@@ -4,7 +4,7 @@ function App() {
   const [mensaje, setMensaje] = useState('');
 
   useEffect(() => {
-    fetch('http://192.168.0.23:8000/api/hello/')
+    fetch('http://10.3.2.60:8000/api/hello/')
       .then(res => res.json())
       .then(data => setMensaje(data.message))
       .catch(err => console.error('Error al obtener el mensaje', err));
