@@ -15,11 +15,24 @@ function App() {
 
   return (
     <div style={{
-      display: 'flex', justifyContent: 'center', alignItems: 'center',
-      height: '100vh', width:'185vh' , flexDirection: 'column', backgroundColor: '#1e1e2f', color: '#fff'
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      height: '100vh', 
+      width: '100vw', 
+      flexDirection: 'column', 
+      backgroundColor: '#1e1e2f', 
+      color: '#fff',
+      padding: '1rem',
+      boxSizing: 'border-box',
+      textAlign: 'center'
     }}>
-      <h1 style={{ fontSize: '2rem', color: '#ff79c6' }}>Hola mundo desde Vite + React</h1>
-      <h2 style={{ fontSize: '1.5rem', color: '#8be9fd' }}>{mensaje}</h2>
+      <h1 style={{ fontSize: '2rem', color: '#ff79c6', margin: '0.5rem' }}>
+        Hola mundo desde Vite + React
+      </h1>
+      <h2 style={{ fontSize: '1.5rem', color: '#8be9fd', margin: '0.5rem' }}>
+        {mensaje}
+      </h2>
     </div>
   )
 }
