@@ -1,40 +1,46 @@
-import { useEffect, useState } from 'react'
+import {  useState } from 'react'
+import './App.css'
+import Home from './components/Home'
+import Register from './components/Register'
+import Login from './components/Login'
+import Navbar from './components/Navbar'
+import About from './components/About'
+import { Routes, Route, useLocation } from 'react-router-dom'  
+
 
 function App() {
-  const [mensaje, setMensaje] = useState('Cargando...')
+  const location = useLocation();
+  const noNavbar = location.pathname === '/login' || location.pathname === '/register';
 
-  useEffect(() => {
-    fetch('/api/hello/')
-      .then((res) => res.json())
-      .then((data) => setMensaje(data.message))
-      .catch((err) => {
-        console.error('Error al obtener el mensaje:', err)
-        setMensaje('No se pudo conectar con Django')
-      })
-  }, [])
+  
 
   return (
-    <div style={{
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center',
-      height: '100vh', 
-      width: '100vw', 
-      flexDirection: 'column', 
-      backgroundColor: '#1e1e2f', 
-      color: '#fff',
-      padding: '1rem',
-      boxSizing: 'border-box',
-      textAlign: 'center'
-    }}>
-      <h1 style={{ fontSize: '2rem', color: '#ff79c6', margin: '0.5rem' }}>
-        Hola mundo desde Vite + React
-      </h1>
-      <h2 style={{ fontSize: '1.5rem', color: '#8be9fd', margin: '0.5rem' }}>
-        {mensaje}
-      </h2>
-    </div>
+
+    <>
+    {
+      noNavbar ?
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      
+      :
+      <Navbar
+      content = {
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+        </Routes>
+      }
+      />
+    }
+    
+    </>
+
   )
+
+    
+    
 }
 
 export default App

@@ -1,6 +1,8 @@
 from django.urls import path
-from .views import HelloWorld
+from .views import RegisterViewset
+from rest_framework.routers import DefaultRouter
 
-urlpatterns = [
-    path('hello/', HelloWorld.as_view()),
-]
+router = DefaultRouter()
+router.register(r'register', RegisterViewset, basename='register')
+
+urlpatterns = router.urls
