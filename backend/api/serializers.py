@@ -4,6 +4,31 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret.pop('password', None)  # Elimina el campo de contraseña de la representación
+        return ret
+
+    def validate(self, data):
+        email = data.get("email")
+        password = data.get("password")
+
+        if not email or not password:
+            raise serializers.ValidationError("Email and password are required.")
+
+        user = User.objects.filter(email=email).first()
+        if user is None or not user.check_password(password):
+            raise serializers.ValidationError("Invalid credentials.")
+
+        data['user'] = user
+        return data
+
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

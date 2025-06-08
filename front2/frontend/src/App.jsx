@@ -6,7 +6,7 @@ import Login from './components/Login'
 import Navbar from './components/Navbar'
 import About from './components/About'
 import { Routes, Route, useLocation } from 'react-router-dom'  
-
+import ProtectedRoutes from './components/ProtectedRoutes'
 
 function App() {
   const location = useLocation();
@@ -28,8 +28,14 @@ function App() {
       <Navbar
       content = {
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route element={<ProtectedRoutes />}>
+
+          <Route path="/home" element={<Home />} />
           <Route path="/about" element={<About />} />
+
+          </Route>
+
+          
         </Routes>
       }
       />

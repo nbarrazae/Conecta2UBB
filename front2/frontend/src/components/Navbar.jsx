@@ -27,12 +27,12 @@ export default function Navbar(props) {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
+      <AppBar  position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <Toolbar className="AppBar">
           <Typography variant="h6" noWrap component="div">
-            Clipped drawer
+            Plataforma de actividades
           </Typography>
-        </Toolbar>
+        </Toolbar>  
       </AppBar>
       <Drawer
         variant="permanent"
@@ -42,11 +42,11 @@ export default function Navbar(props) {
           [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
         }}
       >
-        <Toolbar />
-        <Box sx={{ overflow: 'auto' }}>
+        <Toolbar  />
+        <Box className="SideBar" sx={{ overflow: 'auto' }}>
           <List>
               <ListItem key={1} disablePadding>
-                <ListItemButton component={Link} to="/" selected={path === '/'}>
+                <ListItemButton component={Link} to="/home" selected={path === '/home'}>
                   <ListItemIcon>
                     <HomeIcon />
                   </ListItemIcon>

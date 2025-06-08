@@ -61,6 +61,10 @@ CORS_ALLOW_ALL_ORIGINS = True  # O más seguro: CORS_ALLOWED_ORIGINS = ['http://
 
 AUTH_USER_MODEL = 'api.CustomUser'
 
+AUTHENTICATION_BACKENDS = [
+    'api.auth_backend.EmailAuthBackend',  # Asegúrate de que este es el nombre correcto del backend
+]
+
 # CORS_ALLOWED_ORIGINS = [
 #     'http://192.168.X.X:3000',
 #     'http://localhost:3000',
