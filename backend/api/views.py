@@ -50,3 +50,14 @@ class RegisterViewset(viewsets.ViewSet):
             "user": RegisterSerializer(user).data,
             "message": "User created successfully"
         }, status=201)
+
+
+class UserViewset(viewsets.ViewSet):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, *args, **kwargs): 
+        queryset = User.objects.all()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data, status=200)

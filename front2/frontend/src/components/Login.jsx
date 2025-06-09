@@ -38,7 +38,7 @@ const Login = () => {
         <Box className="whiteBox">
 
             <Box className="itemBox">
-                <Box className="title"> Logueese </Box>
+                <Box className="title"> Logueece </Box>
             </Box>
 
             <Box className="itemBox">
