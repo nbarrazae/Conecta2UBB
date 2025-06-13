@@ -61,3 +61,14 @@ class UserViewset(viewsets.ViewSet):
         queryset = User.objects.all()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data, status=200)
+
+#devolver el username del usuario autenticado
+class UserDataViewset(viewsets.ViewSet):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, *args, **kwargs): 
+        user = request.user
+        serializer = self.serializer_class(user)
+        return Response(serializer.data, status=200)
