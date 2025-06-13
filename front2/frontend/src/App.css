@@ -68,3 +68,11 @@
   text-align: center;
   height: 100vh; /* Full height */
 }
+
+.itemBox .link {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit; /* Inherit color from parent */
+  font-size: 16px; /* Adjust font size */
+  margin: 7px 0; /* Add spacing between links */
+}

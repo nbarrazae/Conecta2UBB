@@ -72,3 +72,4 @@ class UserDataViewset(viewsets.ViewSet):
         user = request.user
         serializer = self.serializer_class(user)
         return Response(serializer.data, status=200)
+    
