@@ -43,7 +43,7 @@ const Login = () => {
             <form onSubmit={handleSubmit(submission)} className="formBox">
                 <Box className="whiteBox">
                     <Box className="itemBox">
-                        <Box className="title">Logueece</Box>
+                        <Box className="title">Iniciar Sesión</Box>
 
                         {errorMsg && (
                             <div style={{
