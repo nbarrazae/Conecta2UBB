@@ -63,4 +63,46 @@ def password_reset_token_created(reset_password_token, *args, **kwargs):
 
     msg.attach_alternative(html_message, "text/html")
     msg.send()
-    
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class Evento(models.Model):
+    STATE_CHOICES = [
+        ('activa', 'Activa'),
+        ('finalizada', 'Finalizada'),
+    ]
+
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    # images = models.ImageField(
+    #     upload_to='event_images/',
+    #     blank=True,
+    #     null=True
+    # )
+    createdAt = models.DateTimeField(auto_now_add=True)
+    state = models.CharField(max_length=15, choices=STATE_CHOICES, default='activa')
+
+    author = models.ForeignKey(
+        'CustomUser',
+        on_delete=models.CASCADE,
+        related_name='eventos_creados'
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='eventos'
+    )
+    participants = models.ManyToManyField(
+        'CustomUser',
+        related_name='eventos_participados',
+        blank=True
+    )
+    max_participants = models.PositiveIntegerField(default=10)
+
+    def __str__(self):
+        return self.title

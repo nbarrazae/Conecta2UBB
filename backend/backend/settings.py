@@ -63,7 +63,8 @@ CORS_ALLOW_ALL_ORIGINS = True  # O más seguro: CORS_ALLOWED_ORIGINS = ['http://
 AUTH_USER_MODEL = 'api.CustomUser'
 
 AUTHENTICATION_BACKENDS = [
-    'api.auth_backend.EmailAuthBackend',  # Asegúrate de que este es el nombre correcto del backend
+    'api.auth_backend.EmailAuthBackend',  # tu backend por email
+    'django.contrib.auth.backends.ModelBackend',  # backend por defecto (necesario para el admin)
 ]
 
 # CORS_ALLOWED_ORIGINS = [
@@ -152,6 +153,16 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+""" 
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+AWS_ACCESS_KEY_ID = env('MINIO_ACCESS_KEY')
+AWS_SECRET_ACCESS_KEY = env('MINIO_SECRET_KEY')
+AWS_STORAGE_BUCKET_NAME = env('MINIO_BUCKET_NAME')
+AWS_S3_ENDPOINT_URL = env('MINIO_ENDPOINT')
+AWS_S3_REGION_NAME = 'us-east-1'  # o la región que uses
+AWS_S3_USE_SSL = False  # o True, según tu configuración
+AWS_S3_VERIFY = False """
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

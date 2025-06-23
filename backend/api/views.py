@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from knox.models import AuthToken
+from .event_serializer import EventoSerializer
 
 User = get_user_model()
 
@@ -72,4 +73,12 @@ class UserDataViewset(viewsets.ViewSet):
         user = request.user
         serializer = self.serializer_class(user)
         return Response(serializer.data, status=200)
-    
+
+class EventoViewSet(viewsets.ModelViewSet):
+    """ViewSet for the Evento model, providing CRUD operations."""
+    queryset = Evento.objects.all()
+    serializer_class = EventoSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
