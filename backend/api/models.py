@@ -84,6 +84,8 @@ class Evento(models.Model):
     #     null=True
     # )
     createdAt = models.DateTimeField(auto_now_add=True)
+    event_date = models.DateTimeField("Event date and time")
+    location = models.CharField("Event location", max_length=255)
     state = models.CharField(max_length=15, choices=STATE_CHOICES, default='activa')
 
     author = models.ForeignKey(

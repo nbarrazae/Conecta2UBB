@@ -22,6 +22,8 @@ class EventoSerializer(serializers.ModelSerializer):
             'title',
             'description',
             'createdAt',
+            'event_date',
+            'location',
             'state',
             'author',
             'category',
