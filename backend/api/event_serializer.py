@@ -11,7 +11,10 @@ class CategorySerializer(serializers.ModelSerializer):
 class EventoSerializer(serializers.ModelSerializer):
     """Serializer for the Evento model, including related fields."""
     author = serializers.StringRelatedField(read_only=True)
-    category = CategorySerializer(read_only=True)
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all()
+    )
+    category_name = serializers.CharField(source='category.name', read_only=True)
     participants = serializers.StringRelatedField(many=True, read_only=True)
 
     class Meta:
@@ -27,6 +30,7 @@ class EventoSerializer(serializers.ModelSerializer):
             'state',
             'author',
             'category',
+            'category_name',
             'participants',
             'max_participants',
         ]
