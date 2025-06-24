@@ -64,7 +64,7 @@ CORS_ALLOW_ALL_ORIGINS = True  # O más seguro: CORS_ALLOWED_ORIGINS = ['http://
 AUTH_USER_MODEL = 'api.CustomUser'
 
 AUTHENTICATION_BACKENDS = [
-    'api.auth_backend.EmailAuthBackend',  # tu backend por email
+    'api.auth_backend.EmailAuthBackend',  # backend por email
     'django.contrib.auth.backends.ModelBackend',  # backend por defecto (necesario para el admin)
 ]
 

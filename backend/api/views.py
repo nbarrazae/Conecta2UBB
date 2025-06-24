@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from knox.models import AuthToken
-from .event_serializer import EventoSerializer
+from .event_serializer import EventoSerializer, CategorySerializer
 
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import EventoFilter  #
@@ -125,3 +125,11 @@ class MisInscripcionesViewSet(viewsets.ViewSet):
         eventos = request.user.eventos_participados.all()
         serializer = EventoSerializer(eventos, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+from rest_framework import viewsets
+from .models import Category
+from .event_serializer import CategorySerializer
+
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
