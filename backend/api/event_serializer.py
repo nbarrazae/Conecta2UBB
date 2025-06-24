@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Evento, Category
+from .models import Evento, Category, EventReport
 
 class CategorySerializer(serializers.ModelSerializer):
     """Serializer for the Category model."""
@@ -34,3 +34,12 @@ class EventoSerializer(serializers.ModelSerializer):
             'participants',
             'max_participants',
         ]
+
+class EventReportSerializer(serializers.ModelSerializer):
+    reporter = serializers.StringRelatedField(read_only=True)
+    event = serializers.PrimaryKeyRelatedField(queryset=Evento.objects.all())
+
+    class Meta:
+        model = EventReport
+        fields = ['id', 'event', 'reporter', 'reason', 'status', 'created_at']
+        read_only_fields = ['status', 'created_at', 'reporter']

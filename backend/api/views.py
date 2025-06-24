@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from knox.models import AuthToken
-from .event_serializer import EventoSerializer, CategorySerializer
+from .event_serializer import EventoSerializer, CategorySerializer, EventReportSerializer
 from .permissions import IsAuthorOrReadOnly
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -139,3 +139,34 @@ from .event_serializer import CategorySerializer
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+class EventReportViewSet(viewsets.ModelViewSet):
+    queryset = EventReport.objects.all()
+    serializer_class = EventReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(reporter=self.request.user)
+
+    def get_queryset(self):
+        user = self.request.user
+        # solo los moderadores pueden ver todos los reportes
+        if user.is_staff or user.is_superuser:
+            return EventReport.objects.all()
+        # los usuarios solo ven sus propios reportes
+        return EventReport.objects.filter(reporter=user)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def accept(self, request, pk=None):
+        report = self.get_object()
+        report.status = 'accepted'
+        report.save()
+        report.event.delete()
+        return Response({'message': 'Reporte aceptado y evento eliminado.'}, status=200)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def reject(self, request, pk=None):
+        report = self.get_object()
+        report.status = 'rejected'
+        report.save()
+        return Response({'message': 'Reporte rechazado.'}, status=200)

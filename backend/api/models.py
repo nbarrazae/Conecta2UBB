@@ -108,3 +108,27 @@ class Evento(models.Model):
 
     def __str__(self):
         return self.title
+
+class EventReport(models.Model):
+    REASON_CHOICES = [
+        ('offensive', 'Contenido ofensivo o lenguaje inapropiado'),
+        ('discriminatory', 'Contenido discriminatorio (sexo, raza, religión, política, etc.)'),
+        ('spam', 'Spam o publicidad no autorizada'),
+        ('unrelated', 'Contenido no relacionado con la actividad'),
+        ('false', 'Información falsa o engañosa'),
+        ('violence', 'Incitación a la violencia o actividades ilegales'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pendiente'),
+        ('accepted', 'Aceptado'),
+        ('rejected', 'Rechazado'),
+    ]
+
+    event = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name='reports')
+    reporter = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    reason = models.CharField(max_length=30, choices=REASON_CHOICES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reporte de {self.event.title} por {self.reporter.email} ({self.get_reason_display()})"
