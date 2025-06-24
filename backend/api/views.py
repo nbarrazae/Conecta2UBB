@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from knox.models import AuthToken
 from .event_serializer import EventoSerializer, CategorySerializer
+from .permissions import IsAuthorOrReadOnly
 
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import EventoFilter  #
@@ -81,7 +82,7 @@ class UserDataViewset(viewsets.ViewSet):
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend]
     filterset_class = EventoFilter
 
@@ -117,6 +118,11 @@ class EventoViewSet(viewsets.ModelViewSet):
             for usuario in inscritos
         ]
         return Response(data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"message": "Evento eliminado correctamente."}, status=status.HTTP_200_OK)
 
 class MisInscripcionesViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
