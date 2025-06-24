@@ -22,6 +22,12 @@ import AxiosInstance from './axiosInstance';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import Fab from '@mui/material/Fab';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+
 
 const drawerWidth = 240;
 const widgetWidth = 400;
@@ -32,6 +38,7 @@ export default function Navbar({ content }) {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [openWidgets, setOpenWidgets] = React.useState(false);
 
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -166,6 +173,35 @@ export default function Navbar({ content }) {
           </LocalizationProvider>
         </Box>
       )}
+      {/* Floating button + modal para móviles */}
+{isMobile && (
+  <>
+    <Fab
+      color="primary"
+      aria-label="calendar"
+      onClick={() => setOpenWidgets(true)}
+      sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 1300 }}
+    >
+      <CalendarMonthIcon />
+    </Fab>
+
+    <Dialog open={openWidgets} onClose={() => setOpenWidgets(false)} fullWidth maxWidth="sm">
+      <DialogTitle>Calendario y recordatorios</DialogTitle>
+      <DialogContent>
+        <Typography variant="subtitle1">Recordatorios</Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          - Evento a las 10:00<br />
+          - Reunión a las 14:00
+        </Typography>
+
+        <Typography variant="subtitle1">Calendario</Typography>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <DateCalendar />
+        </LocalizationProvider>
+      </DialogContent>
+    </Dialog>
+  </>
+)}
     </Box>
   );
 }
