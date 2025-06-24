@@ -1,12 +1,16 @@
 from django.shortcuts import render
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
 from .serializers import *
 from .models import *
 from rest_framework.views import APIView
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from knox.models import AuthToken
 from .event_serializer import EventoSerializer
+
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import EventoFilter  #
 
 User = get_user_model()
 
@@ -75,10 +79,49 @@ class UserDataViewset(viewsets.ViewSet):
         return Response(serializer.data, status=200)
 
 class EventoViewSet(viewsets.ModelViewSet):
-    """ViewSet for the Evento model, providing CRUD operations."""
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = EventoFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def inscribirse(self, request, pk=None):
+        evento = self.get_object()
+
+        if evento.state != 'activa':
+            return Response({"error": "Este evento no está activo."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if evento.participants.filter(id=request.user.id).exists():
+            return Response({"error": "Ya estás inscrito en este evento."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if evento.participants.count() >= evento.max_participants:
+            return Response({"error": "No hay cupos disponibles para este evento."}, status=status.HTTP_400_BAD_REQUEST)
+
+        evento.participants.add(request.user)
+        return Response({"message": "Inscripción exitosa."}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def inscritos(self, request, pk=None):
+        evento = self.get_object()
+        inscritos = evento.participants.all()
+        data = [
+            {
+                "id": usuario.id,
+                "username": usuario.username,
+                "email": usuario.email
+            }
+            for usuario in inscritos
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+class MisInscripcionesViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        eventos = request.user.eventos_participados.all()
+        serializer = EventoSerializer(eventos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
