@@ -33,7 +33,104 @@ const Home = () => {
                             </li>
                         ))}
                     </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
+                    <h1>Authenticated User: {myData.username || 'Null'}</h1>
+                    <ul>
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value.toString()}
+                            </li>
+                        ))}
+                    </ul>
                 </div>
+                
             )}
 
         </div>
