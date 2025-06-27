@@ -9,6 +9,7 @@ import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import ProtectedRoutes from './components/ProtectedRoutes'
 import PasswordReset from './components/PasswordReset'
 import NotFound from './components/NotFound'
+import CrearEvento from './components/CrearEvento'
 
 function App() {
   const location = useLocation();
@@ -25,7 +26,7 @@ function App() {
   const showWithoutNavbar = noNavbarRoutes.includes(path) || isReset;
 
   // Rutas válidas con Navbar
-  const validProtectedRoutes = ['/home', '/about'];
+  const validProtectedRoutes = ['/home', '/about', '/crear-evento'];
 
   const isValidProtected = validProtectedRoutes.includes(path);
 
@@ -52,6 +53,7 @@ function App() {
             <Route element={<ProtectedRoutes />}>
               <Route path="/home" element={<Home />} />
               <Route path="/about" element={<About />} />
+              <Route path="/crear-evento" element={<CrearEvento />} />
             </Route>
           </Routes>
         }
