@@ -50,7 +50,7 @@ const Register = () => {
                 />
             </Box>
 
-            <Box className="itemBox">
+            {/* <Box className="itemBox">
                 <MyPassField 
                 label={"Password"}
                 name={"password"}
@@ -64,7 +64,7 @@ const Register = () => {
                 name={"password2"}
                 control={control}
                 />
-            </Box>
+            </Box> */}
 
             <Box className={"itemBox"}>
                     <MyButton 

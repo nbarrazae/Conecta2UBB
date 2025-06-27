@@ -1,0 +1,30 @@
+<!-- backend/welcome_email.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Bienvenido</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        .container {
+            background: white; max-width: 600px; margin: 40px auto; padding: 30px; border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); text-align: center;
+        }
+        h1 { color: #333; }
+        p { color: #555; }
+        a.button {
+            background: #28a745; color: white; padding: 10px 20px; border-radius: 5px;
+            display: inline-block; text-decoration: none; margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>¡Bienvenido, {{ email_address }}!</h1>
+        <p>Tu cuenta ha sido creada exitosamente.</p>
+        <p>Para establecer tu contraseña, haz clic en el siguiente botón:</p>
+        <a href="{{ full_link }}" class="button">Establecer contraseña</a>
+        <p>Si no solicitaste esto, puedes ignorar este mensaje.</p>
+    </div>
+</body>
+</html>

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth import get_user_model
+from django.utils.crypto import get_random_string
 User = get_user_model()
 
 
@@ -32,11 +33,14 @@ class LoginSerializer(serializers.Serializer):
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'password','username')  # no hace falta incluir username aquí
+        fields = ('id', 'email', 'username') 
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         email = validated_data.get("email")
         validated_data["username"] = email.split("@")[0]  # genera el username automáticamente
+        # pasword random
+        validated_data["password"] = get_random_string(length=10)
+        print(validated_data["password"])
         user = User.objects.create_user(**validated_data)
         return user 

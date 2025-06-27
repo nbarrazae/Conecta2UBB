@@ -7,11 +7,17 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from knox.models import AuthToken
+
 from .event_serializer import EventoSerializer, CategorySerializer, EventReportSerializer
 from .permissions import IsAuthorOrReadOnly
 
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import EventoFilter  #
+
+from django_rest_passwordreset.models import ResetPasswordToken
+from django_rest_passwordreset.signals import reset_password_token_created
+from utils.email_utils import send_welcome_email
+
 
 User = get_user_model()
 
@@ -48,13 +54,21 @@ class RegisterViewset(viewsets.ViewSet):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
 
+
     def create(self, request, *args, **kwargs): 
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()    
+        user = serializer.save()
+
+        # Generar token de recuperación de contraseña
+        token = ResetPasswordToken.objects.create(user=user)
+
+        # Enviar correo de bienvenida personalizado
+        send_welcome_email(user, token)
+
         return Response({
             "user": RegisterSerializer(user).data,
-            "message": "User created successfully"
+            "message": "Usuario creado. Revisa tu correo para establecer tu contraseña."
         }, status=201)
 
 
