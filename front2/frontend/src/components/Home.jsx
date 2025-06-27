@@ -44,12 +44,11 @@ const Home = () => {
                     </Button>
                     <h1>Authenticated User: {myData.username || 'Null'}</h1>
                     <ul>
-                        {myData &&
-                            Object.entries(myData).map(([key, value]) => (
-                                <li key={key}>
-                                    <strong>{key}:</strong> {value.toString()}
-                                </li>
-                            ))}
+                        {myData && Object.entries(myData).map(([key, value]) => (
+                            <li key={key}>
+                                <strong>{key}:</strong> {value !== null && value !== undefined ? value.toString() : '—'}
+                            </li>
+                        ))}
                     </ul>
                     <h2>Eventos:</h2>
                     <ul>

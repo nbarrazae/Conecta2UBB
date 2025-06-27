@@ -16,6 +16,7 @@ import ListItemText from '@mui/material/ListItemText';
 import HomeIcon from '@mui/icons-material/Home';
 import InfoIcon from '@mui/icons-material/Info';
 import LogoutIcon from '@mui/icons-material/Logout';
+import FlagIcon from '@mui/icons-material/Flag';
 import { useTheme, useMediaQuery } from '@mui/material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AxiosInstance from './axiosInstance';
@@ -49,6 +50,9 @@ export default function Navbar({ content }) {
     });
   };
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isAdmin = !!(user && (user.is_staff || user.is_superuser));
+
   const drawerContent = (
     <Box sx={{ overflow: 'auto' }}>
       <Toolbar />
@@ -66,6 +70,15 @@ export default function Navbar({ content }) {
             <ListItemText primary="About" />
           </ListItemButton>
         </ListItem>
+
+        {isAdmin && (
+          <ListItem disablePadding>
+            <ListItemButton component={Link} to="/admin-reports" selected={path === '/admin-reports'}>
+              <ListItemIcon><FlagIcon /></ListItemIcon>
+              <ListItemText primary="Gestionar Reportes" />
+            </ListItemButton>
+          </ListItem>
+        )}
 
         <ListItem disablePadding>
           <ListItemButton onClick={logoutUser}>
