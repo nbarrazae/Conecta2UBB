@@ -36,9 +36,16 @@ class LoginViewset(viewsets.ViewSet):
         user = authenticate(request, email=email, password=password)
         
         if user:
-            _ , token = AuthToken.objects.create(user)
+            _, token = AuthToken.objects.create(user)
+            user_data = {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
+            }
             return Response({
-                "user": self.serializer_class(user).data,
+                "user": user_data,
                 "token": token,
                 "message": "Login successful"
             }, status=200)
