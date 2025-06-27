@@ -63,4 +63,72 @@ def password_reset_token_created(reset_password_token, *args, **kwargs):
 
     msg.attach_alternative(html_message, "text/html")
     msg.send()
-    
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class Evento(models.Model):
+    STATE_CHOICES = [
+        ('activa', 'Activa'),
+        ('finalizada', 'Finalizada'),
+    ]
+
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    # images = models.ImageField(
+    #     upload_to='event_images/',
+    #     blank=True,
+    #     null=True
+    # )
+    createdAt = models.DateTimeField(auto_now_add=True)
+    event_date = models.DateTimeField("Event date and time")
+    location = models.CharField("Event location", max_length=255)
+    state = models.CharField(max_length=15, choices=STATE_CHOICES, default='activa')
+
+    author = models.ForeignKey(
+        'CustomUser',
+        on_delete=models.CASCADE,
+        related_name='eventos_creados'
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='eventos'
+    )
+    participants = models.ManyToManyField(
+        'CustomUser',
+        related_name='eventos_participados',
+        blank=True
+    )
+    max_participants = models.PositiveIntegerField(default=10)
+
+    def __str__(self):
+        return self.title
+
+class EventReport(models.Model):
+    REASON_CHOICES = [
+        ('offensive', 'Contenido ofensivo o lenguaje inapropiado'),
+        ('discriminatory', 'Contenido discriminatorio (sexo, raza, religión, política, etc.)'),
+        ('spam', 'Spam o publicidad no autorizada'),
+        ('unrelated', 'Contenido no relacionado con la actividad'),
+        ('false', 'Información falsa o engañosa'),
+        ('violence', 'Incitación a la violencia o actividades ilegales'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pendiente'),
+        ('accepted', 'Aceptado'),
+        ('rejected', 'Rechazado'),
+    ]
+
+    event = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name='reports')
+    reporter = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    reason = models.CharField(max_length=30, choices=REASON_CHOICES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reporte de {self.event.title} por {self.reporter.email} ({self.get_reason_display()})"
