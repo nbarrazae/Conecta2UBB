@@ -44,3 +44,32 @@ class RegisterSerializer(serializers.ModelSerializer):
         print(validated_data["password"])
         user = User.objects.create_user(**validated_data)
         return user 
+    
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name']
+
+class ProfileSerializer(serializers.ModelSerializer):
+    birthday = serializers.DateField(
+        format="%d/%m/%Y",
+        input_formats=["%d/%m/%Y", "%Y-%m-%d"],
+        required=False,
+        allow_null=True
+    )
+    interests = CategorySerializer(many=True, read_only=True)
+    interest_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Category.objects.all(),
+        write_only=True,
+        source='interests'
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'email', 'username', 'birthday',
+            'full_name', 'bio', 'profile_picture',
+            'interests', 'interest_ids'
+        ]
+        read_only_fields = ['id', 'email']

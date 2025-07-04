@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
 from .serializers import *
 from .models import *
 from rest_framework.views import APIView
@@ -18,6 +18,7 @@ from django_rest_passwordreset.models import ResetPasswordToken
 from django_rest_passwordreset.signals import reset_password_token_created
 from utils.email_utils import send_welcome_email
 
+from django.shortcuts import get_object_or_404
 
 User = get_user_model()
 
@@ -88,6 +89,32 @@ class UserViewset(viewsets.ViewSet):
         queryset = User.objects.all()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data, status=200)
+    
+    def retrieve(self, request, pk=None):  # 👈 nuevo método
+        user = get_object_or_404(CustomUser, pk=pk)
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'])
+    def ver_perfil(self, request):
+        user = request.user
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['put'])
+    def editar_perfil(self, request):
+        user = request.user
+        serializer = ProfileSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Perfil actualizado correctamente"})
+        return Response(serializer.errors, status=400)
+    
+    @action(detail=False, methods=['get'], url_path='username/(?P<username>[^/.]+)')
+    def perfil_por_username(self, request, username=None):
+        user = get_object_or_404(CustomUser, username=username)
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data)
 
 #devolver el username del usuario autenticado
 class UserDataViewset(viewsets.ViewSet):
@@ -191,3 +218,9 @@ class EventReportViewSet(viewsets.ModelViewSet):
         report.status = 'rejected'
         report.save()
         return Response({'message': 'Reporte rechazado.'}, status=200)
+
+class VerPerfilDeOtroUsuarioView(generics.RetrieveAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'  # También podrías usar 'username' si prefieres
