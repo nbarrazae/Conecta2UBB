@@ -1,33 +1,36 @@
-import './App.css'
-import Home from './components/Home'
-import Register from './components/Register'
-import Login from './components/Login'
-import Navbar from './components/Navbar'
-import About from './components/About'
-import PasswordResetRquest from './components/PasswordResetRequest'
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom'  
-import ProtectedRoutes from './components/ProtectedRoutes'
-import PasswordReset from './components/PasswordReset'
-import NotFound from './components/NotFound'
-import CrearEvento from './components/CrearEvento'
-import AdminReports from './components/AdminReports';
+import "./App.css";
+import Home from "./components/Home";
+import Register from "./components/Register";
+import Login from "./components/Login";
+import Navbar from "./components/Navbar";
+import About from "./components/About";
+import PasswordResetRquest from "./components/PasswordResetRequest";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import ProtectedRoutes from "./components/ProtectedRoutes";
+import PasswordReset from "./components/PasswordReset";
+import NotFound from "./components/NotFound";
+import CrearEvento from "./components/CrearEvento";
+import AdminReports from "./components/AdminReports";
+import Perfil from "./components/Perfil/Perfil";
 
 function App() {
   const location = useLocation();
   const path = location.pathname;
 
   // Rutas sin Navbar
-  const noNavbarRoutes = [
-    '/login',
-    '/register',
-    '/request/password_reset',
-  ];
-  const isReset = path.startsWith('/password-reset/');
+  const noNavbarRoutes = ["/login", "/register", "/request/password_reset"];
+  const isReset = path.startsWith("/password-reset/");
 
   const showWithoutNavbar = noNavbarRoutes.includes(path) || isReset;
 
   // Rutas válidas con Navbar
-  const validProtectedRoutes = ['/home', '/about', '/crear-evento', '/admin-reports'];
+  const validProtectedRoutes = [
+    "/home",
+    "/about",
+    "/crear-evento",
+    "/admin-reports",
+    "/perfil",
+  ];
 
   const isValidProtected = validProtectedRoutes.includes(path);
 
@@ -42,7 +45,10 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/request/password_reset" element={<PasswordResetRquest />} />
+        <Route
+          path="/request/password_reset"
+          element={<PasswordResetRquest />}
+        />
         <Route path="/password-reset/:token" element={<PasswordReset />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -60,6 +66,7 @@ function App() {
               <Route path="/home" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/crear-evento" element={<CrearEvento />} />
+              <Route path="/perfil" element={<Perfil />} />
               {isAdmin() && (
                 <Route path="/admin-reports" element={<AdminReports />} />
               )}
