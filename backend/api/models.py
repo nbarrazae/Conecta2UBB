@@ -29,7 +29,7 @@ class CustomUser(AbstractUser):
     
     email = models.EmailField(max_length=200, unique=True)
     birthday = models.DateField(null=True, blank=True)
-    username = models.CharField(max_length=200, null=True, blank=True)
+    username = models.CharField(max_length=200, null=True, blank=True, unique=True)
 
     # Nuevos campos para el perfil (no obligatorios)
     full_name = models.CharField(max_length=100, blank=True)

@@ -19,6 +19,8 @@ from django_rest_passwordreset.signals import reset_password_token_created
 from utils.email_utils import send_welcome_email
 
 from django.shortcuts import get_object_or_404
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+
 
 User = get_user_model()
 
@@ -101,10 +103,18 @@ class UserViewset(viewsets.ViewSet):
         serializer = ProfileSerializer(user)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['put'])
+    @action(detail=False, methods=['put'], parser_classes=[MultiPartParser, FormParser, JSONParser])
     def editar_perfil(self, request):
         user = request.user
-        serializer = ProfileSerializer(user, data=request.data, partial=True)
+
+        data = request.data.copy()
+        ids = data.getlist('interest_ids') if hasattr(data, 'getlist') else data.get('interest_ids')
+
+        if ids == ["0"] or ids == []:
+            user.interests.clear()
+            data.pop("interest_ids", None)
+
+        serializer = ProfileSerializer(user, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Perfil actualizado correctamente"})
