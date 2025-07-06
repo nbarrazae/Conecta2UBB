@@ -8,7 +8,6 @@ const Perfil = () => {
     <div className="perfil-wrapper">
       <div className="perfil-page">
         <div className="perfil-content">
-          <h1 className="perfil-title">Mi perfil</h1>
           <UserProfile />
         </div>
       </div>

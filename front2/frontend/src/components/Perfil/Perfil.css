@@ -7,8 +7,8 @@
 .perfil-page {
   width: 100%;
   max-width: 1200px;
-  padding: -1rem;
-  margin-top: -5rem; /* 👈 Desplaza el contenido hacia arriba */
+  margin-top: -2rem; /* ⬅️ Aumentamos margen superior para separarlo del navbar fijo */
+  padding: 1rem; /* ⬅️ Reemplaza el padding inválido -1rem */
   box-sizing: border-box;
 }
 
@@ -18,14 +18,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 1rem;
+  margin-left: 3.5rem;
 }
 
 .perfil-title {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 2rem;
-  text-align: center;
-  width: 100%;
+  font-size: 1.2rem; /* ⬅️ Tamaño más discreto y elegante */
+  font-weight: 500;
+  color: #555; /* ⬅️ Tono más sutil */
+  align-self: flex-start; /* ⬅️ Alineado a la izquierda de la tarjeta */
+  margin-left: 1rem; /* ⬅️ Separado del borde de la tarjeta */
+  margin-bottom: -0.5rem;
 }
 
 .perfil-card {
@@ -198,4 +201,12 @@
     opacity: 0;
     transform: translateY(20px);
   }
+}
+
+.perfil-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 0.5rem;
+  margin-left: 1rem;
 }

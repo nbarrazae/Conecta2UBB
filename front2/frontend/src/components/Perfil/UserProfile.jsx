@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import AxiosInstance from "../axiosInstance";
 import CakeIcon from "@mui/icons-material/Cake";
 import InfoIcon from "@mui/icons-material/Info";
@@ -10,14 +11,20 @@ import defaultAvatar from "../../assets/default-avatar.jpg";
 import "./Perfil.css";
 
 const UserProfile = () => {
+  const { username } = useParams(); // para rutas como /perfil-publico/:username
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  const usuarioLogeado = JSON.parse(localStorage.getItem("user") || "{}");
+  const usernameLogeado = usuarioLogeado?.username;
+
   const fetchPerfil = async () => {
     try {
-      const res = await AxiosInstance.get("/users/ver_perfil/");
+      const res = username
+        ? await AxiosInstance.get(`/users/username/${username}/`)
+        : await AxiosInstance.get("/users/ver_perfil/");
       setPerfil(res.data);
     } catch (error) {
       console.error("Error al cargar el perfil:", error);
@@ -28,7 +35,7 @@ const UserProfile = () => {
 
   useEffect(() => {
     fetchPerfil();
-  }, []);
+  }, [username]);
 
   const handleUpdate = () => {
     fetchPerfil();
@@ -36,12 +43,8 @@ const UserProfile = () => {
     setTimeout(() => setShowToast(false), 4000);
   };
 
-  if (loading) return <p className="perfil-loading">Cargando perfil...</p>;
-  if (!perfil)
-    return <p className="perfil-error">No se pudo cargar el perfil.</p>;
-
   const getFechaFormateada = () => {
-    if (!perfil.birthday) return "Sin fecha";
+    if (!perfil?.birthday) return "Sin fecha";
 
     try {
       const [d, m, y] = perfil.birthday.split("/");
@@ -58,76 +61,96 @@ const UserProfile = () => {
     }
   };
 
+  const esPerfilPropio = perfil?.username === usernameLogeado;
+
+  if (loading) return <p className="perfil-loading">Cargando perfil...</p>;
+  if (!perfil)
+    return <p className="perfil-error">No se pudo cargar el perfil.</p>;
+
   return (
     <>
-      <div className="perfil-card">
-        <div className="perfil-header">
-          <img
-            src={
-              perfil.profile_picture
-                ? `http://localhost:8000${perfil.profile_picture}`
-                : defaultAvatar
-            }
-            alt="Foto de perfil"
-          />
-          <div className="perfil-header-info">
-            <div className="perfil-nombre-wrapper">
-              <h2 className="perfil-nombre-usuario" title={perfil.full_name}>
-                {perfil.full_name || "Sin nombre"}
-              </h2>
-              <p className="perfil-username">@{perfil.username}</p>
-              <p className="perfil-birthday">
-                <CakeIcon fontSize="small" style={{ marginRight: "4px" }} />
-                {getFechaFormateada()}
-              </p>
+      <div className="perfil-wrapper">
+        <div className="perfil-page">
+          <div className="perfil-label">
+            {esPerfilPropio ? "Mi perfil" : "Perfil público"}
+          </div>
+
+          <div className="perfil-card">
+            <div className="perfil-header">
+              <img
+                src={
+                  perfil.profile_picture
+                    ? `http://localhost:8000${perfil.profile_picture}`
+                    : defaultAvatar
+                }
+                alt="Foto de perfil"
+              />
+              <div className="perfil-header-info">
+                <div className="perfil-nombre-wrapper">
+                  <h2
+                    className="perfil-nombre-usuario"
+                    title={perfil.full_name}
+                  >
+                    {perfil.full_name || "Sin nombre"}
+                  </h2>
+                  <p className="perfil-username">@{perfil.username}</p>
+                  <p className="perfil-birthday">
+                    <CakeIcon fontSize="small" style={{ marginRight: "4px" }} />
+                    {getFechaFormateada()}
+                  </p>
+                </div>
+
+                {esPerfilPropio && (
+                  <button
+                    className="editar-perfil-btn"
+                    onClick={() => setShowModal(true)}
+                  >
+                    Editar perfil
+                  </button>
+                )}
+              </div>
             </div>
-            <button
-              className="editar-perfil-btn"
-              onClick={() => setShowModal(true)}
-            >
-              Editar perfil
-            </button>
-          </div>
-        </div>
 
-        <div className="perfil-section">
-          <div className="perfil-section-title">
-            <InfoIcon />
-            Sobre mí
-          </div>
-          <p className="perfil-bio">{perfil.bio || "Sin biografía"}</p>
-        </div>
+            <div className="perfil-section">
+              <div className="perfil-section-title">
+                <InfoIcon />
+                Sobre mí
+              </div>
+              <p className="perfil-bio">{perfil.bio || "Sin biografía"}</p>
+            </div>
 
-        <div className="perfil-section">
-          <div className="perfil-section-title">
-            <LocalOfferIcon />
-            Intereses
-          </div>
-          <div className="perfil-interests">
-            {perfil.interests?.length > 0 ? (
-              perfil.interests.map((cat) => (
-                <span className="perfil-interest" key={cat.id}>
-                  {cat.name}
-                </span>
-              ))
-            ) : (
-              <span className="perfil-interest">Sin intereses</span>
+            <div className="perfil-section">
+              <div className="perfil-section-title">
+                <LocalOfferIcon />
+                Intereses
+              </div>
+              <div className="perfil-interests">
+                {perfil.interests?.length > 0 ? (
+                  perfil.interests.map((cat) => (
+                    <span className="perfil-interest" key={cat.id}>
+                      {cat.name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="perfil-interest">Sin intereses</span>
+                )}
+              </div>
+            </div>
+
+            <EventosUsuario eventos={perfil.eventos_participados} />
+
+            {esPerfilPropio && showModal && (
+              <EditarPerfil
+                perfil={perfil}
+                onClose={() => setShowModal(false)}
+                onUpdate={handleUpdate}
+              />
             )}
           </div>
         </div>
-
-        <EventosUsuario eventos={perfil.eventos_participados} />
-
-        {showModal && (
-          <EditarPerfil
-            perfil={perfil}
-            onClose={() => setShowModal(false)}
-            onUpdate={handleUpdate}
-          />
-        )}
       </div>
 
-      {showToast && (
+      {esPerfilPropio && showToast && (
         <div className="toast-confirmacion">
           <CheckCircleIcon style={{ marginRight: "8px" }} />
           Cambios aplicados con éxito

@@ -30,9 +30,12 @@ function App() {
     "/crear-evento",
     "/admin-reports",
     "/perfil",
+    "/perfil-publico", // 👈 añadida base para detectar
   ];
 
-  const isValidProtected = validProtectedRoutes.includes(path);
+  const isValidProtected = validProtectedRoutes.some((route) =>
+    path.startsWith(route)
+  );
 
   const isAdmin = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -67,6 +70,7 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/crear-evento" element={<CrearEvento />} />
               <Route path="/perfil" element={<Perfil />} />
+              <Route path="/perfil-publico/:username" element={<Perfil />} />
               {isAdmin() && (
                 <Route path="/admin-reports" element={<AdminReports />} />
               )}
