@@ -2,6 +2,7 @@ import AxiosInstance from "./axiosInstance";
 import { React, useEffect, useState } from "react";
 import { Box, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import BotonInscripcion from "./BotonInscripcion";
 
 const Home = () => {
   const [myData, setMyData] = useState([]);
@@ -58,41 +59,55 @@ const Home = () => {
 
           <h2>Eventos:</h2>
           <ul>
-            {Events.map((event) => (
-              <li
-                key={event.id}
-                style={{
-                  marginBottom: "20px",
-                  padding: "10px",
-                  border: "1px solid #ccc",
-                  borderRadius: "8px",
-                  listStyle: "none",
-                }}
-              >
-                <strong>{event.title}</strong> - {event.description} <br />
-                Fecha: {new Date(event.event_date).toLocaleDateString()} <br />
-                Ubicación: {event.location} <br />
-                Estado: {event.state} <br />
-                Categoría: {event.category_name} <br />
-                Participantes: {event.participants.length}/
-                {event.max_participants} <br />
-                <i>
-                  Creado por:{" "}
-                  <span
-                    style={{
-                      color: "#1976d2",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                    }}
-                    onClick={
-                      () => navigate(`/perfil-publico/${event.author_username}`) // modificación para tener perfiles navegables.
-                    }
-                  >
-                    {event.author_username}
-                  </span>
-                </i>
-              </li>
-            ))}
+            {Events.map((event) => {
+              const estaLleno =
+                event.participants.length >= event.max_participants;
+              const yaInscrito = event.participants.includes(myData.email);
+
+              return (
+                <li
+                  key={event.id}
+                  style={{
+                    marginBottom: "20px",
+                    padding: "10px",
+                    border: "1px solid #ccc",
+                    borderRadius: "8px",
+                    listStyle: "none",
+                  }}
+                >
+                  <strong>{event.title}</strong> - {event.description} <br />
+                  Fecha: {new Date(event.event_date).toLocaleDateString()}{" "}
+                  <br />
+                  Ubicación: {event.location} <br />
+                  Estado: {event.state} <br />
+                  Categoría: {event.category_name} <br />
+                  Participantes: {event.participants.length}/
+                  {event.max_participants} <br />
+                  <i>
+                    Creado por:{" "}
+                    <span
+                      style={{
+                        color: "#1976d2",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      }}
+                      onClick={() =>
+                        navigate(`/perfil-publico/${event.author_username}`)
+                      }
+                    >
+                      {event.author_username}
+                    </span>
+                  </i>
+                  <br />
+                  <BotonInscripcion
+                    eventId={event.id}
+                    yaInscrito={yaInscrito}
+                    estaLleno={estaLleno}
+                    onCambio={GetEvents}
+                  />
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

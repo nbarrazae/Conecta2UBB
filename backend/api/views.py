@@ -181,6 +181,18 @@ class EventoViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({"message": "Evento eliminado correctamente."}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def desinscribirse(self, request, pk=None):
+        evento = self.get_object()
+        usuario = request.user
+
+        if usuario not in evento.participants.all():
+            return Response({"error": "No estás inscrito en este evento."}, status=status.HTTP_400_BAD_REQUEST)
+
+        evento.participants.remove(usuario)
+        return Response({"message": "Te has desinscrito del evento."}, status=status.HTTP_200_OK)
+
 
 class MisInscripcionesViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
