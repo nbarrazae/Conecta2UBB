@@ -48,7 +48,7 @@ const Home = () => {
             Ir a CrearEvento
           </Button>
 
-          <h1>Authenticated User: {myData.username || "Null"}</h1>
+          {/* <h1>Authenticated User: {myData.username || "Null"}</h1>
           <ul>
             {myData &&
               Object.entries(myData).map(([key, value]) => (
@@ -59,7 +59,7 @@ const Home = () => {
                     : "—"}
                 </li>
               ))}
-          </ul>
+          </ul> */}
 
           <h2>Eventos:</h2>
           <ul>
@@ -78,6 +78,8 @@ const Home = () => {
                     borderRadius: "8px",
                     listStyle: "none",
                     cursor: "pointer",
+                    backgroundColor: estaLleno ? "#f8d7da" : "#e2f0d9",
+                    maxWidth: "75%",
                   }}
                   onClick={() => handleEventClick(event.id)}
                 >
@@ -105,12 +107,12 @@ const Home = () => {
                     </span>
                   </i>
                   <br />
-                  <BotonInscripcion
+                  {/* <BotonInscripcion
                     eventId={event.id}
                     yaInscrito={yaInscrito}
                     estaLleno={estaLleno}
                     onCambio={GetEvents}
-                  />
+                  /> */}
                 </li>
               );
             })}

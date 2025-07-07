@@ -2,36 +2,48 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@mui/material';
 import AxiosInstance from './axiosInstance';
+import BotonInscripcion from './BotonInscripcion';
 
 const VerEvento = () => {
     const [evento, setEvento] = useState(null);
     const [imagenes, setImagenes] = useState([]);
     const [categoriasDisponibles, setCategoriasDisponibles] = useState([]);
+    const [myData, setMyData] = useState(null);
     const navigate = useNavigate();
-    const { id } = useParams(); // Obtener el ID del evento desde la URL
+    const { id } = useParams();
+
+    const fetchEvento = async () => {
+        try {
+            const response = await AxiosInstance.get(`eventos/${id}/`);
+            setEvento(response.data);
+            setImagenes(response.data.imagenes || []);
+        } catch (error) {
+            console.error("Error fetching event:", error);
+        }
+    };
+
+    const fetchCategorias = async () => {
+        try {
+            const response = await AxiosInstance.get('categories/');
+            setCategoriasDisponibles(response.data);
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+        }
+    };
+
+    const fetchUserData = async () => {
+        try {
+            const response = await AxiosInstance.get("user_data/");
+            setMyData(response.data);
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
+    };
 
     useEffect(() => {
-        const fetchEvento = async () => {
-            try {
-                const response = await AxiosInstance.get(`eventos/${id}/`);
-                setEvento(response.data);
-                setImagenes(response.data.imagenes || []);
-            } catch (error) {
-                console.error("Error fetching event:", error);
-            }
-        };
-
-        const fetchCategorias = async () => {
-            try {
-                const response = await AxiosInstance.get('categories/');
-                setCategoriasDisponibles(response.data);
-            } catch (error) {
-                console.error("Error fetching categories:", error);
-            }
-        };
-
         fetchEvento();
         fetchCategorias();
+        fetchUserData();
     }, [id]);
 
     const isAuthenticated = !!localStorage.getItem("Token");
@@ -44,9 +56,12 @@ const VerEvento = () => {
         }
     };
 
-    if (!evento) {
+    if (!evento || !myData) {
         return <div>Cargando...</div>;
     }
+
+    const yaInscrito = evento.participants.includes(myData.email);
+    const estaLleno = evento.participants.length >= (evento.max_participants || evento.limite_asistentes || 0);
 
     return (
         <div style={styles.container}>
@@ -66,23 +81,35 @@ const VerEvento = () => {
             >
                 {isAuthenticated ? 'Ir al Inicio' : 'Ir al Login'}
             </Button>
-            <h2 style={styles.title}>{evento.title}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2 style={styles.title}>
+                    {evento.title}
+                </h2>
+                <BotonInscripcion
+                    eventId={evento.id}
+                    yaInscrito={yaInscrito}
+                    estaLleno={estaLleno}
+                    onCambio={fetchEvento}
+                    style={{ marginLeft: '20px' }}
+                />
+            </div>
             <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Información</h3>
                 <p><strong>Lugar:</strong> {evento.location}</p>
                 <p><strong>Fecha:</strong> {evento.event_date}</p>
                 <p><strong>Categoría:</strong> {categoriasDisponibles.find(cat => cat.id === evento.category)?.name || 'Sin categoría'}</p>
-                <p><strong>Límite de asistentes:</strong> {evento.limite_asistentes}</p>
+                <p><strong>Creador del Evento:</strong> {evento.author_username}</p>
+                <p><strong>Participantes:</strong> {evento.participants.length}/{evento.max_participants}</p>
             </div>
 
             <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>Sobre el Evento</h3>
+                <h3 style={styles.sectionTitle}>Sobre el Evento + Imagenes del Evento</h3>
                 <p>{evento.description}</p>
                 <div style={styles.imageContainer}>
                     {imagenes.map((img, idx) => (
                         <div key={idx} style={styles.imageWrapper}>
                             <img
-                                src={img.url} // Asumiendo que el backend devuelve una URL para cada imagen
+                                src={img.url}
                                 alt={`imagen-${idx}`}
                                 style={styles.image}
                             />
@@ -90,6 +117,13 @@ const VerEvento = () => {
                     ))}
                 </div>
             </div>
+
+            {/* <BotonInscripcion
+                eventId={evento.id}
+                yaInscrito={yaInscrito}
+                estaLleno={estaLleno}
+                onCambio={fetchEvento}
+            /> */}
 
             <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Comentarios</h3>
