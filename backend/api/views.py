@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets, permissions, status, generics
+from rest_framework import viewsets, permissions, status, generics,pagination,filters
 from .serializers import *
 from .models import *
 from rest_framework.views import APIView
@@ -21,6 +21,10 @@ from utils.email_utils import send_welcome_email
 
 from django.shortcuts import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+
+from rest_framework import viewsets, permissions
+from .models import Comment
+from .serializers import CommentSerializer
 
 
 User = get_user_model()
@@ -254,3 +258,23 @@ class VerPerfilDeOtroUsuarioView(generics.RetrieveAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'  # También podrías usar 'username' si prefieres
+
+
+
+
+class CommentPagination(pagination.PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    pagination_class = CommentPagination
+
+    def get_queryset(self):
+        evento_id = self.request.query_params.get('evento')
+        if evento_id:
+            return Comment.objects.filter(evento_id=evento_id).order_by('-created_at')  # 👈 Ordenar por más recientes primero
+        return Comment.objects.none()
+
+

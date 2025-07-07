@@ -44,23 +44,6 @@ const Home = () => {
         <div>Loading...</div>
       ) : (
         <div>
-          <Button variant="contained" color="primary" onClick={handleRedirect}>
-            Ir a CrearEvento
-          </Button>
-
-          {/* <h1>Authenticated User: {myData.username || "Null"}</h1>
-          <ul>
-            {myData &&
-              Object.entries(myData).map(([key, value]) => (
-                <li key={key}>
-                  <strong>{key}:</strong>{" "}
-                  {value !== null && value !== undefined
-                    ? value.toString()
-                    : "—"}
-                </li>
-              ))}
-          </ul> */}
-
           <h2>Eventos:</h2>
           <ul>
             {Events.map((event) => {
@@ -107,12 +90,18 @@ const Home = () => {
                     </span>
                   </i>
                   <br />
-                  {/* <BotonInscripcion
-                    eventId={event.id}
-                    yaInscrito={yaInscrito}
-                    estaLleno={estaLleno}
-                    onCambio={GetEvents}
-                  /> */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering the event click
+                    }}
+                  >
+                    <BotonInscripcion
+                      eventId={event.id}
+                      yaInscrito={yaInscrito}
+                      estaLleno={estaLleno}
+                      onCambio={GetEvents}
+                    />
+                  </div>
                 </li>
               );
             })}

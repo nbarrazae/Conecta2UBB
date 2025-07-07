@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import AppBar from "@mui/material/AppBar";
@@ -30,6 +31,15 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import Person2Icon from "@mui/icons-material/Person2";
 import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from '@mui/icons-material/Add';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import Tooltip from '@mui/material/Tooltip';
+
+import Avatar from "@mui/material/Avatar";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+
 
 const drawerWidth = 240;
 const widgetWidth = 400;
@@ -38,6 +48,65 @@ export default function Navbar({ content }) {
   const location = useLocation();
   const path = location.pathname;
   const navigate = useNavigate();
+
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+        try {
+            const res = await AxiosInstance.get("/users/ver_perfil/");
+            if (res.data.profile_picture) {
+                setProfilePicture(`http://localhost:8000${res.data.profile_picture}`);
+            } else {
+                setProfilePicture(defaultAvatar);
+            }
+        } catch (error) {
+            console.error("Error al obtener imagen de perfil:", error);
+            setProfilePicture(defaultAvatar);
+        }
+    };
+
+    fetchProfilePicture();
+}, []);
+
+
+  const handleCrearEvento = () => {
+    navigate("/crear-evento");
+};
+
+const handleNotificaciones = () => {
+    navigate("/notificaciones"); // O ruta que utilices
+};
+
+const handlePerfil = () => {
+    navigate("/perfil");
+};
+
+const handleAvatarClick = (event) => {
+  setAnchorEl(event.currentTarget);
+};
+
+const handleMenuClose = () => {
+  setAnchorEl(null);
+};
+
+const handlePerfilClick = () => {
+  navigate("/perfil");
+  handleMenuClose();
+};
+
+const handleLogoutClick = () => {
+  AxiosInstance.post(`logoutall/`, {}).then(() => {
+      localStorage.removeItem("Token");
+      navigate("/login");
+  });
+  handleMenuClose();
+};
+
+
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [openWidgets, setOpenWidgets] = React.useState(false);
@@ -67,7 +136,7 @@ export default function Navbar({ content }) {
             <ListItemIcon>
               <HomeIcon />
             </ListItemIcon>
-            <ListItemText primary="Home" />
+            <ListItemText primary="Principal" />
           </ListItemButton>
         </ListItem>
 
@@ -112,7 +181,7 @@ export default function Navbar({ content }) {
           </ListItem>
         )}
 
-        <ListItem disablePadding>
+        {/* <ListItem disablePadding>
           <ListItemButton
             component={Link}
             to="/perfil"
@@ -132,7 +201,7 @@ export default function Navbar({ content }) {
             </ListItemIcon>
             <ListItemText primary="Logout" />
           </ListItemButton>
-        </ListItem>
+        </ListItem> */}
       </List>
       <Divider />
     </Box>
@@ -159,9 +228,79 @@ export default function Navbar({ content }) {
               <MenuIcon />
             </IconButton>
           )}
-          <Typography variant="h6" noWrap component="div">
+          
+          
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Plataforma de actividades
           </Typography>
+
+          <IconButton color="inherit" onClick={handleCrearEvento}>
+              <AddIcon />
+          </IconButton>
+
+          <IconButton color="inherit" onClick={handleNotificaciones}>
+              <NotificationsIcon />
+          </IconButton>
+
+          <Tooltip title="Opciones de perfil">
+    <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 1 }}>
+        <Avatar
+            src={profilePicture}
+            alt="Perfil"
+            sx={{ width: 36, height: 36 }}
+        />
+    </IconButton>
+</Tooltip>
+
+<Menu
+    anchorEl={anchorEl}
+    open={open}
+    onClose={handleMenuClose}
+    onClick={handleMenuClose}
+    PaperProps={{
+        elevation: 0,
+        sx: {
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+            mt: 1.5,
+            '& .MuiAvatar-root': {
+                width: 32,
+                height: 32,
+                ml: -0.5,
+                mr: 1,
+            },
+            '&:before': {
+                content: '""',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                right: 14,
+                width: 10,
+                height: 10,
+                bgcolor: 'background.paper',
+                transform: 'translateY(-50%) rotate(45deg)',
+                zIndex: 0,
+            },
+        },
+    }}
+    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+>
+    <MenuItem onClick={handlePerfilClick}>
+        <Avatar src={profilePicture} /> Mi Perfil
+    </MenuItem>
+    <MenuItem onClick={handleLogoutClick}>
+        <LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Logout
+    </MenuItem>
+</Menu>
+
+
+
+{/* <IconButton color="inherit" onClick={handlePerfil}>
+    <AccountCircleIcon />
+</IconButton> */}
+
+
         </Toolbar>
       </AppBar>
 

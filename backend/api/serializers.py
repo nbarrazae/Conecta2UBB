@@ -120,3 +120,23 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
     def get_participants(self, obj):
         # Devuelve lista de correos de los inscritos
         return list(obj.participants.values_list('email', flat=True))
+
+
+class RecursiveField(serializers.Serializer):
+    def to_representation(self, value):
+        serializer = self.parent.parent.__class__(value, context=self.context)
+        return serializer.data
+
+class CommentSerializer(serializers.ModelSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    replies = RecursiveField(many=True, read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'evento', 'author', 'author_username', 'content', 'parent', 'replies', 'created_at']
+        read_only_fields = ['author', 'created_at']
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        validated_data['author'] = request.user
+        return super().create(validated_data)
