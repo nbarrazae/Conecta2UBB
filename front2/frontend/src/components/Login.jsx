@@ -1,5 +1,5 @@
 import "../App.css"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box } from "@mui/material";
 import MyTextField from "./forms/MyTextField";
 import MyPassField from "./forms/MyPassField";
@@ -12,9 +12,19 @@ const Login = () => {
     const { handleSubmit, control } = useForm({});
     const navigate = useNavigate();
     const [errorMsg, setErrorMsg] = useState(null);
+    const [showLogin, setShowLogin] = useState(true);
+
+    useEffect(() => {
+        // Check if the user is already logged in
+        const token = localStorage.getItem("Token");
+        if (token) {
+            navigate("/home");
+            setShowLogin(false);
+        }
+    }, [navigate]);
 
     const submission = (data) => {
-        setErrorMsg(null); // Limpiar errores previos
+        setErrorMsg(null); // Clear previous errors
 
         AxiosInstance.post("login/", {
             email: data.email,
@@ -38,6 +48,10 @@ const Login = () => {
                 }
             });
     };
+
+    if (!showLogin) {
+        return null;
+    }
 
     return (
         <div className="myBackground">
