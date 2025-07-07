@@ -1,17 +1,19 @@
-import './App.css'
-import Home from './components/Home'
-import Register from './components/Register'
-import Login from './components/Login'
-import Navbar from './components/Navbar'
-import About from './components/About'
-import PasswordResetRquest from './components/PasswordResetRequest'
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom'  
-import ProtectedRoutes from './components/ProtectedRoutes'
-import PasswordReset from './components/PasswordReset'
-import NotFound from './components/NotFound'
-import CrearEvento from './components/CrearEvento'
+import "./App.css";
+import Home from "./components/Home";
+import Register from "./components/Register";
+import Login from "./components/Login";
+import Navbar from "./components/Navbar";
+import About from "./components/About";
+import PasswordResetRquest from "./components/PasswordResetRequest";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import ProtectedRoutes from "./components/ProtectedRoutes";
+import PasswordReset from "./components/PasswordReset";
+import NotFound from "./components/NotFound";
+import CrearEvento from "./components/CrearEvento";
 import VerEvento from './components/VerEvento'
-import AdminReports from './components/AdminReports';
+import AdminReports from "./components/AdminReports";
+import Perfil from "./components/Perfil/Perfil";
+import BuscarEventos from "./components/Buscar/BuscarEventos";
 
 function App() {
   const location = useLocation();
@@ -26,12 +28,24 @@ function App() {
   ];
   const isReset = path.startsWith('/password-reset/');
 
+
   const showWithoutNavbar = noNavbarRoutes.includes(path) || isReset;
 
   // Rutas válidas con Navbar
-  const validProtectedRoutes = ['/home', '/about', '/crear-evento', '/admin-reports', '/ver-evento'];
+  const validProtectedRoutes = [
+    "/home",
+    "/about",
+    "/crear-evento",
+    "/ver-evento",
+    "/admin-reports",
+    "/perfil",
+    "/perfil-publico", // 👈 añadida base para detectar
+    "/buscar",
+  ];
 
-  const isValidProtected = validProtectedRoutes.some(route => path.startsWith(route));
+  const isValidProtected = validProtectedRoutes.some((route) =>
+    path.startsWith(route)
+  );
 
   const isAdmin = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -44,7 +58,10 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/request/password_reset" element={<PasswordResetRquest />} />
+        <Route
+          path="/request/password_reset"
+          element={<PasswordResetRquest />}
+        />
         <Route path="/password-reset/:token" element={<PasswordReset />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -63,6 +80,9 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/crear-evento" element={<CrearEvento />} />
               <Route path="/ver-evento/:id" element={<VerEvento />} />
+              <Route path="/perfil" element={<Perfil />} />
+              <Route path="/perfil-publico/:username" element={<Perfil />} />
+              <Route path="/buscar" element={<BuscarEventos />} />
               {isAdmin() && (
                 <Route path="/admin-reports" element={<AdminReports />} />
               )}

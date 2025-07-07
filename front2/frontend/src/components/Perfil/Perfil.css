@@ -1,0 +1,212 @@
+.perfil-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.perfil-page {
+  width: 100%;
+  max-width: 1200px;
+  margin-top: -2rem; /* ⬅️ Aumentamos margen superior para separarlo del navbar fijo */
+  padding: 1rem; /* ⬅️ Reemplaza el padding inválido -1rem */
+  box-sizing: border-box;
+}
+
+.perfil-content {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 3.5rem;
+}
+
+.perfil-title {
+  font-size: 1.2rem; /* ⬅️ Tamaño más discreto y elegante */
+  font-weight: 500;
+  color: #555; /* ⬅️ Tono más sutil */
+  align-self: flex-start; /* ⬅️ Alineado a la izquierda de la tarjeta */
+  margin-left: 1rem; /* ⬅️ Separado del borde de la tarjeta */
+  margin-bottom: -0.5rem;
+}
+
+.perfil-card {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.perfil-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.perfil-header img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.perfil-section {
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+}
+
+.perfil-section-title {
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.perfil-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.perfil-interest {
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+}
+
+.perfil-loading,
+.perfil-error {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+}
+
+.perfil-header-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+}
+
+@media (min-width: 500px) {
+  .perfil-header-info {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+}
+
+.editar-perfil-btn {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.editar-perfil-btn:hover {
+  background-color: #125aa5;
+}
+
+.perfil-nombre-wrapper {
+  max-width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.perfil-nombre-usuario {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px; /* Ajusta si necesitas más espacio */
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.perfil-username {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.perfil-bio {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-line; /* respeta saltos de línea si los hay */
+  max-width: 100%;
+}
+
+.perfil-birthday {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.toast-confirmacion {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #212121; /* oscuro profesional */
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center; /* <-- Esto alinea ícono y texto */
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  animation: fadeInOut 4s ease-in-out;
+}
+
+.toast-confirmacion svg {
+  margin-right: 10px;
+  font-size: 20px;
+  vertical-align: middle;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+.perfil-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 0.5rem;
+  margin-left: 1rem;
+}

@@ -1,0 +1,151 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.modal-content input,
+.modal-content textarea {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.6rem;
+  font-family: inherit;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.modal-buttons button {
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.modal-buttons .cancel-btn {
+  background-color: #e0e0e0;
+}
+
+.modal-buttons .cancel-btn:hover {
+  background-color: #c7c7c7;
+}
+
+.modal-buttons .guardar-btn {
+  background-color: #1976d2;
+  color: white;
+}
+
+.modal-buttons .guardar-btn:hover {
+  background-color: #125aa5;
+}
+
+.modal-error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.modal-content small {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: -0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.preview-avatar {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-top: 10px;
+}
+
+.input-error {
+  border: 1px solid red;
+}
+
+.input-error-text {
+  color: red;
+  font-size: 0.85em;
+  margin-top: 4px;
+}
+
+.modal-error {
+  color: red;
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+.input-modified {
+  border: 2px solid #27ae60;
+  background-color: #f4fff6;
+}
+
+.modal-success {
+  color: #2ecc71;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.guardar-btn:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.interests-chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 20px;
+}
+
+.interest-chip {
+  background-color: #e5e5e5;
+  color: #222;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.interest-chip.selected {
+  background-color: #1976d2;
+  color: #ffffff;
+  font-weight: 500;
+}

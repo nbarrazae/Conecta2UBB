@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
 from .serializers import *
 from .models import *
 from rest_framework.views import APIView
@@ -13,10 +13,14 @@ from .permissions import IsAuthorOrReadOnly
 
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import EventoFilter  #
+from rest_framework.filters import OrderingFilter 
 
 from django_rest_passwordreset.models import ResetPasswordToken
 from django_rest_passwordreset.signals import reset_password_token_created
 from utils.email_utils import send_welcome_email
+
+from django.shortcuts import get_object_or_404
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 
 User = get_user_model()
@@ -88,6 +92,40 @@ class UserViewset(viewsets.ViewSet):
         queryset = User.objects.all()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data, status=200)
+    
+    def retrieve(self, request, pk=None):  # 👈 nuevo método
+        user = get_object_or_404(CustomUser, pk=pk)
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'])
+    def ver_perfil(self, request):
+        user = request.user
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['put'], parser_classes=[MultiPartParser, FormParser, JSONParser])
+    def editar_perfil(self, request):
+        user = request.user
+
+        data = request.data.copy()
+        ids = data.getlist('interest_ids') if hasattr(data, 'getlist') else data.get('interest_ids')
+
+        if ids == ["0"] or ids == []:
+            user.interests.clear()
+            data.pop("interest_ids", None)
+
+        serializer = ProfileSerializer(user, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Perfil actualizado correctamente"})
+        return Response(serializer.errors, status=400)
+    
+    @action(detail=False, methods=['get'], url_path='username/(?P<username>[^/.]+)')
+    def perfil_por_username(self, request, username=None):
+        user = get_object_or_404(CustomUser, username=username)
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data)
 
 #devolver el username del usuario autenticado
 class UserDataViewset(viewsets.ViewSet):
@@ -104,8 +142,10 @@ class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
     permission_classes = [IsAuthorOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]  # 👈 Agrega OrderingFilter aquí
     filterset_class = EventoFilter
+    ordering_fields = ['event_date']  # 👈 Campos que puedes ordenar (puedes agregar más si quieres)
+    ordering = ['-event_date']  # 👈 Orden por defecto: eventos más recientes primero
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -144,6 +184,23 @@ class EventoViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({"message": "Evento eliminado correctamente."}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def desinscribirse(self, request, pk=None):
+        evento = self.get_object()
+        usuario = request.user
+
+        if usuario not in evento.participants.all():
+            return Response({"error": "No estás inscrito en este evento."}, status=status.HTTP_400_BAD_REQUEST)
+
+        evento.participants.remove(usuario)
+        return Response({"message": "Te has desinscrito del evento."}, status=status.HTTP_200_OK)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})  # 👈 necesario para obtener la URL completa de imagen
+        return context
+
 
 class MisInscripcionesViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
@@ -191,3 +248,9 @@ class EventReportViewSet(viewsets.ModelViewSet):
         report.status = 'rejected'
         report.save()
         return Response({'message': 'Reporte rechazado.'}, status=200)
+
+class VerPerfilDeOtroUsuarioView(generics.RetrieveAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'  # También podrías usar 'username' si prefieres
