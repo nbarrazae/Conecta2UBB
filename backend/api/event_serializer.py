@@ -12,6 +12,7 @@ class EventoSerializer(serializers.ModelSerializer):
     """Serializer for the Evento model, including related fields."""
     author = serializers.StringRelatedField(read_only=True)
     author_username = serializers.CharField(source='author.username', read_only=True)  # nuevo
+    author_profile_picture = serializers.SerializerMethodField()  # 👈 nuevo
     category = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all()
     )
@@ -31,11 +32,20 @@ class EventoSerializer(serializers.ModelSerializer):
             'state',
             'author',
             'author_username',  # nuevo
+            'author_profile_picture',  # 👈 nuevo
             'category',
             'category_name',
             'participants',
             'max_participants',
         ]
+
+    def get_author_profile_picture(self, obj):  # ✅ Esta función debe estar aquí
+        request = self.context.get('request')
+        if obj.author.profile_picture:
+            if request:
+                return request.build_absolute_uri(obj.author.profile_picture.url)
+            return obj.author.profile_picture.url
+        return None
 
 class EventReportSerializer(serializers.ModelSerializer):
     reporter = serializers.StringRelatedField(read_only=True)

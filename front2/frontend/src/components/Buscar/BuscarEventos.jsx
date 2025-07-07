@@ -1,0 +1,61 @@
+import React, { useState } from "react";
+import "./BuscarEventos.css";
+import FiltrosBuscar from "./FiltrosBuscar";
+import ListaEventos from "./ListaEventos";
+
+const BuscarEventos = () => {
+  const [filtroCategoria, setFiltroCategoria] = useState("Todos");
+  const [busqueda, setBusqueda] = useState("");
+  const [rangoFecha, setRangoFecha] = useState("todos");
+  const [orden, setOrden] = useState("-event_date"); // por defecto: más recientes primero
+
+  return (
+    <div className="buscar-wrapper">
+      <div className="buscar-page">
+        <div className="buscar-contenido">
+          <input
+            type="text"
+            className="barra-busqueda"
+            placeholder="Buscar eventos..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+
+          <FiltrosBuscar onChangeFiltro={setFiltroCategoria} />
+
+          <div className="filtros-fecha-orden">
+            <label>
+              Rango de fecha:
+              <select
+                value={rangoFecha}
+                onChange={(e) => setRangoFecha(e.target.value)}
+              >
+                <option value="todos">Todos</option>
+                <option value="ultimos_7_dias">Últimos 7 días</option>
+                <option value="proximos_7_dias">Próximos 7 días</option>
+                <option value="proximo_mes">Próximo mes</option>
+              </select>
+            </label>
+
+            <label>
+              Ordenar por:{" "}
+              <select value={orden} onChange={(e) => setOrden(e.target.value)}>
+                <option value="-event_date">Más recientes</option>
+                <option value="event_date">Más antiguos</option>
+              </select>
+            </label>
+          </div>
+
+          <ListaEventos
+            categoria={filtroCategoria}
+            textoBusqueda={busqueda}
+            rangoFecha={rangoFecha}
+            orden={orden}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BuscarEventos;

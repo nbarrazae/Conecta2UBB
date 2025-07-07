@@ -13,6 +13,7 @@ from .permissions import IsAuthorOrReadOnly
 
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import EventoFilter  #
+from rest_framework.filters import OrderingFilter 
 
 from django_rest_passwordreset.models import ResetPasswordToken
 from django_rest_passwordreset.signals import reset_password_token_created
@@ -141,8 +142,10 @@ class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
     permission_classes = [IsAuthorOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]  # 👈 Agrega OrderingFilter aquí
     filterset_class = EventoFilter
+    ordering_fields = ['event_date']  # 👈 Campos que puedes ordenar (puedes agregar más si quieres)
+    ordering = ['-event_date']  # 👈 Orden por defecto: eventos más recientes primero
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -181,7 +184,7 @@ class EventoViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({"message": "Evento eliminado correctamente."}, status=status.HTTP_200_OK)
-    
+
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def desinscribirse(self, request, pk=None):
         evento = self.get_object()
@@ -192,6 +195,11 @@ class EventoViewSet(viewsets.ModelViewSet):
 
         evento.participants.remove(usuario)
         return Response({"message": "Te has desinscrito del evento."}, status=status.HTTP_200_OK)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})  # 👈 necesario para obtener la URL completa de imagen
+        return context
 
 
 class MisInscripcionesViewSet(viewsets.ViewSet):

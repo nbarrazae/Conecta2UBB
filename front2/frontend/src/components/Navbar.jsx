@@ -29,6 +29,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import Person2Icon from "@mui/icons-material/Person2";
+import SearchIcon from "@mui/icons-material/Search";
 
 const drawerWidth = 240;
 const widgetWidth = 400;
@@ -80,6 +81,19 @@ export default function Navbar({ content }) {
               <InfoIcon />
             </ListItemIcon>
             <ListItemText primary="About" />
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem disablePadding>
+          <ListItemButton
+            component={Link}
+            to="/buscar"
+            selected={path === "/buscar"}
+          >
+            <ListItemIcon>
+              <SearchIcon />
+            </ListItemIcon>
+            <ListItemText primary="Buscar" />
           </ListItemButton>
         </ListItem>
 

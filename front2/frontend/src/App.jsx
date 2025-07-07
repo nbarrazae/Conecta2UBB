@@ -12,6 +12,7 @@ import NotFound from "./components/NotFound";
 import CrearEvento from "./components/CrearEvento";
 import AdminReports from "./components/AdminReports";
 import Perfil from "./components/Perfil/Perfil";
+import BuscarEventos from "./components/Buscar/BuscarEventos";
 
 function App() {
   const location = useLocation();
@@ -31,6 +32,7 @@ function App() {
     "/admin-reports",
     "/perfil",
     "/perfil-publico", // 👈 añadida base para detectar
+    "/buscar",
   ];
 
   const isValidProtected = validProtectedRoutes.some((route) =>
@@ -71,6 +73,7 @@ function App() {
               <Route path="/crear-evento" element={<CrearEvento />} />
               <Route path="/perfil" element={<Perfil />} />
               <Route path="/perfil-publico/:username" element={<Perfil />} />
+              <Route path="/buscar" element={<BuscarEventos />} />
               {isAdmin() && (
                 <Route path="/admin-reports" element={<AdminReports />} />
               )}
