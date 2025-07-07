@@ -19,8 +19,22 @@ function App() {
   const path = location.pathname;
 
   // Rutas sin Navbar
-  const noNavbarRoutes = ["/login", "/register", "/request/password_reset"];
-  const isReset = path.startsWith("/password-reset/");
+  const noNavbarRoutes = [
+    '/',
+    '/login',
+    '/register',
+    '/request/password_reset',
+  ];
+  const isReset = path.startsWith('/password-reset/');
+
+  const noNavbarRoutes = [
+    '/',
+    '/login',
+    '/register',
+    '/request/password_reset',
+  ];
+  const isReset = path.startsWith('/password-reset/');
+
 
   const showWithoutNavbar = noNavbarRoutes.includes(path) || isReset;
 
@@ -29,6 +43,7 @@ function App() {
     "/home",
     "/about",
     "/crear-evento",
+    "/ver-evento",
     "/admin-reports",
     "/perfil",
     "/perfil-publico", // 👈 añadida base para detectar
@@ -83,6 +98,19 @@ function App() {
       />
     );
   }
+
+  // if (showWithoutNavbar) {
+  //   return (
+  //     <Routes>
+  //       <Route path="/" element={<Navigate to="/login" replace />} />
+  //       <Route path="/login" element={<Login />} />
+  //       <Route path="/register" element={<Register />} />
+  //       <Route path="/request/password_reset" element={<PasswordResetRquest />} />
+  //       <Route path="/password-reset/:token" element={<PasswordReset />} />
+  //       <Route path="*" element={<NotFound />} />
+  //     </Routes>
+  //   );
+  // }
 
   // Ruta desconocida sin Navbar
   return <NotFound />;
