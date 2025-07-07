@@ -139,3 +139,17 @@ class EventReport(models.Model):
 
     def __str__(self):
         return f"Reporte de {self.event.title} por {self.reporter.email} ({self.get_reason_display()})"
+    
+
+class Comment(models.Model):
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    content = models.TextField()
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.author.email} on {self.evento.title}"

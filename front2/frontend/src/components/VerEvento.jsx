@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback }  from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@mui/material';
 import AxiosInstance from './axiosInstance';
 import BotonInscripcion from './BotonInscripcion';
-
+import CommentTree from './CommentTree';
+import { Box, Typography, TextField, Divider, CircularProgress } from '@mui/material';
 const VerEvento = () => {
     const [evento, setEvento] = useState(null);
     const [imagenes, setImagenes] = useState([]);
@@ -11,6 +12,11 @@ const VerEvento = () => {
     const [myData, setMyData] = useState(null);
     const navigate = useNavigate();
     const { id } = useParams();
+
+    const [comments, setComments] = useState([]);
+    const [nextPage, setNextPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingComments, setLoadingComments] = useState(false);
 
     const fetchEvento = async () => {
         try {
@@ -40,11 +46,98 @@ const VerEvento = () => {
         }
     };
 
+    const fetchComments = useCallback(async () => {
+        if (!hasMore || loadingComments) return;
+        setLoadingComments(true);
+            try {
+                const response = await AxiosInstance.get(`/comments/?evento=${id}&page=${nextPage}`);
+                setComments(prev => {
+                    const existingIds = new Set(prev.map(c => c.id));
+                    const newComments = response.data.results.filter(c => !existingIds.has(c.id));
+                    return [...prev, ...newComments];
+                });
+                setHasMore(response.data.next !== null);
+                setNextPage(prev => prev + 1);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoadingComments(false);
+            }
+    }, [id, nextPage, hasMore, loadingComments]);
+
+    const reloadComments = async () => {
+        try {
+            const response = await AxiosInstance.get(`/comments/?evento=${id}&page=1`);
+            setComments(response.data.results);
+            setNextPage(2);
+            setHasMore(response.data.next !== null);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+
+    const handleReply = async (parentId, content) => {
+        try {
+            await AxiosInstance.post('/comments/', {
+                evento: id, 
+                content,
+                parent: parentId
+            });
+            await reloadComments();
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    
+
+    const handleNewComment = async () => {
+        if (!newCommentContent.trim()) return;
+        try {
+            await AxiosInstance.post('/comments/', {
+                evento: id,
+                content: newCommentContent
+            });
+            setNewCommentContent('');
+            await reloadComments();
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    
+
+    const [newCommentContent, setNewCommentContent] = useState('');
+
     useEffect(() => {
         fetchEvento();
         fetchCategorias();
         fetchUserData();
+        setComments([]);
+        setNextPage(1);
+        setHasMore(true);
+        fetchComments();
     }, [id]);
+
+    // useEffect(() => {
+    //     fetchComments();
+    // }, [fetchComments]);
+
+
+    // Intersection Observer to trigger load
+    const observer = useRef();
+    const lastCommentRef = useCallback(
+        node => {
+            if (loadingComments) return;
+            if (observer.current) observer.current.disconnect();
+            observer.current = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting && hasMore) {
+                    fetchComments();
+                }
+            });
+            if (node) observer.current.observe(node);
+        },
+        [loadingComments, hasMore, fetchComments]
+    );
 
     const isAuthenticated = !!localStorage.getItem("Token");
 
@@ -125,10 +218,65 @@ const VerEvento = () => {
                 onCambio={fetchEvento}
             /> */}
 
-            <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>Comentarios</h3>
-                {/* Espacio para comentarios a futuro */}
-            </div>
+<Box sx={{ mt: 4 }}>
+    <Typography variant="h5" gutterBottom>
+        Comentarios
+    </Typography>
+
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+        <TextField
+            label="Escribe un comentario..."
+            multiline
+            minRows={3}
+            variant="outlined"
+            value={newCommentContent}
+            onChange={e => setNewCommentContent(e.target.value)}
+            fullWidth
+        />
+        <Button
+            variant="contained"
+            color="primary"
+            onClick={handleNewComment}
+            disabled={!newCommentContent.trim()}
+        >
+            Comentar
+        </Button>
+    </Box>
+
+    <Divider sx={{ my: 2 }} />
+
+    {comments.length === 0 && !loadingComments ? (
+        <Typography variant="body1" color="text.secondary">
+            Aún no hay comentarios. ¡Sé el primero en comentar!
+        </Typography>
+    ) : (
+        comments.map((comment, index) => {
+            if (comments.length === index + 1) {
+                return (
+                    <Box key={comment.id} ref={lastCommentRef} sx={{ mb: 2 }}>
+                        <CommentTree comment={comment} onReply={handleReply} />
+                        <Divider sx={{ my: 1 }} />
+                    </Box>
+                );
+            } else {
+                return (
+                    <Box key={comment.id} sx={{ mb: 2 }}>
+                        <CommentTree comment={comment} onReply={handleReply} />
+                        <Divider sx={{ my: 1 }} />
+                    </Box>
+                );
+            }
+        })
+    )}
+
+    {loadingComments && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+            <CircularProgress />
+        </Box>
+    )}
+</Box>
+
+
         </div>
     );
 };
