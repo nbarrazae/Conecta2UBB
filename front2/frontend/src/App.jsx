@@ -10,6 +10,7 @@ import ProtectedRoutes from "./components/ProtectedRoutes";
 import PasswordReset from "./components/PasswordReset";
 import NotFound from "./components/NotFound";
 import CrearEvento from "./components/CrearEvento";
+import VerEvento from './components/VerEvento'
 import AdminReports from "./components/AdminReports";
 import Perfil from "./components/Perfil/Perfil";
 import BuscarEventos from "./components/Buscar/BuscarEventos";
@@ -78,6 +79,7 @@ function App() {
               <Route path="/home" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/crear-evento" element={<CrearEvento />} />
+              <Route path="/ver-evento/:id" element={<VerEvento />} />
               <Route path="/perfil" element={<Perfil />} />
               <Route path="/perfil-publico/:username" element={<Perfil />} />
               <Route path="/buscar" element={<BuscarEventos />} />

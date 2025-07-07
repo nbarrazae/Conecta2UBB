@@ -34,6 +34,10 @@ const Home = () => {
     navigate("/crear-evento");
   };
 
+  const handleEventClick = (eventId) => {
+    navigate(`/ver-evento/${eventId}`);
+  };
+
   return (
     <div>
       {loading ? (
@@ -73,11 +77,12 @@ const Home = () => {
                     border: "1px solid #ccc",
                     borderRadius: "8px",
                     listStyle: "none",
+                    cursor: "pointer",
                   }}
+                  onClick={() => handleEventClick(event.id)}
                 >
                   <strong>{event.title}</strong> - {event.description} <br />
-                  Fecha: {new Date(event.event_date).toLocaleDateString()}{" "}
-                  <br />
+                  Fecha: {new Date(event.event_date).toLocaleDateString()} <br />
                   Ubicación: {event.location} <br />
                   Estado: {event.state} <br />
                   Categoría: {event.category_name} <br />
@@ -91,9 +96,10 @@ const Home = () => {
                         cursor: "pointer",
                         textDecoration: "underline",
                       }}
-                      onClick={() =>
-                        navigate(`/perfil-publico/${event.author_username}`)
-                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/perfil-publico/${event.author_username}`);
+                      }}
                     >
                       {event.author_username}
                     </span>
