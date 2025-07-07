@@ -10,7 +10,7 @@ const CrearEvento = () => {
     const [categoria, setCategoria] = useState("");
     const [lugar, setLugar] = useState("");
     const [fecha, setFecha] = useState("");
-    const [limiteAsistentes, setLimiteAsistentes] = useState("");
+    const [max_participants, setLimiteAsistentes] = useState("");
     const [descripcion, setDescripcion] = useState("");
 
     const [categoriasDisponibles, setCategoriasDisponibles] = useState([]);
@@ -63,7 +63,7 @@ const CrearEvento = () => {
         formData.append("location", lugar);
         formData.append("event_date", fecha);
         formData.append("description", descripcion);
-        formData.append("limite_asistentes", limiteAsistentes); // si el backend lo espera así
+        formData.append("max_participants", max_participants); // si el backend lo espera así
 
         formData.append("descripcion", descripcion);
 
@@ -127,7 +127,7 @@ const CrearEvento = () => {
                         <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required style={styles.input} />
                     </div>
                     <div style={styles.row}>
-                        <input type="number" placeholder="Límite asistentes" value={limiteAsistentes} onChange={(e) => setLimiteAsistentes(e.target.value)} style={styles.input} />
+                        <input type="number" placeholder="Límite asistentes" value={max_participants} onChange={(e) => setLimiteAsistentes(e.target.value)} style={styles.input} />
                     </div>
                 </div>
 
