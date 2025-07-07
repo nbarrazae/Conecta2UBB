@@ -27,14 +27,6 @@ function App() {
   ];
   const isReset = path.startsWith('/password-reset/');
 
-  const noNavbarRoutes = [
-    '/',
-    '/login',
-    '/register',
-    '/request/password_reset',
-  ];
-  const isReset = path.startsWith('/password-reset/');
-
 
   const showWithoutNavbar = noNavbarRoutes.includes(path) || isReset;
 
