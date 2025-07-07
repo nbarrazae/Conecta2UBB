@@ -10,6 +10,7 @@ import ProtectedRoutes from './components/ProtectedRoutes'
 import PasswordReset from './components/PasswordReset'
 import NotFound from './components/NotFound'
 import CrearEvento from './components/CrearEvento'
+import VerEvento from './components/VerEvento'
 import AdminReports from './components/AdminReports';
 
 function App() {
@@ -28,9 +29,9 @@ function App() {
   const showWithoutNavbar = noNavbarRoutes.includes(path) || isReset;
 
   // Rutas válidas con Navbar
-  const validProtectedRoutes = ['/home', '/about', '/crear-evento', '/admin-reports'];
+  const validProtectedRoutes = ['/home', '/about', '/crear-evento', '/admin-reports', '/ver-evento'];
 
-  const isValidProtected = validProtectedRoutes.includes(path);
+  const isValidProtected = validProtectedRoutes.some(route => path.startsWith(route));
 
   const isAdmin = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -61,6 +62,7 @@ function App() {
               <Route path="/home" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/crear-evento" element={<CrearEvento />} />
+              <Route path="/ver-evento/:id" element={<VerEvento />} />
               {isAdmin() && (
                 <Route path="/admin-reports" element={<AdminReports />} />
               )}

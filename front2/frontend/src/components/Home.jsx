@@ -2,6 +2,7 @@ import AxiosInstance from './axiosInstance';
 import { React, useEffect, useState } from 'react';
 import { Box, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import VerEvento from './VerEvento'; // Import the VerEvento component if needed
 
 const Home = () => {
     const [myData, setMyData] = useState([]);
@@ -33,6 +34,12 @@ const Home = () => {
         navigate('/crear-evento'); // Replace with the actual route for "CrearEvento"
     };
 
+    const handleEventClick = (eventId) => {
+        navigate(`/ver-evento/${eventId}`); // Navigate to the VerEvento component with the event ID
+        // If you want to use the VerEvento component directly, you can render it conditionally
+        // <VerEvento eventId={eventId} />
+    };
+
     return (
         <div>
             {loading ? (
@@ -53,7 +60,11 @@ const Home = () => {
                     <h2>Eventos:</h2>
                     <ul>
                         {Events.map((event) => (
-                            <li key={event.id} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ccc' }}>
+                            <li 
+                                key={event.id} 
+                                style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ccc', cursor: 'pointer' }}
+                                onClick={() => handleEventClick(event.id)}
+                            >
                                 <strong>{event.title}</strong> - {event.description} <br />
                                 Fecha: {new Date(event.event_date).toLocaleDateString()} <br />
                                 Ubicación: {event.location} <br />
