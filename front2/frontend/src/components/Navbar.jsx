@@ -41,6 +41,12 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 
 
+import Badge from "@mui/material/Badge";
+import Popover from "@mui/material/Popover";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+
+
 const drawerWidth = 240;
 const widgetWidth = 400;
 
@@ -52,6 +58,42 @@ export default function Navbar({ content }) {
   const [profilePicture, setProfilePicture] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  const [notifications, setNotifications] = useState([]);
+  const [anchorNotif, setAnchorNotif] = useState(null);
+  const [tabValue, setTabValue] = useState(0);
+
+  const fetchNotifications = async () => {
+    try {
+        const res = await AxiosInstance.get('/notifications/');
+        setNotifications(res.data);
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+useEffect(() => {
+  fetchNotifications(); // inicial
+
+  const interval = setInterval(() => {
+      fetchNotifications();
+  }, 10000); // cada 10 segundos
+
+  return () => clearInterval(interval);
+}, []);
+
+
+
+const handleNotifClick = (event) => {
+  setAnchorNotif(event.currentTarget);
+  markAllAsRead();
+};
+
+const handleNotifClose = () => {
+  setAnchorNotif(null);
+};
+
+const unreadCount = notifications.filter(n => !n.is_read).length;
 
   useEffect(() => {
     const fetchProfilePicture = async () => {
@@ -104,6 +146,17 @@ const handleLogoutClick = () => {
   });
   handleMenuClose();
 };
+
+const markAllAsRead = async () => {
+  try {
+      await AxiosInstance.patch('/notifications/mark_all_as_read/');
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  } catch (error) {
+      console.error("Error al marcar como leídas:", error);
+  }
+};
+
+
 
 
 
@@ -208,6 +261,7 @@ const handleLogoutClick = () => {
   );
 
   return (
+    
     <Box sx={{ display: "flex", width: "100vw", overflowX: "hidden" }}>
       <CssBaseline />
 
@@ -238,9 +292,13 @@ const handleLogoutClick = () => {
               <AddIcon />
           </IconButton>
 
-          <IconButton color="inherit" onClick={handleNotificaciones}>
+          <IconButton color="inherit" onClick={handleNotifClick}>
+            <Badge badgeContent={unreadCount} color="error">
               <NotificationsIcon />
+              
+           </Badge>
           </IconButton>
+
 
           <Tooltip title="Opciones de perfil">
     <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 1 }}>
@@ -293,6 +351,44 @@ const handleLogoutClick = () => {
         <LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Logout
     </MenuItem>
 </Menu>
+
+<Popover
+  open={Boolean(anchorNotif)}
+  anchorEl={anchorNotif}
+  onClose={handleNotifClose}
+  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+>
+  <Tabs
+    value={tabValue}
+    onChange={(e, newValue) => setTabValue(newValue)}
+    variant="fullWidth"
+  >
+    <Tab label="Eventos" />
+    <Tab label="Comentarios" />
+  </Tabs>
+
+  <List dense sx={{ maxHeight: 300, overflow: 'auto', width: 300 }}>
+    {notifications
+      .filter(n => (tabValue === 0 ? n.notification_type === 'evento' : n.notification_type === 'comentario'))
+      .map(n => (
+        <ListItem
+          key={n.id}
+          button
+          onClick={() => {
+            window.location.href = n.url;
+          }}
+        >
+          <ListItemText
+            primary={n.message}
+            secondary={new Date(n.created_at).toLocaleString()}
+          />
+          {!n.is_read && <span style={{ color: 'red', fontSize: '1.5em' }}>•</span>}
+        </ListItem>
+      ))
+    }
+  </List>
+</Popover>
 
 
 

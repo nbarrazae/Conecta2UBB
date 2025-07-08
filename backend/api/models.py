@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django_rest_passwordreset.signals import reset_password_token_created
 from django.utils.html import strip_tags
+from django.contrib.auth import get_user_model
 # Create your models here.
 class CustomUserManager(BaseUserManager): 
     def create_user(self, email, password=None, **extra_fields ): 
@@ -153,3 +154,21 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.author.email} on {self.evento.title}"
+    
+User = get_user_model()
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('evento', 'Evento'),
+        ('comentario', 'Comentario'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    message = models.CharField(max_length=255)
+    url = models.URLField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.notification_type} - {self.message} - {self.user}'
