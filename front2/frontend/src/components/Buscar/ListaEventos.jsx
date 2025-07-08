@@ -12,6 +12,16 @@ import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
 import TheaterComedyIcon from "@mui/icons-material/TheaterComedy";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import { Link } from "react-router-dom";
+import defaultAvatar from "../../assets/default-avatar.jpg";
+
+const iconMap = [
+  { keyword: "videojuego", icon: <SportsEsportsIcon /> },
+  { keyword: "deporte", icon: <SportsSoccerIcon /> },
+  { keyword: "ocio", icon: <TheaterComedyIcon /> },
+  { keyword: "cultura", icon: <ImportContactsIcon /> },
+
+  // Agrega aquí más si quieres
+];
 
 const iconMap = [
   { keyword: "videojuego", icon: <SportsEsportsIcon /> },

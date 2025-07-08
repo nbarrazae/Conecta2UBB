@@ -132,7 +132,7 @@ class EventReport(models.Model):
         ('rejected', 'Rechazado'),
     ]
 
-    event = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name='reports')
+    event = models.ForeignKey(Evento, on_delete=models.SET_NULL, null=True, related_name='reports')
     reporter = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     reason = models.CharField(max_length=30, choices=REASON_CHOICES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')

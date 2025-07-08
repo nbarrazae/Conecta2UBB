@@ -48,10 +48,31 @@ class EventoSerializer(serializers.ModelSerializer):
         return None
 
 class EventReportSerializer(serializers.ModelSerializer):
-    reporter = serializers.StringRelatedField(read_only=True)
-    event = serializers.PrimaryKeyRelatedField(queryset=Evento.objects.all())
+    event = serializers.PrimaryKeyRelatedField(
+        queryset=Evento.objects.all(),
+        required=True
+    )
+    reporter = serializers.SerializerMethodField()
+    reason_display = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
+
+    def get_reporter(self, obj):
+        return obj.reporter.email if obj.reporter else None
+
+    def get_reason_display(self, obj):
+        return obj.get_reason_display()
+
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+
+    def validate_event(self, value):
+        if value is None:
+            raise serializers.ValidationError("Debes seleccionar un evento para reportar.")
+        if not Evento.objects.filter(id=value.id).exists():
+            raise serializers.ValidationError("El evento no existe.")
+        return value
 
     class Meta:
         model = EventReport
-        fields = ['id', 'event', 'reporter', 'reason', 'status', 'created_at']
+        fields = ['id', 'event', 'reporter', 'reason', 'reason_display', 'status', 'status_display', 'created_at']
         read_only_fields = ['status', 'created_at', 'reporter']
