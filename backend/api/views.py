@@ -26,6 +26,10 @@ from rest_framework import viewsets, permissions
 from .models import Comment
 from .serializers import CommentSerializer
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+
 
 User = get_user_model()
 
@@ -154,6 +158,17 @@ class EventoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        participantes = instance.participants.all()
+        for user in participantes:
+            Notification.objects.create(
+                user=user,
+                notification_type='evento',
+                message=f'El evento "{instance.title}" ha sido modificado.',
+                url=f'http://localhost:3000/ver-evento/{instance.id}'
+            )
+
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def inscribirse(self, request, pk=None):
         evento = self.get_object()
@@ -274,7 +289,42 @@ class CommentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         evento_id = self.request.query_params.get('evento')
         if evento_id:
-            return Comment.objects.filter(evento_id=evento_id).order_by('-created_at')  # 👈 Ordenar por más recientes primero
+            # Solo retornar comentarios raíz para evitar duplicados
+            return Comment.objects.filter(evento_id=evento_id, parent__isnull=True).order_by('-created_at')
         return Comment.objects.none()
 
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        if instance.parent:
+            parent_user = instance.parent.author
+            if parent_user != self.request.user:
+                Notification.objects.create(
+                    user=parent_user,
+                    notification_type='comentario',
+                    message=f'Te han respondido en un comentario.',
+                    url=f'http://localhost:5173/ver-evento/{instance.evento.id}'
+                )
+
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+
+    @action(detail=False, methods=['post'])
+    def mark_as_read(self, request):
+        ids = request.data.get('ids', [])
+        Notification.objects.filter(id__in=ids, user=request.user).update(is_read=True)
+        return Response({'status': 'marked as read'})
+
+    @action(detail=False, methods=['patch'])
+    def mark_all_as_read(self, request):
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({'status': 'all marked as read'})
+
+    
+    
 

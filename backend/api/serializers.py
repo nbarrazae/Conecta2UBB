@@ -140,3 +140,9 @@ class CommentSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         validated_data['author'] = request.user
         return super().create(validated_data)
+    
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
