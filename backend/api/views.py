@@ -29,7 +29,7 @@ from .serializers import CommentSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -219,6 +219,26 @@ class EventoViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context.update({"request": self.request})  # 👈 necesario para obtener la URL completa de imagen
         return context
+
+    
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def upcoming(self, request):
+        user = request.user
+        now = timezone.now()
+        eventos = Evento.objects.filter(
+            participants=user,
+            state='activa',
+            event_date__gte=now
+        ).order_by('event_date')
+
+        data = [{
+            'id': e.id,
+            'titulo': e.title,
+            #transformar la fecha a un formato legible
+            'fecha_limite': e.event_date.strftime('%Y-%m-%d %H:%M:%S'),
+        } for e in eventos]
+
+        return Response(data)
 
 
 class MisInscripcionesViewSet(viewsets.ViewSet):

@@ -67,7 +67,7 @@ const Home = () => {
                   onClick={() => handleEventClick(event.id)}
                 >
                   <strong>{event.title}</strong> - {event.description} <br />
-                  Fecha: {new Date(event.event_date).toLocaleDateString()} <br />
+                  Fecha: {new Date(event.event_date).toISOString().split("T")[0]} <br />
                   Ubicación: {event.location} <br />
                   Estado: {event.state} <br />
                   Categoría: {event.category_name} <br />
