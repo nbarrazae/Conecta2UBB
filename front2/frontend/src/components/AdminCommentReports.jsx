@@ -7,31 +7,36 @@ import Button from "@mui/material/Button";
 import { DataGrid } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
 
-const AdminReports = () => {
+const AdminCommentReports = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [evento, setEvento] = useState(null);
+  const [comment, setComment] = useState(null);
 
   const fetchReports = () => {
-    AxiosInstance.get("event-reports/").then((res) => {
+    AxiosInstance.get("comment-reports/").then((res) => {
       setReports(res.data);
       setLoading(false);
     });
   };
 
   const handleAction = (id, action) => {
-    AxiosInstance.post(`event-reports/${id}/${action}/`).then(() => fetchReports());
+    AxiosInstance.post(`comment-reports/${id}/${action}/`).then(() => fetchReports());
   };
 
-  const handleOpenEvento = (eventId) => {
-    if (eventId && eventId !== "Evento eliminado") {
-      AxiosInstance.get(`eventos/${eventId}/`).then((res) => {
-        setEvento(res.data);
-        setOpen(true);
-      });
+  const handleOpenComment = (commentId) => {
+    if (commentId) {
+      AxiosInstance.get(`comments/${commentId}/`)
+        .then((res) => {
+          setComment(res.data);
+          setOpen(true);
+        })
+        .catch(() => {
+          setComment(null);
+          setOpen(true);
+        });
     } else {
-      setEvento(null);
+      setComment(null);
       setOpen(true);
     }
   };
@@ -45,29 +50,31 @@ const AdminReports = () => {
   }, []);
 
   const columns = [
-    { field: "id", headerName: "ID", width: 60 },
+    { field: "id", headerName: "ID", width: 70 },
     {
-      field: "event",
-      headerName: "Evento",
-      width: 95,
+      field: "comment",
+      headerName: "Comentario",
+      width: 100,
       renderCell: (params) =>
-        params.value ? params.value : "Eliminado",
+        params.value
+          ? `ID: ${params.value}`
+          : "Comentario eliminado",
     },
-    { field: "reporter", headerName: "Reportado por", width: 170 },
-    { field: "reason_display", headerName: "Razón", width: 405 },
-    { field: "status_display", headerName: "Estado", width: 110 },
+    { field: "reporter", headerName: "Reportado por", width: 180 },
+    { field: "reason_display", headerName: "Razón", width: 250 },
+    { field: "status_display", headerName: "Estado", width: 120 },
     {
       field: "ver",
-      headerName: "Ver publicación",
-      width: 140,
+      headerName: "Ver comentario",
+      width: 165,
       renderCell: (params) => (
         <Button
           variant="outlined"
           size="small"
-          onClick={() => handleOpenEvento(params.row.event)}
-          disabled={!params.row.event}
+          onClick={() => handleOpenComment(params.row.comment)}
+          disabled={!params.row.comment}
         >
-          Ver Evento
+          Ver Comentario
         </Button>
       ),
     },
@@ -118,7 +125,7 @@ const AdminReports = () => {
           mt: 2,
         }}
       >
-        <h2>Gestión de Reportes de Eventos</h2>
+        <h2>Gestión de Reportes de Comentarios</h2>
         <DataGrid
           rows={reports}
           columns={columns}
@@ -133,35 +140,33 @@ const AdminReports = () => {
         <Dialog
           open={open}
           onClose={handleClose}
-          onExited={() => setEvento(null)}
+          onExited={() => setComment(null)}
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Publicación Reportada</DialogTitle>
+          <DialogTitle>Comentario Reportado</DialogTitle>
           <DialogContent>
-            {evento ? (
+            {comment ? (
               <div>
-                <h3>{evento.title}</h3>
                 <p>
-                  <strong>Descripción:</strong> {evento.description}
+                  <strong>Autor:</strong> {comment.author_username}
+                </p>
+                <p>
+                  <strong>Contenido:</strong> {comment.content}
                 </p>
                 <p>
                   <strong>Fecha:</strong>{" "}
-                  {new Date(evento.event_date).toLocaleString()}
+                  {new Date(comment.created_at).toLocaleString()}
                 </p>
-                <p>
-                  <strong>Ubicación:</strong> {evento.location}
-                </p>
-                <p>
-                  <strong>Categoría:</strong> {evento.category_name}
-                </p>
-                <p>
-                  <strong>Estado:</strong> {evento.state}
-                </p>
+                {comment.parent && (
+                  <p>
+                    <strong>Respuesta a:</strong> ID {comment.parent}
+                  </p>
+                )}
               </div>
             ) : (
               <div>
-                <p>El evento ha sido eliminado o no está disponible.</p>
+                <p>El comentario ha sido eliminado o no está disponible.</p>
               </div>
             )}
           </DialogContent>
@@ -171,4 +176,4 @@ const AdminReports = () => {
   );
 };
 
-export default AdminReports;
+export default AdminCommentReports;

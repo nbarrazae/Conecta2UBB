@@ -146,3 +146,33 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
+
+class CommentReportSerializer(serializers.ModelSerializer):
+    comment = serializers.PrimaryKeyRelatedField(
+        queryset=Comment.objects.all(),
+        required=True
+    )
+    reporter = serializers.SerializerMethodField()
+    reason_display = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
+
+    def get_reporter(self, obj):
+        return obj.reporter.email if obj.reporter else None
+
+    def get_reason_display(self, obj):
+        return obj.get_reason_display()
+
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+
+    def validate_comment(self, value):
+        if value is None:
+            raise serializers.ValidationError("Debes seleccionar un comentario para reportar.")
+        if not Comment.objects.filter(id=value.id).exists():
+            raise serializers.ValidationError("El comentario no existe.")
+        return value
+
+    class Meta:
+        model = CommentReport
+        fields = ['id', 'comment', 'reporter', 'reason', 'reason_display', 'status', 'status_display', 'created_at']
+        read_only_fields = ['status', 'created_at', 'reporter']

@@ -314,10 +314,11 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         evento_id = self.request.query_params.get('evento')
-        if evento_id:
-            # Solo retornar comentarios raíz para evitar duplicados
+        if self.action == 'list' and evento_id:
+            # Solo retornar comentarios raíz para evitar duplicados en la lista
             return Comment.objects.filter(evento_id=evento_id, parent__isnull=True).order_by('-created_at')
-        return Comment.objects.none()
+        # Para retrieve (detalle), permite buscar por ID
+        return Comment.objects.all()
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -351,3 +352,39 @@ class NotificationViewSet(viewsets.ModelViewSet):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({'status': 'all marked as read'})
 
+<<<<<<< HEAD
+=======
+class CommentReportViewSet(viewsets.ModelViewSet):
+    queryset = CommentReport.objects.all()
+    serializer_class = CommentReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(reporter=self.request.user)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return CommentReport.objects.all()
+        return CommentReport.objects.filter(reporter=user)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def accept(self, request, pk=None):
+        report = self.get_object()
+        report.status = 'accepted'
+        report.save()
+        if report.comment:
+            report.comment.delete()
+        return Response({'message': 'Reporte aceptado y comentario eliminado.'}, status=200)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def reject(self, request, pk=None):
+        report = self.get_object()
+        report.status = 'rejected'
+        report.save()
+        return Response({'message': 'Reporte rechazado.'}, status=200)
+
+
+
+
+>>>>>>> 01864a0db23bb0a33c3753e6cc397b6303f3f246
