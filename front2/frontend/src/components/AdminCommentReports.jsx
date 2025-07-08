@@ -3,6 +3,8 @@ import AxiosInstance from "./axiosInstance";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContentText from "@mui/material/DialogContentText";
 import Button from "@mui/material/Button";
 import { DataGrid } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
@@ -12,6 +14,8 @@ const AdminCommentReports = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingActionId, setPendingActionId] = useState(null);
 
   const fetchReports = () => {
     AxiosInstance.get("comment-reports/").then((res) => {
@@ -58,7 +62,7 @@ const AdminCommentReports = () => {
       renderCell: (params) =>
         params.value
           ? `ID: ${params.value}`
-          : "Comentario eliminado",
+          : "Eliminado",
     },
     { field: "reporter", headerName: "Reportado por", width: 180 },
     { field: "reason_display", headerName: "Razón", width: 250 },
@@ -88,7 +92,10 @@ const AdminCommentReports = () => {
             <Button
               size="small"
               color="success"
-              onClick={() => handleAction(params.row.id, "accept")}
+              onClick={() => {
+                setPendingActionId(params.row.id);
+                setConfirmOpen(true);
+              }}
             >
               Aceptar
             </Button>
@@ -170,6 +177,31 @@ const AdminCommentReports = () => {
               </div>
             )}
           </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={confirmOpen}
+          onClose={() => setConfirmOpen(false)}
+        >
+          <DialogTitle>Confirmar acción</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              ¿Estás seguro de que deseas aceptar este reporte? Esta acción eliminará el comentario reportado de forma permanente.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                handleAction(pendingActionId, "accept");
+                setConfirmOpen(false);
+              }}
+              color="error"
+              variant="contained"
+            >
+              Sí, eliminar
+            </Button>
+          </DialogActions>
         </Dialog>
       </Paper>
     </div>
