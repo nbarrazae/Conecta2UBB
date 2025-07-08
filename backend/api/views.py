@@ -296,6 +296,11 @@ class VerPerfilDeOtroUsuarioView(generics.RetrieveAPIView):
     lookup_field = 'id'  # También podrías usar 'username' si prefieres
 
 
+class UsuarioPorUsernameView(APIView):
+    def get(self, request, username):
+        user = get_object_or_404(User, username=username)
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data)
 
 
 class CommentPagination(pagination.PageNumberPagination):

@@ -6,6 +6,8 @@ import EventIcon from "@mui/icons-material/Event";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import GroupIcon from "@mui/icons-material/Group";
+import { useNavigate } from "react-router-dom";
+import Tooltip from "@mui/material/Tooltip"; // ✅ IMPORTACIÓN NUEVA
 
 const iconosCategoria = {
   Deportes: <SportsSoccerIcon />,
@@ -14,41 +16,73 @@ const iconosCategoria = {
 };
 
 const EventosUsuario = ({ eventos }) => {
+  const navigate = useNavigate();
+
   if (!eventos || eventos.length === 0) return null;
 
   return (
     <div className="eventos-section">
       <h2 className="eventos-title">Mis eventos</h2>
       <div className="eventos-list">
-        {eventos.map((evento) => (
-          <div className="evento-card" key={evento.id}>
-            <div className="evento-icon">
-              {iconosCategoria[evento.category] || iconosCategoria.Default}
+        {eventos.map((evento) => {
+          const participantes = evento.participants?.length || 0;
+          const estaLleno = participantes >= evento.max_participants;
+
+          const contenidoAsistentes = (
+            <div
+              className="evento-item-horizontal"
+              style={{ color: estaLleno ? "#d32f2f" : "inherit" }}
+            >
+              <GroupIcon fontSize="small" />
+              <span>
+                {participantes}/{evento.max_participants}
+              </span>
             </div>
-            <div className="evento-info">
-              <h3 className="evento-nombre">{evento.title}</h3>
+          );
 
-              <div className="evento-meta-line">
-                <LocationOnIcon className="evento-icon-info" />
-                <span>{evento.location}</span>
+          return (
+            <div
+              className="evento-card-horizontal"
+              key={evento.id}
+              onClick={() => navigate(`/ver-evento/${evento.id}`)}
+              style={{ cursor: "pointer" }}
+            >
+              <div className="evento-icon-horizontal">
+                {iconosCategoria[evento.category] || iconosCategoria.Default}
               </div>
 
-              <div className="evento-meta-line">
-                <CalendarTodayIcon className="evento-icon-info" />
-                <span>{new Date(evento.event_date).toLocaleDateString()}</span>
-              </div>
+              <div className="evento-contenido-horizontal">
+                <div className="evento-header-horizontal">
+                  <h3 className="evento-nombre-horizontal">{evento.title}</h3>
+                  <span className="chip-globo-horizontal">
+                    {evento.category}
+                  </span>
+                </div>
 
-              <div className="evento-meta-line">
-                <GroupIcon className="evento-icon-info" />
-                <span>{evento.participants?.length || 0} asistentes</span>
-              </div>
+                <div className="evento-info-horizontal">
+                  <div className="evento-item-horizontal">
+                    <LocationOnIcon fontSize="small" />
+                    <span>{evento.location}</span>
+                  </div>
+                  <div className="evento-item-horizontal">
+                    <CalendarTodayIcon fontSize="small" />
+                    <span>
+                      {new Date(evento.event_date).toLocaleDateString()}
+                    </span>
+                  </div>
 
-              <div className="evento-etiquetas">
-                <span className="etiqueta">{evento.category}</span>
+                  {estaLleno ? (
+                    <Tooltip title="Evento lleno" arrow>
+                      {contenidoAsistentes}
+                    </Tooltip>
+                  ) : (
+                    contenidoAsistentes
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
