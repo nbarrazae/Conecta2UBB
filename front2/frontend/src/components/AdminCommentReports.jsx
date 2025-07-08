@@ -8,6 +8,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import Button from "@mui/material/Button";
 import { DataGrid } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
+import { useNavigate } from "react-router-dom";
 
 const AdminCommentReports = () => {
   const [reports, setReports] = useState([]);
@@ -16,6 +17,7 @@ const AdminCommentReports = () => {
   const [comment, setComment] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingActionId, setPendingActionId] = useState(null);
+  const navigate = useNavigate();
 
   const fetchReports = () => {
     AxiosInstance.get("comment-reports/").then((res) => {
@@ -170,6 +172,14 @@ const AdminCommentReports = () => {
                     <strong>Respuesta a:</strong> ID {comment.parent}
                   </p>
                 )}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{ mt: 2 }}
+                  onClick={() => navigate(`/ver-evento/${comment.evento}?comentario=${comment.id}`)}
+                >
+                  Ir al comentario
+                </Button>
               </div>
             ) : (
               <div>
