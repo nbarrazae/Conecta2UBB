@@ -263,6 +263,7 @@ class EventReportViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
+        print("DATA ENVIADA AL SERIALIZER:", serializer.validated_data)
         serializer.save(reporter=self.request.user)
 
     def get_queryset(self):
