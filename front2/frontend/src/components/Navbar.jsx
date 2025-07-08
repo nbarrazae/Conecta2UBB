@@ -46,6 +46,9 @@ import Popover from "@mui/material/Popover";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
+import { isSameDay } from 'date-fns';
+import { PickersDay } from '@mui/x-date-pickers/PickersDay';
+
 
 const drawerWidth = 240;
 const widgetWidth = 400;
@@ -62,6 +65,36 @@ export default function Navbar({ content }) {
   const [notifications, setNotifications] = useState([]);
   const [anchorNotif, setAnchorNotif] = useState(null);
   const [tabValue, setTabValue] = useState(0);
+
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+
+  const fetchUpcomingEvents = async () => {
+      try {
+          const res = await AxiosInstance.get('/eventos/upcoming/');
+          setUpcomingEvents(res.data);
+      } catch (err) {
+          console.error(err);
+      }
+  };
+  useEffect(() => {
+    fetchUpcomingEvents();
+}, []);
+
+const CustomDay = ({ day, outsideCurrentMonth, ...other }) => {
+    const hasEvent = upcomingEvents.some(event =>
+        isSameDay(new Date(event.fecha_limite), day)
+    );
+
+    return (
+        <Badge
+            overlap="circular"
+            color="primary"
+            variant={hasEvent ? "dot" : "standard"}
+        >
+            <PickersDay day={day} outsideCurrentMonth={outsideCurrentMonth} {...other} />
+        </Badge>
+    );
+};
 
   const fetchNotifications = async () => {
     try {
@@ -462,15 +495,36 @@ const markAllAsRead = async () => {
           }}
         >
           <Typography variant="h6">Recordatorios</Typography>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            - Evento a las 10:00
-            <br />- Reunión a las 14:00
-          </Typography>
+          {upcomingEvents.length === 0 ? (
+    <Typography variant="body2" sx={{ mb: 2 }}>
+        No tienes eventos próximos.
+    </Typography>
+) : (
+    <List dense>
+        {upcomingEvents.map(event => (
+            <ListItem
+                key={event.id}
+                button
+                onClick={() => navigate(`/ver-evento/${event.id}`)}
+            >
+                <ListItemText
+                    primary={event.titulo}
+                    secondary={`Límite: ${new Date(event.fecha_limite).toLocaleString()}`}
+                />
+            </ListItem>
+        ))}
+    </List>
+)}
+
 
           <Typography variant="h6">Calendario</Typography>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DateCalendar />
-          </LocalizationProvider>
+    <DateCalendar
+        slots={{
+            day: CustomDay
+        }}
+    />
+</LocalizationProvider>
         </Box>
       )}
       {/* Floating button + modal para móviles */}
@@ -494,15 +548,36 @@ const markAllAsRead = async () => {
             <DialogTitle>Calendario y recordatorios</DialogTitle>
             <DialogContent>
               <Typography variant="subtitle1">Recordatorios</Typography>
-              <Typography variant="body2" sx={{ mb: 2 }}>
-                - Evento a las 10:00
-                <br />- Reunión a las 14:00
-              </Typography>
+              {upcomingEvents.length === 0 ? (
+    <Typography variant="body2" sx={{ mb: 2 }}>
+        No tienes eventos próximos.
+    </Typography>
+) : (
+    <List dense>
+        {upcomingEvents.map(event => (
+            <ListItem
+                key={event.id}
+                button
+                onClick={() => navigate(`/ver-evento/${event.id}`)}
+            >
+                <ListItemText
+                    primary={event.titulo}
+                    secondary={`Límite: ${new Date(event.fecha_limite).toLocaleString()}`}
+                />
+            </ListItem>
+        ))}
+    </List>
+)}
+
 
               <Typography variant="subtitle1">Calendario</Typography>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DateCalendar />
-              </LocalizationProvider>
+    <DateCalendar
+        slots={{
+            day: CustomDay
+        }}
+    />
+</LocalizationProvider>
             </DialogContent>
           </Dialog>
         </>
