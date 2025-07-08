@@ -5,6 +5,18 @@ import AxiosInstance from './axiosInstance';
 import BotonInscripcion from './BotonInscripcion';
 import CommentTree from './CommentTree';
 import { Box, Typography, TextField, Divider, CircularProgress } from '@mui/material';
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Alert,
+} from '@mui/material';
+
 const VerEvento = () => {
     const [evento, setEvento] = useState(null);
     const [imagenes, setImagenes] = useState([]);
@@ -17,6 +29,28 @@ const VerEvento = () => {
     const [nextPage, setNextPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loadingComments, setLoadingComments] = useState(false);
+
+    const [openReportModal, setOpenReportModal] = useState(false);
+    const [reportReason, setReportReason] = useState('');
+    const [reportError, setReportError] = useState('');
+    const [reportSuccess, setReportSuccess] = useState('');
+
+
+    const handleReportEvent = async () => {
+        try {
+            await AxiosInstance.post('/event-reports/', {
+                event: id,
+                reason: reportReason,
+            });
+            setReportSuccess('Reporte enviado correctamente. Un moderador lo revisará.');
+            setReportReason('');
+            setTimeout(() => setOpenReportModal(false), 1500);
+        } catch (error) {
+            console.error(error);
+            setReportError('Error al enviar el reporte. Intenta nuevamente.');
+        }
+    };
+    
 
     const fetchEvento = async () => {
         try {
@@ -170,8 +204,7 @@ const VerEvento = () => {
                     borderRadius: '4px',
                     cursor: 'pointer',
                     fontSize: '10px',
-                }}
-            >
+                }} >
                 {isAuthenticated ? 'Ir al Inicio' : 'Ir al Login'}
             </Button>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -183,8 +216,17 @@ const VerEvento = () => {
                     yaInscrito={yaInscrito}
                     estaLleno={estaLleno}
                     onCambio={fetchEvento}
-                    style={{ marginLeft: '20px' }}
-                />
+                    style={{ marginLeft: '20px' }}/>
+                {isAuthenticated && (
+                <Button
+                    variant="outlined"
+                    color="error"
+                    sx={{ mt: 2 }}
+                    onClick={() => setOpenReportModal(true)}>
+                    Reportar Evento
+                </Button>
+                )}
+
             </div>
             <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Información</h3>
@@ -218,63 +260,106 @@ const VerEvento = () => {
                 onCambio={fetchEvento}
             /> */}
 
-<Box sx={{ mt: 4 }}>
-    <Typography variant="h5" gutterBottom>
-        Comentarios
-    </Typography>
+            <Box sx={{ mt: 4 }}>
+                <Typography variant="h5" gutterBottom>
+                    Comentarios
+                </Typography>
 
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
-        <TextField
-            label="Escribe un comentario..."
-            multiline
-            minRows={3}
-            variant="outlined"
-            value={newCommentContent}
-            onChange={e => setNewCommentContent(e.target.value)}
-            fullWidth
-        />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+                <TextField
+                    label="Escribe un comentario..."
+                    multiline
+                    minRows={3}
+                    variant="outlined"
+                    value={newCommentContent}
+                    onChange={e => setNewCommentContent(e.target.value)}
+                    fullWidth
+                />
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleNewComment}
+                    disabled={!newCommentContent.trim()}
+                >
+                    Comentar
+                </Button>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            {comments.length === 0 && !loadingComments ? (
+                <Typography variant="body1" color="text.secondary">
+                    Aún no hay comentarios. ¡Sé el primero en comentar!
+                </Typography>
+            ) : (
+                comments.map((comment, index) => {
+                    if (comments.length === index + 1) {
+                        return (
+                            <Box key={comment.id} ref={lastCommentRef} sx={{ mb: 2 }}>
+                                <CommentTree comment={comment} onReply={handleReply} />
+                                <Divider sx={{ my: 1 }} />
+                            </Box>
+                        );
+                    } else {
+                        return (
+                            <Box key={comment.id} sx={{ mb: 2 }}>
+                                <CommentTree comment={comment} onReply={handleReply} />
+                                <Divider sx={{ my: 1 }} />
+                            </Box>
+                        );
+                    }
+                })
+            )}
+
+                {loadingComments && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                        <CircularProgress />
+                    </Box>
+                )}
+            </Box>
+            <Dialog
+    open={openReportModal}
+    onClose={() => {
+        setOpenReportModal(false);
+        setReportError('');
+        setReportSuccess('');
+    }}
+    fullWidth
+    maxWidth="sm"
+>
+    <DialogTitle>Reportar Evento</DialogTitle>
+    <DialogContent>
+        {reportError && <Alert severity="error" sx={{ mb: 2 }}>{reportError}</Alert>}
+        {reportSuccess && <Alert severity="success" sx={{ mb: 2 }}>{reportSuccess}</Alert>}
+
+        <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Motivo del Reporte</InputLabel>
+            <Select
+                label="Motivo del Reporte"
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+            >
+                <MenuItem value="offensive">Contenido ofensivo o lenguaje inapropiado</MenuItem>
+                <MenuItem value="discriminatory">Contenido discriminatorio</MenuItem>
+                <MenuItem value="spam">Spam o publicidad no autorizada</MenuItem>
+                <MenuItem value="unrelated">Contenido no relacionado</MenuItem>
+                <MenuItem value="false">Información falsa o engañosa</MenuItem>
+                <MenuItem value="violence">Incitación a la violencia o actividades ilegales</MenuItem>
+            </Select>
+        </FormControl>
+    </DialogContent>
+    <DialogActions>
+        <Button onClick={() => setOpenReportModal(false)}>Cancelar</Button>
         <Button
+            onClick={handleReportEvent}
             variant="contained"
-            color="primary"
-            onClick={handleNewComment}
-            disabled={!newCommentContent.trim()}
+            color="error"
+            disabled={!reportReason}
         >
-            Comentar
+            Enviar Reporte
         </Button>
-    </Box>
-
-    <Divider sx={{ my: 2 }} />
-
-    {comments.length === 0 && !loadingComments ? (
-        <Typography variant="body1" color="text.secondary">
-            Aún no hay comentarios. ¡Sé el primero en comentar!
-        </Typography>
-    ) : (
-        comments.map((comment, index) => {
-            if (comments.length === index + 1) {
-                return (
-                    <Box key={comment.id} ref={lastCommentRef} sx={{ mb: 2 }}>
-                        <CommentTree comment={comment} onReply={handleReply} />
-                        <Divider sx={{ my: 1 }} />
-                    </Box>
-                );
-            } else {
-                return (
-                    <Box key={comment.id} sx={{ mb: 2 }}>
-                        <CommentTree comment={comment} onReply={handleReply} />
-                        <Divider sx={{ my: 1 }} />
-                    </Box>
-                );
-            }
-        })
-    )}
-
-    {loadingComments && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-            <CircularProgress />
-        </Box>
-    )}
-</Box>
+    </DialogActions>
+</Dialog>
 
 
         </div>
@@ -322,6 +407,8 @@ const styles = {
         border: '1px solid #ccc',
         borderRadius: '4px',
     },
+
+    
 };
 
 export default VerEvento;
