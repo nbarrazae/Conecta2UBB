@@ -14,6 +14,7 @@ import VerEvento from './components/VerEvento'
 import AdminReports from "./components/AdminReports";
 import Perfil from "./components/Perfil/Perfil";
 import BuscarEventos from "./components/Buscar/BuscarEventos";
+import AdminModeration from "./components/AdminModeration";
 
 function App() {
   const location = useLocation();
@@ -84,7 +85,7 @@ function App() {
               <Route path="/perfil-publico/:username" element={<Perfil />} />
               <Route path="/buscar" element={<BuscarEventos />} />
               {isAdmin() && (
-                <Route path="/admin-reports" element={<AdminReports />} />
+                <Route path="/admin-reports" element={<AdminModeration />} />
               )}
             </Route>
           </Routes>

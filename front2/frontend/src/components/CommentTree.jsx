@@ -1,15 +1,34 @@
-import { Box, Typography, Button, TextField } from '@mui/material';
+import { Box, Typography, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material';
 import { useState } from 'react';
+import AxiosInstance from "./axiosInstance";
 
 const CommentTree = ({ comment, onReply }) => {
     const [replying, setReplying] = useState(false);
     const [replyContent, setReplyContent] = useState('');
+    const [openReport, setOpenReport] = useState(false);
+    const [reportReason, setReportReason] = useState("");
+    const [reportError, setReportError] = useState("");
+    const [reportSuccess, setReportSuccess] = useState("");
 
     const handleReplySubmit = () => {
         if (!replyContent.trim()) return;
         onReply(comment.id, replyContent);
         setReplyContent('');
         setReplying(false);
+    };
+
+    const handleReport = async () => {
+        try {
+            await AxiosInstance.post("/comment-reports/", {
+                comment: comment.id,
+                reason: reportReason,
+            });
+            setReportSuccess("Reporte enviado correctamente. Un moderador lo revisará.");
+            setReportReason("");
+            setTimeout(() => setOpenReport(false), 1500);
+        } catch (error) {
+            setReportError("Error al enviar el reporte. Intenta nuevamente.");
+        }
     };
 
     return (
@@ -58,6 +77,60 @@ const CommentTree = ({ comment, onReply }) => {
                     </Box>
                 </Box>
             )}
+
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={() => setOpenReport(true)}
+                >
+                    Reportar
+                </Button>
+            </div>
+
+            <Dialog
+                open={openReport}
+                onClose={() => {
+                    setOpenReport(false);
+                    setReportError("");
+                    setReportSuccess("");
+                }}
+                fullWidth
+                maxWidth="sm"
+            >
+                <DialogTitle>Reportar Comentario</DialogTitle>
+                <DialogContent>
+                    {reportError && <Alert severity="error" sx={{ mb: 2 }}>{reportError}</Alert>}
+                    {reportSuccess && <Alert severity="success" sx={{ mb: 2 }}>{reportSuccess}</Alert>}
+                    <FormControl fullWidth sx={{ mt: 2 }}>
+                        <InputLabel>Motivo del Reporte</InputLabel>
+                        <Select
+                            label="Motivo del Reporte"
+                            value={reportReason}
+                            onChange={(e) => setReportReason(e.target.value)}
+                        >
+                            <MenuItem value="offensive">Contenido ofensivo o lenguaje inapropiado</MenuItem>
+                            <MenuItem value="discriminatory">Contenido discriminatorio</MenuItem>
+                            <MenuItem value="spam">Spam o publicidad no autorizada</MenuItem>
+                            <MenuItem value="unrelated">Contenido no relacionado</MenuItem>
+                            <MenuItem value="false">Información falsa o engañosa</MenuItem>
+                            <MenuItem value="violence">Incitación a la violencia o actividades ilegales</MenuItem>
+                        </Select>
+                    </FormControl>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenReport(false)}>Cancelar</Button>
+                    <Button
+                        onClick={handleReport}
+                        variant="contained"
+                        color="error"
+                        disabled={!reportReason}
+                    >
+                        Enviar Reporte
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {comment.replies && comment.replies.length > 0 && (
                 <Box sx={{ mt: 1 }}>
