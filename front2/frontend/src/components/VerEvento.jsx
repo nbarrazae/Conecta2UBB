@@ -189,7 +189,7 @@ const VerEvento = () => {
             <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Información</h3>
                 <p><strong>Lugar:</strong> {evento.location}</p>
-                <p><strong>Fecha:</strong> {evento.event_date}</p>
+                <p><strong>Fecha:</strong> {new Date(evento.event_date).toISOString().split("T")[0]}</p>
                 <p><strong>Categoría:</strong> {categoriasDisponibles.find(cat => cat.id === evento.category)?.name || 'Sin categoría'}</p>
                 <p><strong>Creador del Evento:</strong> {evento.author_username}</p>
                 <p><strong>Participantes:</strong> {evento.participants.length}/{evento.max_participants}</p>
