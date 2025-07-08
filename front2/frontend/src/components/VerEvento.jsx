@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback }  from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button } from '@mui/material';
 import AxiosInstance from './axiosInstance';
 import BotonInscripcion from './BotonInscripcion';
@@ -24,6 +24,7 @@ const VerEvento = () => {
     const [myData, setMyData] = useState(null);
     const navigate = useNavigate();
     const { id } = useParams();
+    const location = useLocation();
 
     const [comments, setComments] = useState([]);
     const [nextPage, setNextPage] = useState(1);
@@ -156,6 +157,26 @@ const VerEvento = () => {
     //     fetchComments();
     // }, [fetchComments]);
 
+    useEffect(() => {
+        // espera a que los comentarios estén cargados
+        if (comments.length > 0) {
+            const params = new URLSearchParams(location.search);
+            const comentarioId = params.get("comentario");
+            if (comentarioId) {
+                // espera un pequeño delay para asegurar que el DOM esté listo
+                setTimeout(() => {
+                    const el = document.getElementById(`comentario-${comentarioId}`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: "smooth", block: "center" });
+                        el.style.background = "#e3f2fd";
+                        setTimeout(() => {
+                          el.style.background = "";
+                        }, 2000);
+                    }
+                }, 300);
+            }
+        }
+    }, [comments, location.search]);
 
     // Intersection Observer to trigger load
     const observer = useRef();
@@ -295,14 +316,14 @@ const VerEvento = () => {
                 comments.map((comment, index) => {
                     if (comments.length === index + 1) {
                         return (
-                            <Box key={comment.id} ref={lastCommentRef} sx={{ mb: 2 }}>
+                            <Box key={comment.id} ref={lastCommentRef} sx={{ mb: 2 }} id={`comentario-${comment.id}`}>
                                 <CommentTree comment={comment} onReply={handleReply} />
                                 <Divider sx={{ my: 1 }} />
                             </Box>
                         );
                     } else {
                         return (
-                            <Box key={comment.id} sx={{ mb: 2 }}>
+                            <Box key={comment.id} sx={{ mb: 2 }} id={`comentario-${comment.id}`}>
                                 <CommentTree comment={comment} onReply={handleReply} />
                                 <Divider sx={{ my: 1 }} />
                             </Box>

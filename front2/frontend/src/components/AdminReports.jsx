@@ -8,6 +8,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import Button from "@mui/material/Button";
 import { DataGrid } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
+import { useNavigate } from "react-router-dom";
 
 const AdminReports = () => {
   const [reports, setReports] = useState([]);
@@ -17,6 +18,7 @@ const AdminReports = () => {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingActionId, setPendingActionId] = useState(null);
+  const navigate = useNavigate();
 
   const fetchReports = () => {
     AxiosInstance.get("event-reports/").then((res) => {
@@ -166,6 +168,14 @@ const AdminReports = () => {
                 <p>
                   <strong>Estado:</strong> {evento.state}
                 </p>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{ mt: 2 }}
+                  onClick={() => navigate(`/ver-evento/${evento.id}`)}
+                >
+                  Ir a publicación
+                </Button>
               </div>
             ) : (
               <div>
