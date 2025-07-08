@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import AxiosInstance from "../axiosInstance";
 import dayjs from "dayjs";
 import "./ListaEventos.css";
-import defaultAvatar from "../../assets/default-avatar.jpg";
 
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import EventIcon from "@mui/icons-material/Event";
@@ -11,25 +10,15 @@ import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
 import TheaterComedyIcon from "@mui/icons-material/TheaterComedy";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import defaultAvatar from "../../assets/default-avatar.jpg";
+import Tooltip from "@mui/material/Tooltip";
 
 const iconMap = [
   { keyword: "videojuego", icon: <SportsEsportsIcon /> },
   { keyword: "deporte", icon: <SportsSoccerIcon /> },
   { keyword: "ocio", icon: <TheaterComedyIcon /> },
   { keyword: "cultura", icon: <ImportContactsIcon /> },
-
-  // Agrega aquí más si quieres
-];
-
-const iconMap = [
-  { keyword: "videojuego", icon: <SportsEsportsIcon /> },
-  { keyword: "deporte", icon: <SportsSoccerIcon /> },
-  { keyword: "ocio", icon: <TheaterComedyIcon /> },
-  { keyword: "cultura", icon: <ImportContactsIcon /> },
-
-  // Agrega aquí más si quieres
 ];
 
 const iconoCategoria = (nombre) => {
@@ -47,6 +36,7 @@ const iconoCategoria = (nombre) => {
 const ListaEventos = ({ categoria, textoBusqueda, rangoFecha, orden }) => {
   const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // ✅ Nuevo: hook para redirigir
 
   useEffect(() => {
     const fetchEventos = async () => {
@@ -62,10 +52,8 @@ const ListaEventos = ({ categoria, textoBusqueda, rangoFecha, orden }) => {
           params.categoria = categoria;
         }
 
-        // Fecha actual
         const hoy = dayjs();
 
-        // Rango de fechas usando parámetros correctos
         if (rangoFecha === "ultimos_7_dias") {
           params["fecha__gte"] = hoy.subtract(7, "day").format("YYYY-MM-DD");
           params["fecha__lte"] = hoy.format("YYYY-MM-DD");
@@ -75,7 +63,6 @@ const ListaEventos = ({ categoria, textoBusqueda, rangoFecha, orden }) => {
         } else if (rangoFecha === "proximo_mes") {
           const primerDiaProximoMes = dayjs().add(1, "month").startOf("month");
           const ultimoDiaProximoMes = dayjs().add(1, "month").endOf("month");
-
           params["fecha__gte"] = primerDiaProximoMes.format("YYYY-MM-DD");
           params["fecha__lte"] = ultimoDiaProximoMes.format("YYYY-MM-DD");
         }
@@ -102,7 +89,12 @@ const ListaEventos = ({ categoria, textoBusqueda, rangoFecha, orden }) => {
   return (
     <div className="lista-eventos">
       {eventos.map((e) => (
-        <div key={e.id} className="evento-card compacto">
+        <div
+          key={e.id}
+          className="evento-card compacto"
+          onClick={() => navigate(`/ver-evento/${e.id}`)} // ✅ Clic redirecciona
+          style={{ cursor: "pointer" }} // ✅ Apariencia de clickeable
+        >
           <div className="evento-icono">{iconoCategoria(e.category_name)}</div>
 
           <div className="evento-detalles">
@@ -115,6 +107,7 @@ const ListaEventos = ({ categoria, textoBusqueda, rangoFecha, orden }) => {
               <Link
                 to={`/perfil-publico/${encodeURIComponent(e.author_username)}`}
                 className="evento-autor-link"
+                onClick={(e) => e.stopPropagation()} // ✅ No activa navegación del contenedor
               >
                 <img
                   src={
@@ -126,7 +119,6 @@ const ListaEventos = ({ categoria, textoBusqueda, rangoFecha, orden }) => {
                   alt={e.author_username}
                   className="evento-avatar"
                 />
-
                 <span>{e.author_username}</span>
               </Link>
 
@@ -139,10 +131,41 @@ const ListaEventos = ({ categoria, textoBusqueda, rangoFecha, orden }) => {
                   <EventIcon fontSize="small" />
                   <span>{e.event_date?.split("T")[0]}</span>
                 </div>
-                <div className="evento-info-item">
-                  <GroupIcon fontSize="small" />
-                  <span>{e.participants.length} asistentes</span>
-                </div>
+                <Tooltip
+                  title={
+                    e.participants.length >= e.max_participants
+                      ? "Evento lleno"
+                      : "Cupos disponibles"
+                  }
+                  arrow
+                >
+                  <div
+                    className="evento-info-item"
+                    style={{ display: "flex", alignItems: "center" }}
+                  >
+                    <GroupIcon
+                      fontSize="small"
+                      style={{
+                        color:
+                          e.participants.length >= e.max_participants
+                            ? "#d32f2f"
+                            : "inherit",
+                      }}
+                    />
+                    <span
+                      style={{
+                        marginLeft: "4px",
+                        fontWeight: 500,
+                        color:
+                          e.participants.length >= e.max_participants
+                            ? "#d32f2f"
+                            : "inherit",
+                      }}
+                    >
+                      {e.participants.length}/{e.max_participants}
+                    </span>
+                  </div>
+                </Tooltip>
               </div>
             </div>
           </div>
