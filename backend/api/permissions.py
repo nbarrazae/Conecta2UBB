@@ -2,14 +2,14 @@ from rest_framework import permissions
 
 class IsAuthorOrReadOnly(permissions.BasePermission):
     """
-    Permiso personalizado para que sólo los autores de un evento puedan editarlo o eliminarlo.
+    Permite que solo el autor o un staff/superuser pueda editar/eliminar.
     """
-
     def has_object_permission(self, request, view, obj):
-        # se permiten permisos de lectura a cualquier petición,
-        # por lo que siempre permitiremos peticiones GET, HEAD u OPTIONS.
+        # SAFE_METHODS: GET, HEAD, OPTIONS
         if request.method in permissions.SAFE_METHODS:
             return True
-
-        # permisos de escritura sólo están permitidos al autor del evento.
+        # Permitir si es staff o superuser
+        if request.user.is_staff or request.user.is_superuser:
+            return True
+        # Permitir si es el autor
         return obj.author == request.user

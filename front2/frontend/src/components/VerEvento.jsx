@@ -35,6 +35,7 @@ const VerEvento = () => {
     const [reportReason, setReportReason] = useState('');
     const [reportError, setReportError] = useState('');
     const [reportSuccess, setReportSuccess] = useState('');
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
 
     const handleReportEvent = async () => {
@@ -208,6 +209,8 @@ const VerEvento = () => {
         return <div>Cargando...</div>;
     }
 
+    console.log("myData", myData);
+
     const yaInscrito = evento.participants.includes(myData.email);
     const estaLleno = evento.participants.length >= (evento.max_participants || evento.limite_asistentes || 0);
 
@@ -232,22 +235,36 @@ const VerEvento = () => {
                 <h2 style={styles.title}>
                     {evento.title}
                 </h2>
-                <BotonInscripcion
-                    eventId={evento.id}
-                    yaInscrito={yaInscrito}
-                    estaLleno={estaLleno}
-                    onCambio={fetchEvento}
-                    style={{ marginLeft: '20px' }}/>
-                {isAuthenticated && (
-                <Button
-                    variant="outlined"
-                    color="error"
-                    sx={{ mt: 2 }}
-                    onClick={() => setOpenReportModal(true)}>
-                    Reportar Evento
-                </Button>
-                )}
-
+                <div>
+                    <BotonInscripcion
+                        eventId={evento.id}
+                        yaInscrito={yaInscrito}
+                        estaLleno={estaLleno}
+                        onCambio={fetchEvento}
+                        style={{ marginLeft: '20px' }}
+                    />
+                    {isAuthenticated && (
+                    <Button
+                        variant="outlined"
+                        color="error"
+                        sx={{ mt: 2, ml: 2 }}
+                        onClick={() => setOpenReportModal(true)}
+                    >
+                        Reportar Evento
+                    </Button>
+                    )}
+                    {/* SOLO PARA MODERADORES */}
+                    {myData.is_staff && (
+                    <Button
+                        variant="contained"
+                        color="error"
+                        sx={{ mt: 2, ml: 2 }}
+                        onClick={() => setOpenDeleteDialog(true)}
+                    >
+                        Eliminar Evento
+                    </Button>
+                    )}
+                </div>
             </div>
             <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Información</h3>
@@ -317,14 +334,14 @@ const VerEvento = () => {
                     if (comments.length === index + 1) {
                         return (
                             <Box key={comment.id} ref={lastCommentRef} sx={{ mb: 2 }} id={`comentario-${comment.id}`}>
-                                <CommentTree comment={comment} onReply={handleReply} />
+                                <CommentTree comment={comment} onReply={handleReply} myData={myData} />
                                 <Divider sx={{ my: 1 }} />
                             </Box>
                         );
                     } else {
                         return (
                             <Box key={comment.id} sx={{ mb: 2 }} id={`comentario-${comment.id}`}>
-                                <CommentTree comment={comment} onReply={handleReply} />
+                                <CommentTree comment={comment} onReply={handleReply} myData={myData} />
                                 <Divider sx={{ my: 1 }} />
                             </Box>
                         );
@@ -381,6 +398,36 @@ const VerEvento = () => {
         </Button>
     </DialogActions>
 </Dialog>
+
+{/* diálogo de confirmación para eliminar evento */}
+<Dialog
+    open={openDeleteDialog}
+    onClose={() => setOpenDeleteDialog(false)}
+>
+    <DialogTitle>Confirmar eliminación</DialogTitle>
+    <DialogContent>
+      ¿Estás seguro de que deseas eliminar este evento? Esta acción no se puede deshacer.
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={() => setOpenDeleteDialog(false)}>Cancelar</Button>
+      <Button
+        color="error"
+        variant="contained"
+        onClick={async () => {
+          try {
+            await AxiosInstance.delete(`/eventos/${evento.id}/`);
+            setOpenDeleteDialog(false);
+            alert("Evento eliminado correctamente.");
+            navigate("/home");
+          } catch {
+            alert("Error al eliminar el evento.");
+          }
+        }}
+      >
+        Sí, eliminar
+      </Button>
+    </DialogActions>
+  </Dialog>
 
 
         </div>

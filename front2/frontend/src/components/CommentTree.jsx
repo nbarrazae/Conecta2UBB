@@ -2,13 +2,14 @@ import { Box, Typography, Button, TextField, Dialog, DialogTitle, DialogContent,
 import { useState } from 'react';
 import AxiosInstance from "./axiosInstance";
 
-const CommentTree = ({ comment, onReply }) => {
+const CommentTree = ({ comment, onReply, myData }) => {
     const [replying, setReplying] = useState(false);
     const [replyContent, setReplyContent] = useState('');
     const [openReport, setOpenReport] = useState(false);
     const [reportReason, setReportReason] = useState("");
     const [reportError, setReportError] = useState("");
     const [reportSuccess, setReportSuccess] = useState("");
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
     const handleReplySubmit = () => {
         if (!replyContent.trim()) return;
@@ -87,6 +88,44 @@ const CommentTree = ({ comment, onReply }) => {
                 >
                     Reportar
                 </Button>
+                {myData?.is_staff && (
+                    <>
+                        <Button
+                            size="small"
+                            color="error"
+                            onClick={() => setOpenDeleteDialog(true)}
+                        >
+                            Eliminar Comentario
+                        </Button>
+                        <Dialog
+                            open={openDeleteDialog}
+                            onClose={() => setOpenDeleteDialog(false)}
+                        >
+                            <DialogTitle>Confirmar eliminación</DialogTitle>
+                            <DialogContent>
+                                ¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer.
+                            </DialogContent>
+                            <DialogActions>
+                                <Button onClick={() => setOpenDeleteDialog(false)}>Cancelar</Button>
+                                <Button
+                                    color="error"
+                                    variant="contained"
+                                    onClick={async () => {
+                                        try {
+                                            await AxiosInstance.delete(`/comments/${comment.id}/`);
+                                            setOpenDeleteDialog(false);
+                                            window.location.reload();
+                                        } catch {
+                                            alert("Error al eliminar el comentario.");
+                                        }
+                                    }}
+                                >
+                                    Sí, eliminar
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
+                    </>
+                )}
             </div>
 
             <Dialog
@@ -135,7 +174,7 @@ const CommentTree = ({ comment, onReply }) => {
             {comment.replies && comment.replies.length > 0 && (
                 <Box sx={{ mt: 1 }}>
                     {comment.replies.map(reply => (
-                        <CommentTree key={reply.id} comment={reply} onReply={onReply} />
+                        <CommentTree key={reply.id} comment={reply} onReply={onReply} myData={myData} />
                     ))}
                 </Box>
             )}
