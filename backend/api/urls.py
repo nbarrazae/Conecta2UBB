@@ -1,7 +1,7 @@
-from django.urls import path
+from django.urls import path, re_path
 from .views import RegisterViewset, LoginViewset, UserViewset, UserDataViewset, MisInscripcionesViewSet
 from rest_framework.routers import DefaultRouter
-from .views import EventoViewSet, CategoryViewSet, EventReportViewSet, NotificationViewSet,CommentViewSet
+from .views import EventoViewSet, CategoryViewSet, EventReportViewSet, NotificationViewSet,CommentViewSet,UsuarioPorUsernameView
 
 router = DefaultRouter()
 router.register(r'register', RegisterViewset, basename='register')
@@ -15,4 +15,6 @@ router.register(r'event-reports', EventReportViewSet, basename='eventreport')
 router.register(r'comments', CommentViewSet, basename='comments')
 router.register(r'notifications', NotificationViewSet, basename='notifications')
 
-urlpatterns = router.urls
+urlpatterns = router.urls + [
+    re_path(r'^buscar-usuario/(?P<username>[\w.@+-]+)/$', UsuarioPorUsernameView.as_view()),
+]

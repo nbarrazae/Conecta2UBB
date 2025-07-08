@@ -2,17 +2,35 @@ import React, { useEffect, useState } from "react";
 import AxiosInstance from "../axiosInstance";
 import dayjs from "dayjs";
 import "./ListaEventos.css";
+import defaultAvatar from "../../assets/default-avatar.jpg";
 
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import EventIcon from "@mui/icons-material/Event";
 import GroupIcon from "@mui/icons-material/Group";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
+import TheaterComedyIcon from "@mui/icons-material/TheaterComedy";
+import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import { Link } from "react-router-dom";
 
+const iconMap = [
+  { keyword: "videojuego", icon: <SportsEsportsIcon /> },
+  { keyword: "deporte", icon: <SportsSoccerIcon /> },
+  { keyword: "ocio", icon: <TheaterComedyIcon /> },
+  { keyword: "cultura", icon: <ImportContactsIcon /> },
+
+  // Agrega aquí más si quieres
+];
+
 const iconoCategoria = (nombre) => {
-  if (nombre.toLowerCase().includes("videojuego")) return <SportsEsportsIcon />;
-  if (nombre.toLowerCase().includes("deporte")) return <SportsSoccerIcon />;
+  if (!nombre || typeof nombre !== "string") return <EventIcon />;
+
+  const nombreLower = nombre.toLowerCase();
+
+  for (const { keyword, icon } of iconMap) {
+    if (nombreLower.includes(keyword)) return icon;
+  }
+
   return <EventIcon />;
 };
 
@@ -85,14 +103,20 @@ const ListaEventos = ({ categoria, textoBusqueda, rangoFecha, orden }) => {
 
             <div className="evento-info-grid">
               <Link
-                to={`/perfil-publico/${e.author_username}`}
+                to={`/perfil-publico/${encodeURIComponent(e.author_username)}`}
                 className="evento-autor-link"
               >
                 <img
-                  src={e.author_profile_picture || "/default-avatar.png"}
+                  src={
+                    e.author_profile_picture &&
+                    e.author_profile_picture.trim() !== ""
+                      ? e.author_profile_picture
+                      : defaultAvatar
+                  }
                   alt={e.author_username}
                   className="evento-avatar"
                 />
+
                 <span>{e.author_username}</span>
               </Link>
 

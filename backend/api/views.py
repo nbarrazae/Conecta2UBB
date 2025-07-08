@@ -275,6 +275,11 @@ class VerPerfilDeOtroUsuarioView(generics.RetrieveAPIView):
     lookup_field = 'id'  # También podrías usar 'username' si prefieres
 
 
+class UsuarioPorUsernameView(APIView):
+    def get(self, request, username):
+        user = get_object_or_404(User, username=username)
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data)
 
 
 class CommentPagination(pagination.PageNumberPagination):
@@ -324,7 +329,4 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def mark_all_as_read(self, request):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({'status': 'all marked as read'})
-
-    
-    
 

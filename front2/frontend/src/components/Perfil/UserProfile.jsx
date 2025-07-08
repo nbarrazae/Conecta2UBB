@@ -11,7 +11,9 @@ import defaultAvatar from "../../assets/default-avatar.jpg";
 import "./Perfil.css";
 
 const UserProfile = () => {
-  const { username } = useParams(); // para rutas como /perfil-publico/:username
+  const { username } = useParams();
+  const usernameDecoded = username ? decodeURIComponent(username) : null;
+
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -22,8 +24,8 @@ const UserProfile = () => {
 
   const fetchPerfil = async () => {
     try {
-      const res = username
-        ? await AxiosInstance.get(`/users/username/${username}/`)
+      const res = usernameDecoded
+        ? await AxiosInstance.get(`/buscar-usuario/${usernameDecoded}/`)
         : await AxiosInstance.get("/users/ver_perfil/");
       setPerfil(res.data);
     } catch (error) {
@@ -66,6 +68,9 @@ const UserProfile = () => {
   if (loading) return <p className="perfil-loading">Cargando perfil...</p>;
   if (!perfil)
     return <p className="perfil-error">No se pudo cargar el perfil.</p>;
+  console.log("👤 Usuario logeado:", usernameLogeado);
+  console.log("📄 Perfil cargado:", perfil?.username);
+  console.log("✅ Es mi perfil:", esPerfilPropio);
 
   return (
     <>
