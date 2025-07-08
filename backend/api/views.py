@@ -352,8 +352,6 @@ class NotificationViewSet(viewsets.ModelViewSet):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({'status': 'all marked as read'})
 
-<<<<<<< HEAD
-=======
 class CommentReportViewSet(viewsets.ModelViewSet):
     queryset = CommentReport.objects.all()
     serializer_class = CommentReportSerializer
@@ -387,4 +385,3 @@ class CommentReportViewSet(viewsets.ModelViewSet):
 
 
 
->>>>>>> 01864a0db23bb0a33c3753e6cc397b6303f3f246
