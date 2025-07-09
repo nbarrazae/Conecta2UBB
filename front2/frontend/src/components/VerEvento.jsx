@@ -16,6 +16,7 @@ import {
     MenuItem,
     Alert,
 } from '@mui/material';
+import EditarEventoDialog from './EditarEventoDialog';
 
 const VerEvento = () => {
     const [evento, setEvento] = useState(null);
@@ -36,6 +37,19 @@ const VerEvento = () => {
     const [reportError, setReportError] = useState('');
     const [reportSuccess, setReportSuccess] = useState('');
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
+    // estado para el diálogo de edición
+    const [openEditDialog, setOpenEditDialog] = useState(false);
+    const [editData, setEditData] = useState({
+        title: '',
+        description: '',
+        event_date: '',
+        location: '',
+        category: '',
+        max_participants: '',
+    });
+    const [editError, setEditError] = useState('');
+    const [editLoading, setEditLoading] = useState(false);
 
 
     const handleReportEvent = async () => {
@@ -205,6 +219,43 @@ const VerEvento = () => {
         }
     };
 
+    // cuando se abre el diálogo, llena los datos actuales
+    const handleOpenEditDialog = () => {
+        setEditData({
+            title: evento.title || '',
+            description: evento.description || '',
+            event_date: evento.event_date ? evento.event_date.slice(0, 16) : '', // formato YYYY-MM-DDTHH:mm
+            location: evento.location || '',
+            category: evento.category || '',
+            max_participants: evento.max_participants || '',
+        });
+        setEditError('');
+        setOpenEditDialog(true);
+    };
+
+    // handler para cambios en los campos
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // guardar cambios
+    const handleEditSubmit = async () => {
+        setEditLoading(true);
+        setEditError('');
+        try {
+            await AxiosInstance.patch(`/eventos/${evento.id}/`, {
+                ...editData,
+            });
+            setOpenEditDialog(false);
+            await fetchEvento(); // recarga datos del evento
+        } catch (err) {
+            setEditError('Error al guardar los cambios. Revisa los campos.');
+        } finally {
+            setEditLoading(false);
+        }
+    };
+
     if (!evento || !myData) {
         return <div>Cargando...</div>;
     }
@@ -244,25 +295,36 @@ const VerEvento = () => {
                         style={{ marginLeft: '20px' }}
                     />
                     {isAuthenticated && (
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        sx={{ mt: 2, ml: 2 }}
-                        onClick={() => setOpenReportModal(true)}
-                    >
-                        Reportar Evento
-                    </Button>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            sx={{ mt: 2, ml: 2 }}
+                            onClick={() => setOpenReportModal(true)}
+                        >
+                            Reportar Evento
+                        </Button>
                     )}
+                    {/* Botón solo para el autor */}
+                    {myData.email === evento.author || myData.username === evento.author_username ? (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            sx={{ mt: 2, ml: 2 }}
+                            onClick={handleOpenEditDialog}
+                        >
+                            Editar Evento
+                        </Button>
+                    ) : null}
                     {/* SOLO PARA MODERADORES */}
                     {myData.is_staff && (
-                    <Button
-                        variant="contained"
-                        color="error"
-                        sx={{ mt: 2, ml: 2 }}
-                        onClick={() => setOpenDeleteDialog(true)}
-                    >
-                        Eliminar Evento
-                    </Button>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            sx={{ mt: 2, ml: 2 }}
+                            onClick={() => setOpenDeleteDialog(true)}
+                        >
+                            Eliminar Evento
+                        </Button>
                     )}
                 </div>
             </div>
@@ -429,6 +491,16 @@ const VerEvento = () => {
     </DialogActions>
   </Dialog>
 
+  <EditarEventoDialog
+    open={openEditDialog}
+    onClose={() => setOpenEditDialog(false)}
+    editData={editData}
+    onChange={handleEditChange}
+    onSubmit={handleEditSubmit}
+    loading={editLoading}
+    error={editError}
+    categorias={categoriasDisponibles}
+/>
 
         </div>
     );
