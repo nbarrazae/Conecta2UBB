@@ -59,7 +59,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-#CORS_ALLOW_ALL_ORIGINS = True  # O más seguro: CORS_ALLOWED_ORIGINS = ['http://localhost:3000']
+CORS_ALLOW_ALL_ORIGINS = True  # O más seguro: CORS_ALLOWED_ORIGINS = ['http://localhost:3000']
 
 AUTH_USER_MODEL = 'api.CustomUser'
 
@@ -68,10 +68,10 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # backend por defecto (necesario para el admin)
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "https://146.83.198.35:1258",
-    "https://146.83.198.35:1242",
- ]
+#CORS_ALLOWED_ORIGINS = [
+#    "https://146.83.198.35:1258",
+#    "https://146.83.198.35:1242",
+# ]
 
 
 ROOT_URLCONF = 'backend.urls'
