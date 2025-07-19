@@ -1,13 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./BuscarEventos.css";
 import FiltrosBuscar from "./FiltrosBuscar";
 import ListaEventos from "./ListaEventos";
+import ListaUsuarios from "./ListaUsuarios";
+import AxiosInstance from "../axiosInstance";
 
 const BuscarEventos = () => {
   const [filtroCategoria, setFiltroCategoria] = useState("Todos");
   const [busqueda, setBusqueda] = useState("");
   const [rangoFecha, setRangoFecha] = useState("todos");
-  const [orden, setOrden] = useState("-event_date"); // por defecto: más recientes primero
+  const [orden, setOrden] = useState("-event_date");
+  const [usuarios, setUsuarios] = useState([]);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
+
+  useEffect(() => {
+    const buscarUsuarios = async () => {
+      if (!busqueda.trim()) {
+        setUsuarios([]);
+        return;
+      }
+
+      setLoadingUsuarios(true);
+      try {
+        const res = await AxiosInstance.get(
+          `/users/buscar/?search=${busqueda}`
+        );
+        setUsuarios(res.data);
+      } catch (err) {
+        console.error("Error al buscar usuarios:", err);
+      } finally {
+        setLoadingUsuarios(false);
+      }
+    };
+
+    buscarUsuarios();
+  }, [busqueda]);
 
   return (
     <div className="buscar-wrapper">
@@ -16,7 +43,7 @@ const BuscarEventos = () => {
           <input
             type="text"
             className="barra-busqueda"
-            placeholder="Buscar eventos..."
+            placeholder="Buscar eventos o usuarios..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
@@ -52,6 +79,8 @@ const BuscarEventos = () => {
             rangoFecha={rangoFecha}
             orden={orden}
           />
+
+          <ListaUsuarios usuarios={usuarios} />
         </div>
       </div>
     </div>

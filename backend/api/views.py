@@ -31,6 +31,10 @@ from rest_framework.permissions import IsAuthenticated
 
 from django.utils import timezone
 
+from rest_framework.decorators import action
+from django.db.models import Q
+
+
 User = get_user_model()
 
 # Create your views here.
@@ -134,6 +138,18 @@ class UserViewset(viewsets.ViewSet):
         user = get_object_or_404(CustomUser, username=username)
         serializer = ProfileSerializer(user)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path='buscar')
+    def buscar_usuarios(self, request):
+        search = request.query_params.get('search', '')
+        queryset = CustomUser.objects.filter(
+            Q(username__icontains=search) |
+            Q(full_name__icontains=search) |
+            Q(email__icontains=search)
+        )
+        serializer = ProfileSerializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 #devolver el username del usuario autenticado
 class UserDataViewset(viewsets.ViewSet):
