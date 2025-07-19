@@ -19,6 +19,7 @@
   min-height: 96px;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 12px;
 }
 
 .usuario-card:hover {

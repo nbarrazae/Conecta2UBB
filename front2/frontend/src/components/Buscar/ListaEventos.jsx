@@ -48,8 +48,8 @@ const ListaEventos = ({ categoria, textoBusqueda, rangoFecha, orden }) => {
           params.palabra_clave = textoBusqueda.trim();
         }
 
-        if (categoria && categoria !== "Todos") {
-          params.categoria = categoria;
+        if (categoria && categoria.length > 0 && !categoria.includes("Todos")) {
+          params.categoria = categoria.join(",");
         }
 
         const hoy = dayjs();

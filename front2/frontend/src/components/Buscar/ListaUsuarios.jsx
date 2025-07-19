@@ -10,7 +10,6 @@ const ListaUsuarios = ({ usuarios }) => {
 
   return (
     <div className="lista-usuarios">
-      <h3>Usuarios encontrados</h3>
       <div className="usuarios-grid">
         {usuarios.map((u) => (
           <div
