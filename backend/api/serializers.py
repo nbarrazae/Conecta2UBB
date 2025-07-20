@@ -59,7 +59,6 @@ class ProfileSerializer(serializers.ModelSerializer):
     )
     interests = CategorySerializer(many=True, read_only=True)
 
-    # ✔ Acepta una lista vacía como []
     interest_ids = serializers.ListField(
         child=serializers.IntegerField(),
         write_only=True,
@@ -68,13 +67,16 @@ class ProfileSerializer(serializers.ModelSerializer):
     )
 
     eventos_participados = serializers.SerializerMethodField()
+    eventos_organizados = serializers.SerializerMethodField()  # 🔹 Nuevo campo
 
     class Meta:
         model = CustomUser
         fields = [
             'id', 'email', 'username', 'birthday',
             'full_name', 'bio', 'profile_picture',
-            'interests', 'interest_ids', 'eventos_participados'
+            'interests', 'interest_ids',
+            'eventos_participados',  # ✅ Ya existente
+            'eventos_organizados'   # ✅ Ahora también se entrega este
         ]
         read_only_fields = ['id', 'email']
 
@@ -82,14 +84,17 @@ class ProfileSerializer(serializers.ModelSerializer):
         eventos = obj.eventos_participados.all()
         return EventoSimpleSerializer(eventos, many=True).data
 
+    def get_eventos_organizados(self, obj):
+        eventos = obj.eventos_creados.all()  # 👈 Asumiendo que tienes related_name='eventos_creados'
+        return EventoSimpleSerializer(eventos, many=True).data
+
     def update(self, instance, validated_data):
         request = self.context.get('request')
         raw_interest_ids = request.data.getlist('interest_ids') if request else []
 
-    # Si solo llega un "0" como interés, vaciar intereses
         if raw_interest_ids == ["0"]:
             instance.interests.clear()
-            validated_data.pop('interest_ids', None)  # 👈 evitar doble procesamiento
+            validated_data.pop('interest_ids', None)
         elif 'interest_ids' in validated_data:
             interest_ids = validated_data.pop('interest_ids')
             instance.interests.set(interest_ids)
@@ -101,25 +106,37 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class EventoSimpleSerializer(serializers.ModelSerializer):
-    category = serializers.StringRelatedField()
-    participants = serializers.SerializerMethodField()  # 👈 nuevo campo
+    category_name = serializers.CharField(source="category.name", read_only=True)
+    category = serializers.StringRelatedField(read_only=True)  # 👈 Añádelo de nuevo
+    participants = serializers.SerializerMethodField()
+    author_username = serializers.CharField(source="author.username", read_only=True)
+    author_profile_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = Evento
         fields = [
             'id',
             'title',
-            'category',
+            'category',               # 👈 campo tipo string (fallback)
+            'category_name',          # 👈 campo que usas para mostrar chip
             'event_date',
             'location',
             'state',
             'max_participants',
-            'participants',  # 👈 incluirlo en la salida
+            'participants',
+            'author_username',
+            'author_profile_picture',
         ]
 
+
     def get_participants(self, obj):
-        # Devuelve lista de correos de los inscritos
         return list(obj.participants.values_list('email', flat=True))
+
+    def get_author_profile_picture(self, obj):
+        if obj.author.profile_picture:
+            return obj.author.profile_picture.url
+        return None
+
 
 
 class RecursiveField(serializers.Serializer):

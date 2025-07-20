@@ -1,86 +1,76 @@
-import React from "react";
+import React, { useState } from "react";
+import EventoCard from "../EventoCard";
 import "./EventosUsuario.css";
-import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
-import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
-import EventIcon from "@mui/icons-material/Event";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import GroupIcon from "@mui/icons-material/Group";
-import { useNavigate } from "react-router-dom";
-import Tooltip from "@mui/material/Tooltip"; // ✅ IMPORTACIÓN NUEVA
 
-const iconosCategoria = {
-  Deportes: <SportsSoccerIcon />,
-  Videojuegos: <SportsEsportsIcon />,
-  Default: <EventIcon />,
-};
-
-const EventosUsuario = ({ eventos }) => {
-  const navigate = useNavigate();
+const EventosUsuario = ({ eventos, username, email }) => {
+  const [rolesSeleccionados, setRolesSeleccionados] = useState([]);
 
   if (!eventos || eventos.length === 0) return null;
 
-  return (
-    <div className="eventos-section">
-      <h2 className="eventos-title">Mis eventos</h2>
-      <div className="eventos-list">
-        {eventos.map((evento) => {
-          const participantes = evento.participants?.length || 0;
-          const estaLleno = participantes >= evento.max_participants;
+  const toggleRol = (rol) => {
+    setRolesSeleccionados((prev) =>
+      prev.includes(rol) ? prev.filter((r) => r !== rol) : [...prev, rol]
+    );
+  };
 
-          const contenidoAsistentes = (
-            <div
-              className="evento-item-horizontal"
-              style={{ color: estaLleno ? "#d32f2f" : "inherit" }}
-            >
-              <GroupIcon fontSize="small" />
-              <span>
-                {participantes}/{evento.max_participants}
-              </span>
-            </div>
-          );
+  const filtrarEventos = () => {
+    if (rolesSeleccionados.length === 0) return eventos;
+
+    return eventos.filter((e) => {
+      const esOrganizador = e.author_username === username;
+      const esAsistente = e.participants?.includes(email);
+
+      const quiereOrg = rolesSeleccionados.includes("organizador");
+      const quiereAsis = rolesSeleccionados.includes("asistente");
+
+      if (quiereOrg && quiereAsis) return esOrganizador && esAsistente;
+      if (quiereOrg) return esOrganizador;
+      if (quiereAsis) return esAsistente;
+
+      return false; // fallback defensivo
+    });
+  };
+
+  const eventosFiltrados = filtrarEventos();
+
+  return (
+    <div>
+      <div className="eventos-usuario-header">
+        <span className="rol-label">MOSTRAR EVENTOS COMO:</span>
+        {["organizador", "asistente"].map((rol) => (
+          <span
+            key={rol}
+            className={`chip-rol ${
+              rolesSeleccionados.includes(rol) ? `activo ${rol}` : ""
+            }`}
+            onClick={() => toggleRol(rol)}
+          >
+            {rol.charAt(0).toUpperCase() + rol.slice(1)}
+          </span>
+        ))}
+      </div>
+
+      <div className="lista-eventos">
+        {eventosFiltrados.map((e) => {
+          const esOrganizador = e.author_username === username;
+          const esAsistente = e.participants?.includes(email);
 
           return (
-            <div
-              className="evento-card-horizontal"
-              key={evento.id}
-              onClick={() => navigate(`/ver-evento/${evento.id}`)}
-              style={{ cursor: "pointer" }}
-            >
-              <div className="evento-icon-horizontal">
-                {iconosCategoria[evento.category] || iconosCategoria.Default}
-              </div>
-
-              <div className="evento-contenido-horizontal">
-                <div className="evento-header-horizontal">
-                  <h3 className="evento-nombre-horizontal">{evento.title}</h3>
-                  <span className="chip-globo-horizontal">
-                    {evento.category}
-                  </span>
-                </div>
-
-                <div className="evento-info-horizontal">
-                  <div className="evento-item-horizontal">
-                    <LocationOnIcon fontSize="small" />
-                    <span>{evento.location}</span>
-                  </div>
-                  <div className="evento-item-horizontal">
-                    <CalendarTodayIcon fontSize="small" />
-                    <span>
-                      {new Date(evento.event_date).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  {estaLleno ? (
-                    <Tooltip title="Evento lleno" arrow>
-                      {contenidoAsistentes}
-                    </Tooltip>
-                  ) : (
-                    contenidoAsistentes
-                  )}
-                </div>
-              </div>
-            </div>
+            <EventoCard
+              key={e.id}
+              id={e.id}
+              title={e.title}
+              category={e.category}
+              category_name={e.category_name}
+              author_username={e.author_username}
+              author_profile_picture={e.author_profile_picture}
+              location={e.location}
+              event_date={e.event_date}
+              participants={e.participants}
+              max_participants={e.max_participants}
+              esOrganizador={esOrganizador}
+              esAsistente={esAsistente}
+            />
           );
         })}
       </div>

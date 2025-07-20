@@ -14,7 +14,7 @@ const ListaUsuarios = ({ usuarios }) => {
         {usuarios.map((u) => (
           <div
             key={u.id}
-            className="usuario-card"
+            className="usuario-card aparecer"
             onClick={() => navigate(`/perfil-publico/${u.username}`)}
           >
             <img

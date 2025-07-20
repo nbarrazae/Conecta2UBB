@@ -1,0 +1,159 @@
+/* CONTENEDOR GENERAL DE LA LISTA */
+.lista-eventos {
+  width: 100%;
+  max-width: 650px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* TARJETA DE EVENTO */
+.evento-card.compacto {
+  display: flex;
+  align-items: flex-start;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 0.75rem 1rem;
+  width: 100%;
+  max-width: 650px;
+  gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.evento-card.compacto:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: #fafafa;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.evento-card.compacto.aparecer {
+  animation: fadeInUp 0.4s ease both;
+}
+
+/* ICONO DE CATEGORÍA */
+.evento-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f1f1;
+  border-radius: 16px;
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
+}
+
+/* CONTENIDO DE LA TARJETA */
+.evento-detalles {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-self: flex-start;
+  padding: 0.2rem 0;
+}
+
+/* LÍNEA SUPERIOR: TÍTULO + AUTOR */
+.evento-header-linea {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.evento-titulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* AUTOR */
+.evento-autor-link {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #007bff;
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.evento-autor-link:hover {
+  text-decoration: underline;
+}
+
+.evento-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+/* LÍNEA INFERIOR: INFORMACIÓN Y CATEGORÍA */
+.evento-linea-inferior {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #444;
+  flex-wrap: wrap;
+}
+
+/* ITEM DE INFORMACIÓN */
+.evento-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
+.evento-info-item span {
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* CHIP CATEGORÍA */
+.chip-globo {
+  background-color: #f0f0f0;
+  color: #333;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* CAPACIDAD LLENA */
+.evento-lleno {
+  color: #e53935;
+  font-weight: 600;
+}
+
+/* BOTÓN DE INSCRIPCIÓN EN ESQUINA SUPERIOR DERECHA */
+.evento-inscribir-top {
+  position: absolute;
+  top: 6px;
+  right: 12px;
+  z-index: 10;
+}

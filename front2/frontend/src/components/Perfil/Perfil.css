@@ -58,15 +58,15 @@
 }
 
 .perfil-section {
-  border-top: 1px solid #eee;
-  padding-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 .perfil-section-title {
-  font-weight: bold;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
   margin-bottom: 0.5rem;
 }
 

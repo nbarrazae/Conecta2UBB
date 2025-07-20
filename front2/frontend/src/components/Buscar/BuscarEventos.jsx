@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./BuscarEventos.css";
-import ListaEventos from "./ListaEventos";
+import EventoCard from "../EventoCard";
 import ListaUsuarios from "./ListaUsuarios";
 import AxiosInstance from "../axiosInstance";
 import DropdownFiltro from "./DropdownFiltro";
@@ -16,23 +16,21 @@ const BuscarEventos = () => {
   const [rangoFecha, setRangoFecha] = useState("todos");
   const [orden, setOrden] = useState("-event_date");
   const [usuarios, setUsuarios] = useState([]);
+  const [eventos, setEventos] = useState([]);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [categorias, setCategorias] = useState([]);
   const [tipoBusqueda, setTipoBusqueda] = useState("eventos");
 
   // 🔎 Búsqueda de usuarios
   useEffect(() => {
-    const buscarUsuarios = async () => {
-      if (tipoBusqueda !== "usuarios") {
-        setUsuarios([]);
-        return;
-      }
+    if (tipoBusqueda !== "usuarios") return;
 
+    const buscarUsuarios = async () => {
       setLoadingUsuarios(true);
       try {
         const url = busqueda.trim()
           ? `/users/buscar/?search=${busqueda}`
-          : `/users/buscar/`; // mostrar todos si no hay búsqueda
+          : `/users/buscar/`;
 
         const res = await AxiosInstance.get(url);
         setUsuarios(res.data);
@@ -61,7 +59,31 @@ const BuscarEventos = () => {
     fetchCategorias();
   }, []);
 
-  // 🔢 Etiqueta con badge para Categoría
+  // 📥 Cargar eventos si se selecciona tipo "eventos"
+  useEffect(() => {
+    if (tipoBusqueda !== "eventos") return;
+
+    const fetchEventos = async () => {
+      try {
+        const params = {
+          search: busqueda || "",
+          orden,
+          fecha: rangoFecha,
+        };
+        if (!filtroCategoria.includes("Todos")) {
+          params.categoria = filtroCategoria.join(",");
+        }
+
+        const res = await AxiosInstance.get("/eventos/", { params });
+        setEventos(res.data);
+      } catch (error) {
+        console.error("Error al obtener eventos:", error);
+      }
+    };
+
+    fetchEventos();
+  }, [busqueda, orden, rangoFecha, filtroCategoria, tipoBusqueda]);
+
   const labelCategoria =
     filtroCategoria.length > 1 || filtroCategoria[0] !== "Todos" ? (
       <span className="filtro-con-badge">
@@ -114,7 +136,7 @@ const BuscarEventos = () => {
             />
           </div>
 
-          {/* 🎛 Filtros (solo si se buscan eventos) */}
+          {/* 🎛 Filtros */}
           {tipoBusqueda === "eventos" && (
             <div className="filtros-fecha-orden">
               <DropdownFiltro
@@ -138,7 +160,7 @@ const BuscarEventos = () => {
                       <span
                         className="filtro-clear-x"
                         onClick={(e) => {
-                          e.stopPropagation(); // evitar que se abra el dropdown
+                          e.stopPropagation();
                           setRangoFecha("todos");
                         }}
                       >
@@ -177,12 +199,11 @@ const BuscarEventos = () => {
 
           {/* 📋 Resultados */}
           {tipoBusqueda === "eventos" ? (
-            <ListaEventos
-              categoria={filtroCategoria}
-              textoBusqueda={busqueda}
-              rangoFecha={rangoFecha}
-              orden={orden}
-            />
+            <div className="lista-eventos">
+              {eventos.map((e) => (
+                <EventoCard key={e.id} {...e} />
+              ))}
+            </div>
           ) : (
             <ListaUsuarios usuarios={usuarios} />
           )}
