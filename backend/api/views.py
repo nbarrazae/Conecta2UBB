@@ -48,6 +48,11 @@ class LoginViewset(viewsets.ViewSet):
         user = authenticate(request, email=email, password=password)
         
         if user:
+            if not user.is_active:
+                return Response(
+                    {"message": "Tu cuenta ha sido suspendida por un moderador."},
+                    status=403
+                )
             _, token = AuthToken.objects.create(user)
             user_data = {
                 "id": user.id,
@@ -156,6 +161,8 @@ class EventoViewSet(viewsets.ModelViewSet):
     ordering = ['-event_date']  # 👈 Orden por defecto: eventos más recientes primero
 
     def perform_create(self, serializer):
+        if not self.request.user.is_active:
+            return Response({"error": "Tu usuario está suspendido y no puede crear eventos."}, status=status.HTTP_403_FORBIDDEN)
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
@@ -171,6 +178,8 @@ class EventoViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def inscribirse(self, request, pk=None):
+        if not request.user.is_active:
+            return Response({"error": "Tu usuario está suspendido y no puede inscribirse a eventos."}, status=status.HTTP_403_FORBIDDEN)
         evento = self.get_object()
 
         if evento.state != 'activa':
@@ -334,6 +343,8 @@ class CommentViewSet(viewsets.ModelViewSet):
         return Comment.objects.all()
 
     def perform_create(self, serializer):
+        if not self.request.user.is_active:
+            raise PermissionDenied("Tu usuario está suspendido y no puede comentar.")
         instance = serializer.save()
         if instance.parent:
             parent_user = instance.parent.author
@@ -410,6 +421,20 @@ class CommentReportViewSet(viewsets.ModelViewSet):
         report.status = 'rejected'
         report.save()
         return Response({'message': 'Reporte rechazado.'}, status=200)
+
+class UserAdminViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAdminUser]  # Solo moderadores
+
+    def partial_update(self, request, pk=None):
+        user = self.get_object()
+        is_active = request.data.get('is_active')
+        if is_active is not None:
+            user.is_active = bool(is_active)
+            user.save()
+            return Response({'status': 'updated', 'is_active': user.is_active})
+        return Response({'error': 'No se proporcionó is_active'}, status=400)
 
 
 
