@@ -263,8 +263,11 @@ class EventReportViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        print("DATA ENVIADA AL SERIALIZER:", serializer.validated_data)
-        serializer.save(reporter=self.request.user)
+        evento = serializer.validated_data.get('event')
+        usuario = self.request.user
+        if evento.author == usuario:
+            raise serializers.ValidationError("No puedes reportar tu propio evento.")
+        serializer.save(reporter=usuario)
 
     def get_queryset(self):
         user = self.request.user
@@ -358,7 +361,11 @@ class CommentReportViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(reporter=self.request.user)
+        comentario = serializer.validated_data.get('comment')
+        usuario = self.request.user
+        if comentario and comentario.author == usuario:
+            raise serializers.ValidationError("No puedes reportar tu propio comentario.")
+        serializer.save(reporter=usuario)
 
     def get_queryset(self):
         user = self.request.user
