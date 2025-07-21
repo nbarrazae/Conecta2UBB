@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import *
 from django.contrib.auth import get_user_model
 from django.utils.crypto import get_random_string
+from django.utils import timezone
+
 User = get_user_model()
 
 
@@ -105,6 +107,17 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         return super().update(instance, validated_data)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # ajustar date_joined
+        if instance.date_joined:
+            local_date_joined = timezone.localtime(instance.date_joined)
+            data['date_joined'] = local_date_joined.strftime("%d/%m/%Y %H:%M")
+        # ajustar last_login
+        if instance.last_login:
+            local_last_login = timezone.localtime(instance.last_login)
+            data['last_login'] = local_last_login.strftime("%d/%m/%Y %H:%M")
+        return data
 
 
 

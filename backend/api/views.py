@@ -57,6 +57,9 @@ class LoginViewset(viewsets.ViewSet):
                     {"message": "Tu cuenta ha sido suspendida por un moderador."},
                     status=403
                 )
+            # Actualiza el campo last_login
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
             _, token = AuthToken.objects.create(user)
             user_data = {
                 "id": user.id,
