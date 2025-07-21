@@ -82,14 +82,16 @@ const CommentTree = ({ comment, onReply, myData }) => {
                 )}
 
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => setOpenReport(true)}
-                    >
-                        Reportar
-                    </Button>
+                    {myData?.username !== comment.author_username && (
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            onClick={() => setOpenReport(true)}
+                        >
+                            Reportar
+                        </Button>
+                    )}
                     {myData?.is_staff && (
                         <>
                             <Button

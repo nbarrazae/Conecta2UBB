@@ -298,7 +298,7 @@ const VerEvento = () => {
                         onCambio={fetchEvento}
                         style={{ marginLeft: '20px' }}
                     />
-                    {isAuthenticated && (
+                    {isAuthenticated && myData.username !== evento.author_username && (
                         <Button
                             variant="outlined"
                             color="error"
