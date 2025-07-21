@@ -9,9 +9,17 @@ import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
 import TheaterComedyIcon from "@mui/icons-material/TheaterComedy";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import AxiosInstance from "./axiosInstance";
 
 import BotonInscripcion from "./BotonInscripcion";
-import "./EventoCard.css";
+//import "./EventoCard.css";
+import "./styles/EventoCard.css";
+import "./styles/EventoDetalles.css";
+import "./styles/Participantes.css";
+import "./styles/BotonVerInscritos.css";
+import "./styles/Comentarios.css";
 
 const iconMap = [
   { keyword: "videojuego", icon: <SportsEsportsIcon fontSize="inherit" /> },
@@ -42,10 +50,12 @@ const EventoCard = ({
   participants,
   max_participants,
   sinSombra = false,
-  ocultarBotonInscripcion = false, // ✅ Nueva prop
+  ocultarBotonInscripcion = false,
 }) => {
   const navigate = useNavigate();
   const [yaInscrito, setYaInscrito] = useState(false);
+  const [mostrarParticipantes, setMostrarParticipantes] = useState(false);
+  const [inscritos, setInscritos] = useState([]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -55,6 +65,30 @@ const EventoCard = ({
       );
     }
   }, [participants]);
+
+  const obtenerInscritos = async (e) => {
+    e.stopPropagation();
+
+    if (mostrarParticipantes) {
+      setMostrarParticipantes(false);
+      return;
+    }
+
+    try {
+      const res = await AxiosInstance.get(`/eventos/${id}/inscritos/`);
+      if (Array.isArray(res.data)) {
+        setInscritos(res.data);
+        setMostrarParticipantes(true);
+      } else {
+        console.error("Respuesta no válida:", res.data);
+      }
+    } catch (error) {
+      console.error(
+        "Error al obtener los inscritos:",
+        error.response?.data || error
+      );
+    }
+  };
 
   const foto =
     (author_profile_picture?.trim() &&
@@ -70,9 +104,8 @@ const EventoCard = ({
     <div
       className={`evento-card compacto ${sinSombra ? "sin-sombra" : ""}`}
       onClick={() => navigate(`/ver-evento/${id}`)}
-      style={{ cursor: "pointer", position: "relative" }} // ✅ volvemos a ponerlo
+      style={{ cursor: "pointer", position: "relative" }}
     >
-      {/* 🎯 Solo se muestra si no está oculto */}
       {!ocultarBotonInscripcion && (
         <div
           className="evento-inscribir-top"
@@ -129,6 +162,48 @@ const EventoCard = ({
             </span>
           )}
         </div>
+
+        <button
+          className="boton-inscritos"
+          onClick={obtenerInscritos}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {mostrarParticipantes ? (
+            <>
+              <VisibilityOffIcon fontSize="small" />
+              <span>Ocultar inscritos</span>
+            </>
+          ) : (
+            <>
+              <VisibilityIcon fontSize="small" />
+              <span>Ver inscritos</span>
+            </>
+          )}
+        </button>
+
+        {mostrarParticipantes && (
+          <div className="seccion-participantes">
+            <h4>USUARIOS INSCRITOS:</h4>
+            <ul className="lista-participantes">
+              {inscritos.length === 0 && <li>No hay participantes aún.</li>}
+              {inscritos.map((user) => (
+                <li key={user.id} className="participante-item">
+                  <img
+                    src={defaultAvatar}
+                    alt="avatar"
+                    className="avatar-participante"
+                  />
+                  <div className="participante-datos">
+                    <span className="participante-username">
+                      {user.username}
+                    </span>
+                    <span className="participante-email">{user.email}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
