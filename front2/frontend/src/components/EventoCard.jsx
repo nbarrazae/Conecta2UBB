@@ -11,6 +11,7 @@ import TheaterComedyIcon from "@mui/icons-material/TheaterComedy";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import InfoIcon from "@mui/icons-material/Info";
 import AxiosInstance from "./axiosInstance";
 
 import BotonInscripcion from "./BotonInscripcion";
@@ -20,6 +21,7 @@ import "./styles/EventoDetalles.css";
 import "./styles/Participantes.css";
 import "./styles/BotonVerInscritos.css";
 import "./styles/Comentarios.css";
+import ListaInscritos from "./ListaInscritos";
 
 const iconMap = [
   { keyword: "videojuego", icon: <SportsEsportsIcon fontSize="inherit" /> },
@@ -99,12 +101,15 @@ const EventoCard = ({
 
   const nombreCategoria = category_name || category;
   const estaLleno = participants?.length >= max_participants;
+  const irADetalleEvento = (e) => {
+    e.stopPropagation();
+    navigate(`/evento/${id}`);
+  };
 
   return (
     <div
       className={`evento-card compacto ${sinSombra ? "sin-sombra" : ""}`}
-      onClick={() => navigate(`/ver-evento/${id}`)}
-      style={{ cursor: "pointer", position: "relative" }}
+      style={{ position: "relative" }}
     >
       {!ocultarBotonInscripcion && (
         <div
@@ -122,9 +127,7 @@ const EventoCard = ({
           />
         </div>
       )}
-
       <div className="evento-icono">{iconoCategoria(nombreCategoria)}</div>
-
       <div className="evento-detalles">
         <div className="evento-header-linea">
           <h3 className="evento-titulo" title={title}>
@@ -163,45 +166,44 @@ const EventoCard = ({
           )}
         </div>
 
-        <button
-          className="boton-inscritos"
-          onClick={obtenerInscritos}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          {mostrarParticipantes ? (
-            <>
-              <VisibilityOffIcon fontSize="small" />
-              <span>Ocultar inscritos</span>
-            </>
-          ) : (
-            <>
-              <VisibilityIcon fontSize="small" />
-              <span>Ver inscritos</span>
-            </>
-          )}
-        </button>
+        <div className="evento-botones">
+          <button
+            className="boton-inscritos"
+            onClick={obtenerInscritos}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            {mostrarParticipantes ? (
+              <>
+                <VisibilityOffIcon fontSize="small" />
+                <span>Ocultar inscritos</span>
+              </>
+            ) : (
+              <>
+                <VisibilityIcon fontSize="small" />
+                <span>Ver inscritos</span>
+              </>
+            )}
+          </button>
+
+          <button
+            className="boton-inscritos"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/ver-evento/${id}`);
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <InfoIcon fontSize="small" />
+            <span>Ver Evento</span>
+          </button>
+        </div>
 
         {mostrarParticipantes && (
-          <div className="seccion-participantes">
-            <h4>USUARIOS INSCRITOS:</h4>
-            <ul className="lista-participantes">
-              {inscritos.length === 0 && <li>No hay participantes aún.</li>}
-              {inscritos.map((user) => (
-                <li key={user.id} className="participante-item">
-                  <img
-                    src={defaultAvatar}
-                    alt="avatar"
-                    className="avatar-participante"
-                  />
-                  <div className="participante-datos">
-                    <span className="participante-username">
-                      {user.username}
-                    </span>
-                    <span className="participante-email">{user.email}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+          <div
+            className="seccion-participantes"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ListaInscritos inscritos={inscritos} />
           </div>
         )}
       </div>

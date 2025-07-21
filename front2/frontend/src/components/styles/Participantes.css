@@ -1,8 +1,8 @@
 .seccion-participantes {
   margin-top: -1rem;
   padding-left: 0;
-  margin-left: -5.5rem;
-  margin-top: -0.5rem;
+  margin-left: -2.5rem;
+  margin-top: 0rem;
   animation: fadeIn 0.2s ease-in-out;
 }
 
@@ -41,6 +41,7 @@
 .participante-username {
   font-weight: 600;
   font-size: 0.95rem;
+  color: #202020;
 }
 
 .participante-email {
@@ -57,4 +58,26 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.participante-nombre {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #222;
+}
+
+.participante-username {
+  font-size: 0.85rem;
+  color: #6633cc;
+  text-decoration: none;
+}
+
+.participante-username:hover {
+  text-decoration: underline;
+}
+
+.participante-nombre {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #222;
 }

@@ -214,15 +214,21 @@ class EventoViewSet(viewsets.ModelViewSet):
     def inscritos(self, request, pk=None):
         evento = self.get_object()
         inscritos = evento.participants.all()
+
         data = [
             {
                 "id": usuario.id,
+                "full_name": usuario.full_name,
                 "username": usuario.username,
-                "email": usuario.email
+                "email": usuario.email,
+                "profile_picture": request.build_absolute_uri(usuario.profile_picture.url)
+                if usuario.profile_picture else None
             }
             for usuario in inscritos
         ]
+
         return Response(data, status=status.HTTP_200_OK)
+
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
