@@ -77,13 +77,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             'id', 'email', 'username', 'birthday',
             'full_name', 'bio', 'profile_picture',
             'interests', 'interest_ids',
-            'eventos_participados',  # ✅ Ya existente
-            'eventos_organizados'   # ✅ Ahora también se entrega este
-            'id', 'email', 'username', 'birthday', 'full_name', 'bio',
-            'profile_picture', 'interests', 'interest_ids', 'eventos_participados',
+            'eventos_participados',
+            'eventos_organizados',
             'is_active', 'date_joined', 'last_login'
         ]
         read_only_fields = ['id', 'email', 'date_joined', 'last_login']
+
 
     def get_eventos_participados(self, obj):
         eventos = obj.eventos_participados.all()

@@ -1,0 +1,41 @@
+.boton-inscritos {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #161616;
+  background-color: transparent;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  margin-left: -5.8rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.boton-inscritos:hover {
+  background-color: #f6f8fa;
+  border-color: #1976d2;
+  color: #1976d2;
+}
+
+.boton-icono-participantes {
+  background-color: transparent;
+  color: #1976d2;
+  border: none;
+  padding: 4px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-top: 6px;
+  align-self: flex-start;
+}
+
+.boton-icono-participantes:hover {
+  background-color: rgba(25, 118, 210, 0.1);
+}
