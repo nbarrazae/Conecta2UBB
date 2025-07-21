@@ -250,6 +250,7 @@ const VerEvento = () => {
             setOpenEditDialog(false);
             await fetchEvento(); // recarga datos del evento
         } catch (err) {
+            console.error(err);
             setEditError('Error al guardar los cambios. Revisa los campos.');
         } finally {
             setEditLoading(false);
@@ -264,6 +265,9 @@ const VerEvento = () => {
 
     const yaInscrito = evento.participants.includes(myData.email);
     const estaLleno = evento.participants.length >= (evento.max_participants || evento.limite_asistentes || 0);
+
+    // Solo comentarios raíz
+    const rootComments = comments.filter(c => c.parent === null);
 
     return (
         <div style={styles.container}>
@@ -294,7 +298,7 @@ const VerEvento = () => {
                         onCambio={fetchEvento}
                         style={{ marginLeft: '20px' }}
                     />
-                    {isAuthenticated && (
+                    {isAuthenticated && myData.username !== evento.author_username && (
                         <Button
                             variant="outlined"
                             color="error"
@@ -387,22 +391,22 @@ const VerEvento = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            {comments.length === 0 && !loadingComments ? (
+            {rootComments.length === 0 && !loadingComments ? (
                 <Typography variant="body1" color="text.secondary">
                     Aún no hay comentarios. ¡Sé el primero en comentar!
                 </Typography>
             ) : (
-                comments.map((comment, index) => {
-                    if (comments.length === index + 1) {
+                rootComments.map((comment, index) => {
+                    if (rootComments.length === index + 1) {
                         return (
-                            <Box key={comment.id} ref={lastCommentRef} sx={{ mb: 2 }} id={`comentario-${comment.id}`}>
+                            <Box key={comment.id} ref={lastCommentRef} sx={{ mb: 2 }}>
                                 <CommentTree comment={comment} onReply={handleReply} myData={myData} />
                                 <Divider sx={{ my: 1 }} />
                             </Box>
                         );
                     } else {
                         return (
-                            <Box key={comment.id} sx={{ mb: 2 }} id={`comentario-${comment.id}`}>
+                            <Box key={comment.id} sx={{ mb: 2 }}>
                                 <CommentTree comment={comment} onReply={handleReply} myData={myData} />
                                 <Divider sx={{ my: 1 }} />
                             </Box>

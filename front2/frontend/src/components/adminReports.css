@@ -1,0 +1,30 @@
+/* .row-pending {
+  background-color: #fffde7 !important;
+}
+.row-accepted {
+  background-color: #e8f5e9 !important;
+}
+.row-rejected {
+  background-color: #ffebee !important;
+} */
+.status-pending {
+  color: #fbc02d;
+  /* font-weight: bold; */
+}
+.status-accepted {
+  color: #388e3c;
+  /* font-weight: bold; */
+}
+.status-rejected {
+  color: #d32f2f;
+  /* font-weight: bold; */
+}
+.eliminado {
+  color: #d32f2f;
+  /* font-weight: bold; */
+}
+.header-bold,
+.MuiDataGrid-columnHeader.header-bold,
+.MuiDataGrid-columnHeaderTitle {
+  font-weight: bold !important;
+}

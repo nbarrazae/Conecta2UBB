@@ -48,6 +48,11 @@ class LoginViewset(viewsets.ViewSet):
         user = authenticate(request, email=email, password=password)
         
         if user:
+            if not user.is_active:
+                return Response(
+                    {"message": "Tu cuenta ha sido suspendida por un moderador."},
+                    status=403
+                )
             _, token = AuthToken.objects.create(user)
             user_data = {
                 "id": user.id,
@@ -156,6 +161,8 @@ class EventoViewSet(viewsets.ModelViewSet):
     ordering = ['-event_date']  # 👈 Orden por defecto: eventos más recientes primero
 
     def perform_create(self, serializer):
+        if not self.request.user.is_active:
+            return Response({"error": "Tu usuario está suspendido y no puede crear eventos."}, status=status.HTTP_403_FORBIDDEN)
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
@@ -171,6 +178,8 @@ class EventoViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def inscribirse(self, request, pk=None):
+        if not request.user.is_active:
+            return Response({"error": "Tu usuario está suspendido y no puede inscribirse a eventos."}, status=status.HTTP_403_FORBIDDEN)
         evento = self.get_object()
 
         if evento.state != 'activa':
@@ -263,8 +272,11 @@ class EventReportViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        print("DATA ENVIADA AL SERIALIZER:", serializer.validated_data)
-        serializer.save(reporter=self.request.user)
+        evento = serializer.validated_data.get('event')
+        usuario = self.request.user
+        if evento.author == usuario:
+            raise serializers.ValidationError("No puedes reportar tu propio evento.")
+        serializer.save(reporter=usuario)
 
     def get_queryset(self):
         user = self.request.user
@@ -279,7 +291,17 @@ class EventReportViewSet(viewsets.ModelViewSet):
         report = self.get_object()
         report.status = 'accepted'
         report.save()
-        report.event.delete()
+        motivo = report.get_reason_display()
+        autor = report.event.author if report.event else None
+        if autor:
+            Notification.objects.create(
+                user=autor,
+                notification_type='evento',
+                message=f'Tu evento "{report.event.title}" fue eliminado por moderación. Motivo: {motivo}',
+                url=f'http://localhost:5173/home'
+            )
+        if report.event:
+            report.event.delete()
         return Response({'message': 'Reporte aceptado y evento eliminado.'}, status=200)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
@@ -321,6 +343,8 @@ class CommentViewSet(viewsets.ModelViewSet):
         return Comment.objects.all()
 
     def perform_create(self, serializer):
+        if not self.request.user.is_active:
+            raise PermissionDenied("Tu usuario está suspendido y no puede comentar.")
         instance = serializer.save()
         if instance.parent:
             parent_user = instance.parent.author
@@ -358,7 +382,11 @@ class CommentReportViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(reporter=self.request.user)
+        comentario = serializer.validated_data.get('comment')
+        usuario = self.request.user
+        if comentario and comentario.author == usuario:
+            raise serializers.ValidationError("No puedes reportar tu propio comentario.")
+        serializer.save(reporter=usuario)
 
     def get_queryset(self):
         user = self.request.user
@@ -371,6 +399,18 @@ class CommentReportViewSet(viewsets.ModelViewSet):
         report = self.get_object()
         report.status = 'accepted'
         report.save()
+        motivo = report.get_reason_display()
+        autor = report.comment.author if report.comment else None
+        if autor and report.comment:
+            Notification.objects.create(
+                user=autor,
+                notification_type='comentario',
+                message=(
+                    f'Tu comentario "{report.comment.content}" fue eliminado por moderación. '
+                    f'Motivo: {motivo}'
+                ),
+                url=f'http://localhost:5173/ver-evento/{report.comment.evento.id}' if report.comment.evento else ''
+            )
         if report.comment:
             report.comment.delete()
         return Response({'message': 'Reporte aceptado y comentario eliminado.'}, status=200)
@@ -381,6 +421,20 @@ class CommentReportViewSet(viewsets.ModelViewSet):
         report.status = 'rejected'
         report.save()
         return Response({'message': 'Reporte rechazado.'}, status=200)
+
+class UserAdminViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAdminUser]  # Solo moderadores
+
+    def partial_update(self, request, pk=None):
+        user = self.get_object()
+        is_active = request.data.get('is_active')
+        if is_active is not None:
+            user.is_active = bool(is_active)
+            user.save()
+            return Response({'status': 'updated', 'is_active': user.is_active})
+        return Response({'error': 'No se proporcionó is_active'}, status=400)
 
 
 

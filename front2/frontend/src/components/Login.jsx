@@ -30,23 +30,47 @@ const Login = () => {
             email: data.email,
             password: data.password,
         })
-            .then((response) => {
-                console.log(response.data);
-                localStorage.setItem("Token", response.data.token);
-                localStorage.setItem("user", JSON.stringify(response.data.user));
-                navigate("/home");
-            })
-            .catch((error) => {
-                console.error("Error al iniciar sesión:", error.response);
+        .then((response) => {
+            console.log(response.data);
+            localStorage.setItem("Token", response.data.token);
+            localStorage.setItem("user", JSON.stringify(response.data.user));
+            navigate("/home");
+        })
+        .catch((error) => {
+            console.error("Error al iniciar sesión:", error);
 
-                if (error.response?.data) {
-                    const values = Object.values(error.response.data);
-                    const mensaje = values.flat().join(" ");
-                    setErrorMsg(mensaje);
-                } else {
-                    setErrorMsg("Error al iniciar sesión. Verifique sus credenciales.");
+            // Primero verifica si es un error 403
+            if (error.response?.status === 403) {
+                setErrorMsg(error.response.data?.message || "Tu cuenta ha sido suspendida por un moderador.");
+                return;
+            }
+
+            // Luego intenta otros métodos de captura de error
+            if (error.response?.data) {
+                // Si es un objeto con mensaje
+                if (typeof error.response.data === 'object' && error.response.data.message) {
+                    setErrorMsg(error.response.data.message);
+                    return;
                 }
-            });
+                // Si es un string que puede ser parseado como JSON
+                if (typeof error.response.data === 'string') {
+                    try {
+                        const parsedData = JSON.parse(error.response.data);
+                        if (parsedData.message) {
+                            setErrorMsg(parsedData.message);
+                            return;
+                        }
+                    } catch (e) {
+                        // No es JSON válido, usa el texto directamente
+                        setErrorMsg(error.response.data);
+                        return;
+                    }
+                }
+            }
+
+            // Mensaje por defecto
+            setErrorMsg("Error al iniciar sesión. Verifique sus credenciales.");
+        });
     };
 
     if (!showLogin) {
