@@ -282,7 +282,17 @@ class EventReportViewSet(viewsets.ModelViewSet):
         report = self.get_object()
         report.status = 'accepted'
         report.save()
-        report.event.delete()
+        motivo = report.get_reason_display()
+        autor = report.event.author if report.event else None
+        if autor:
+            Notification.objects.create(
+                user=autor,
+                notification_type='evento',
+                message=f'Tu evento "{report.event.title}" fue eliminado por moderación. Motivo: {motivo}',
+                url=f'http://localhost:5173/home'
+            )
+        if report.event:
+            report.event.delete()
         return Response({'message': 'Reporte aceptado y evento eliminado.'}, status=200)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
@@ -378,6 +388,18 @@ class CommentReportViewSet(viewsets.ModelViewSet):
         report = self.get_object()
         report.status = 'accepted'
         report.save()
+        motivo = report.get_reason_display()
+        autor = report.comment.author if report.comment else None
+        if autor and report.comment:
+            Notification.objects.create(
+                user=autor,
+                notification_type='comentario',
+                message=(
+                    f'Tu comentario "{report.comment.content}" fue eliminado por moderación. '
+                    f'Motivo: {motivo}'
+                ),
+                url=f'http://localhost:5173/ver-evento/{report.comment.evento.id}' if report.comment.evento else ''
+            )
         if report.comment:
             report.comment.delete()
         return Response({'message': 'Reporte aceptado y comentario eliminado.'}, status=200)
