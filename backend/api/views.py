@@ -154,7 +154,7 @@ class UserViewset(viewsets.ViewSet):
 #devolver el username del usuario autenticado
 class UserDataViewset(viewsets.ViewSet):
     queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+    serializer_class = ProfileSerializer  # ✅ Este incluye los intereses
     permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request, *args, **kwargs): 

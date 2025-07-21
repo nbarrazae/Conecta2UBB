@@ -1,28 +1,48 @@
 .contenedor-home {
   width: 100%;
-  padding: 1rem 0;
+  padding: 0;
   box-sizing: border-box;
-}
-
-/* Contenedor de las tarjetas en Home */
-.contenedor-home .lista-eventos {
   display: flex;
   flex-direction: column;
-  gap: 0rem;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  transform: translateX(-220px); /* solo afecta al home */
+  align-items: center;
 }
 
-/* Título "Eventos:" alineado al contenido */
-.titulo-eventos {
-  text-align: left;
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
+/* 🔹 Esta clase ya no se usará si separas la barra */
+.bloque-central {
+  display: none;
+}
+
+/* Tabs */
+.zona-tabs {
   width: 100%;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+  display: flex;
+  justify-content: center;
+  transform: translateY(-66px);
+}
+
+/* 🔹 Mantiene centrada la barra de búsqueda */
+.zona-busqueda {
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 2rem;
+  transform: translate(-180px, 0px);
+  position: relative;
+  z-index: 100; /* asegura una capa superior */
+}
+
+/* Título */
+.titulo-eventos {
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  width: 100%;
   padding: 0 1rem;
+}
+
+/* 🔹 Solo este bloque se mueve a la izquierda */
+.bloque-eventos {
+  width: 100%;
+  max-width: 600px;
+  transform: translateX(-180px);
+  margin-top: -1.25rem;
 }
