@@ -8,7 +8,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import Button from "@mui/material/Button";
 import { DataGrid } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const AdminCommentReports = () => {
   const [reports, setReports] = useState([]);
@@ -18,6 +18,7 @@ const AdminCommentReports = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingActionId, setPendingActionId] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const fetchReports = () => {
     AxiosInstance.get("comment-reports/").then((res) => {
@@ -54,6 +55,25 @@ const AdminCommentReports = () => {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  useEffect(() => {
+    if (reports.length > 0) {
+      const params = new URLSearchParams(location.search);
+      const comentarioId = params.get("comentario");
+      if (comentarioId) {
+        setTimeout(() => {
+          const el = document.getElementById(`comentario-${comentarioId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.style.background = "#e3f2fd";
+            setTimeout(() => {
+              el.style.background = "";
+            }, 2000);
+          }
+        }, 300);
+      }
+    }
+  }, [reports, location.search]);
 
   const columns = [
     { field: "id", headerName: "ID", width: 70 },
