@@ -61,6 +61,16 @@ const AdminUserManagement = () => {
     },
     { field: 'email', headerName: 'Email', width: 220 },
     {
+      field: 'date_joined',
+      headerName: 'Creado',
+      width: 160,
+    },
+    {
+      field: 'last_login',
+      headerName: 'Última conexión',
+      width: 180,
+    },
+    {
       field: 'actions',
       headerName: 'Acciones',
       width: 200,
@@ -70,7 +80,7 @@ const AdminUserManagement = () => {
           direction="row"
           spacing={1}
           alignItems="center"
-          sx={{ height: "100%" }} // Centra verticalmente los botones
+          sx={{ height: "100%" }}
         >
           <Tooltip title="Eliminar">
             <Button
@@ -122,6 +132,8 @@ const AdminUserManagement = () => {
       ),
     },
   ];
+
+  console.log(users);
 
   return (
     <Box sx={{ maxWidth: 1200, width: "100%", ml: 2, mt: 4 }}>
