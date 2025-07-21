@@ -229,7 +229,7 @@ const AdminCommentReports = () => {
           mt: 2,
         }}
       >
-        <h2>Gestión de Reportes de Comentarios</h2>
+        {/* <h2>Gestión de Reportes de Comentarios</h2> */}
         <DataGrid
           rows={sortedReports}
           columns={columns}

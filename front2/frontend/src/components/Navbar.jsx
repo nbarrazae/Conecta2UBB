@@ -256,6 +256,21 @@ const markAllAsRead = async () => {
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
+              to="/admin-users"
+              selected={path === "/admin-users"}
+            >
+              <ListItemIcon>
+                <Person2Icon />
+              </ListItemIcon>
+              <ListItemText primary="Gestionar Usuarios" />
+            </ListItemButton>
+          </ListItem>
+        )}
+
+        {isAdmin && (
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
               to="/admin-reports"
               selected={path === "/admin-reports"}
             >
