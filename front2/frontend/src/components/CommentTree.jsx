@@ -28,6 +28,7 @@ const CommentTree = ({ comment, onReply, myData }) => {
             setReportReason("");
             setTimeout(() => setOpenReport(false), 1500);
         } catch (error) {
+            console.error(error);
             setReportError("Error al enviar el reporte. Intenta nuevamente.");
         }
     };

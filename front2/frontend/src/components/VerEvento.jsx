@@ -250,6 +250,7 @@ const VerEvento = () => {
             setOpenEditDialog(false);
             await fetchEvento(); // recarga datos del evento
         } catch (err) {
+            console.error(err);
             setEditError('Error al guardar los cambios. Revisa los campos.');
         } finally {
             setEditLoading(false);
