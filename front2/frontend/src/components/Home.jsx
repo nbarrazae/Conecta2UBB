@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import BotonInscripcion from "./BotonInscripcion";
 import EventoPostCard from "./EventoPostCard";
 import "./Home.css";
+import BarraBusqueda from "./BarraBusqueda";
 
 const Home = () => {
   const [myData, setMyData] = useState([]);
@@ -52,12 +53,13 @@ const Home = () => {
       ) : (
         <div className="contenedor-home">
           <div className="lista-eventos">
+            <BarraBusqueda /> {/* 🔍 NUEVA BARRA AÑADIDA */}
             <h2 style={{ textAlign: "center" }}>Eventos:</h2>
             {Events.map((event) => (
               <EventoPostCard
                 key={event.id}
                 event={event}
-                mostrarSnackbar={mostrarSnackbar} // ✅ Pasamos prop hacia abajo
+                mostrarSnackbar={mostrarSnackbar}
               />
             ))}
           </div>
