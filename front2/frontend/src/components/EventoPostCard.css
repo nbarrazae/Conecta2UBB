@@ -178,3 +178,20 @@
   margin-top: -16px; /* Sube el botón */
   margin-right: 4px; /* Ajusta a la izquierda si hace falta */
 }
+
+.evento-post-card {
+  position: relative;
+  margin-bottom: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 1rem;
+}
+
+.evento-botones-post {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  margin-left: 0.5rem;
+}

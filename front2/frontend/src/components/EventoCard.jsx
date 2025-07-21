@@ -12,15 +12,16 @@ import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import InfoIcon from "@mui/icons-material/Info";
-import AxiosInstance from "./axiosInstance";
 
+import AxiosInstance from "./axiosInstance";
 import BotonInscripcion from "./BotonInscripcion";
-//import "./EventoCard.css";
+
 import "./styles/EventoCard.css";
 import "./styles/EventoDetalles.css";
 import "./styles/Participantes.css";
 import "./styles/BotonVerInscritos.css";
 import "./styles/Comentarios.css";
+
 import ListaInscritos from "./ListaInscritos";
 
 const iconMap = [
@@ -70,12 +71,10 @@ const EventoCard = ({
 
   const obtenerInscritos = async (e) => {
     e.stopPropagation();
-
     if (mostrarParticipantes) {
       setMostrarParticipantes(false);
       return;
     }
-
     try {
       const res = await AxiosInstance.get(`/eventos/${id}/inscritos/`);
       if (Array.isArray(res.data)) {
@@ -101,33 +100,16 @@ const EventoCard = ({
 
   const nombreCategoria = category_name || category;
   const estaLleno = participants?.length >= max_participants;
-  const irADetalleEvento = (e) => {
-    e.stopPropagation();
-    navigate(`/evento/${id}`);
-  };
 
   return (
     <div
       className={`evento-card compacto ${sinSombra ? "sin-sombra" : ""}`}
       style={{ position: "relative" }}
     >
-      {!ocultarBotonInscripcion && (
-        <div
-          className="evento-inscribir-top"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <BotonInscripcion
-            eventId={id}
-            yaInscrito={yaInscrito}
-            estaLleno={estaLleno}
-            onCambio={(accion) => {
-              if (accion === "inscrito") setYaInscrito(true);
-              if (accion === "desinscrito") setYaInscrito(false);
-            }}
-          />
-        </div>
-      )}
+      {/* 🔴 Botón flotante eliminado */}
+
       <div className="evento-icono">{iconoCategoria(nombreCategoria)}</div>
+
       <div className="evento-detalles">
         <div className="evento-header-linea">
           <h3 className="evento-titulo" title={title}>
@@ -167,6 +149,19 @@ const EventoCard = ({
         </div>
 
         <div className="evento-botones">
+          {/* 🔵 Botón Inscribirse ahora aquí */}
+          {!ocultarBotonInscripcion && (
+            <BotonInscripcion
+              eventId={id}
+              yaInscrito={yaInscrito}
+              estaLleno={estaLleno}
+              onCambio={(accion) => {
+                if (accion === "inscrito") setYaInscrito(true);
+                if (accion === "desinscrito") setYaInscrito(false);
+              }}
+            />
+          )}
+
           <button
             className="boton-inscritos"
             onClick={obtenerInscritos}

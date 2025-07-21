@@ -67,7 +67,7 @@ const BotonInscripcion = ({
           style={{
             color: "gray",
             fontStyle: "italic",
-            marginTop: "8px",
+            marginTop: "16px",
             display: "inline-block",
           }}
         >
@@ -101,7 +101,6 @@ const BotonInscripcion = ({
           style={{
             marginTop: "8px",
             borderRadius: "20px",
-            fontWeight: "bold",
           }}
         >
           Inscribirme
