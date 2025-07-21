@@ -24,7 +24,7 @@
 }
 
 .evento-card.compacto:hover {
-  transform: translateY(-2px);
+  /* transform: translateY(-2px); */ /* ← COMENTAR esto temporalmente */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   background-color: #fafafa;
 }
@@ -156,4 +156,39 @@
   top: 6px;
   right: 12px;
   z-index: 10;
+}
+
+.evento-card.sin-sombra {
+  box-shadow: none;
+  background-color: transparent;
+  padding: 0;
+}
+.comentario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.comentario-autor-link {
+  text-decoration: none;
+  color: #222;
+}
+
+.comentario-autor-link:hover {
+  text-decoration: underline;
+  color: #007bff;
+}
+
+.comentario-autor {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.comentario-fecha {
+  font-style: italic;
+  font-size: 0.8rem;
+  color: #888;
 }

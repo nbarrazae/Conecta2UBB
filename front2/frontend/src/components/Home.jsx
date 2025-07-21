@@ -1,19 +1,31 @@
 import AxiosInstance from "./axiosInstance";
 import { React, useEffect, useState } from "react";
-import { Box, Button } from "@mui/material";
+import { Snackbar, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import BotonInscripcion from "./BotonInscripcion";
+import EventoPostCard from "./EventoPostCard";
+import "./Home.css";
 
 const Home = () => {
   const [myData, setMyData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
   const [Events, setEvents] = useState([]);
+  const navigate = useNavigate();
+
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+  const mostrarSnackbar = (mensaje, tipo = "success") => {
+    setSnackbarMessage(mensaje);
+    setSnackbarSeverity(tipo);
+    setSnackbarOpen(true);
+  };
 
   const GetData = () => {
     AxiosInstance.get("user_data/").then((res) => {
       setMyData(res.data);
-      console.log(res.data);
       setLoading(false);
     });
   };
@@ -21,7 +33,6 @@ const Home = () => {
   const GetEvents = () => {
     AxiosInstance.get("eventos/").then((res) => {
       setEvents(res.data);
-      console.log(res.data);
     });
   };
 
@@ -34,80 +45,42 @@ const Home = () => {
     navigate("/crear-evento");
   };
 
-  const handleEventClick = (eventId) => {
-    navigate(`/ver-evento/${eventId}`);
-  };
-
   return (
     <div>
       {loading ? (
         <div>Loading...</div>
       ) : (
-        <div>
-          <h2>Eventos:</h2>
-          <ul>
-            {Events.map((event) => {
-              const estaLleno =
-                event.participants.length >= event.max_participants;
-              const yaInscrito = event.participants.includes(myData.email);
-
-              return (
-                <li
-                  key={event.id}
-                  style={{
-                    marginBottom: "20px",
-                    padding: "10px",
-                    border: "1px solid #ccc",
-                    borderRadius: "8px",
-                    listStyle: "none",
-                    cursor: "pointer",
-                    backgroundColor: estaLleno ? "#f8d7da" : "#e2f0d9",
-                    maxWidth: "75%",
-                  }}
-                  onClick={() => handleEventClick(event.id)}
-                >
-                  <strong>{event.title}</strong> - {event.description} <br />
-                  Fecha: {new Date(event.event_date).toISOString().split("T")[0]} <br />
-                  Ubicación: {event.location} <br />
-                  Estado: {event.state} <br />
-                  Categoría: {event.category_name} <br />
-                  Participantes: {event.participants.length}/
-                  {event.max_participants} <br />
-                  <i>
-                    Creado por:{" "}
-                    <span
-                      style={{
-                        color: "#1976d2",
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/perfil-publico/${event.author_username}`);
-                      }}
-                    >
-                      {event.author_username}
-                    </span>
-                  </i>
-                  <br />
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent triggering the event click
-                    }}
-                  >
-                    <BotonInscripcion
-                      eventId={event.id}
-                      yaInscrito={yaInscrito}
-                      estaLleno={estaLleno}
-                      onCambio={GetEvents}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+        <div className="contenedor-home">
+          <div className="lista-eventos">
+            <h2 style={{ textAlign: "center" }}>Eventos:</h2>
+            {Events.map((event) => (
+              <EventoPostCard
+                key={event.id}
+                event={event}
+                mostrarSnackbar={mostrarSnackbar} // ✅ Pasamos prop hacia abajo
+              />
+            ))}
+          </div>
         </div>
       )}
+
+      {/* Snackbar global para esta vista */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        sx={{ position: "fixed", zIndex: 13000, bottom: 20, right: 20 }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

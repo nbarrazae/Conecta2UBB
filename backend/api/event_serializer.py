@@ -18,6 +18,8 @@ class EventoSerializer(serializers.ModelSerializer):
     )
     category_name = serializers.CharField(source='category.name', read_only=True)
     participants = serializers.StringRelatedField(many=True, read_only=True)
+    comment_count = serializers.SerializerMethodField()
+
 
     class Meta:
         """Serializer for the Evento model, including related fields."""
@@ -37,6 +39,7 @@ class EventoSerializer(serializers.ModelSerializer):
             'category_name',
             'participants',
             'max_participants',
+            'comment_count',
         ]
 
     def get_author_profile_picture(self, obj):  # ✅ Esta función debe estar aquí
@@ -46,6 +49,11 @@ class EventoSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.author.profile_picture.url)
             return obj.author.profile_picture.url
         return None
+    
+    def get_comment_count(self, obj):
+        return obj.comments.count()
+
+
 
 class EventReportSerializer(serializers.ModelSerializer):
     event = serializers.PrimaryKeyRelatedField(

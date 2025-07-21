@@ -111,6 +111,7 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
     participants = serializers.SerializerMethodField()
     author_username = serializers.CharField(source="author.username", read_only=True)
     author_profile_picture = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()  # ✅ Nuevo campo
 
     class Meta:
         model = Evento
@@ -126,6 +127,7 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
             'participants',
             'author_username',
             'author_profile_picture',
+            'comment_count',  # ✅ Nuevo campo
         ]
 
 
@@ -136,6 +138,9 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
         if obj.author.profile_picture:
             return obj.author.profile_picture.url
         return None
+    
+    def get_comment_count(self, obj):  # ✅ Nuevo método
+        return obj.comments.count()
 
 
 
@@ -146,12 +151,21 @@ class RecursiveField(serializers.Serializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
+    author_profile_picture = serializers.SerializerMethodField()
     replies = RecursiveField(many=True, read_only=True)
 
     class Meta:
         model = Comment
-        fields = ['id', 'evento', 'author', 'author_username', 'content', 'parent', 'replies', 'created_at']
+        fields = ['id', 'evento', 'author', 'author_username', 'author_profile_picture', 'content', 'parent', 'replies', 'created_at']
         read_only_fields = ['author', 'created_at']
+
+    def get_author_profile_picture(self, obj):
+        request = self.context.get('request')
+        if obj.author.profile_picture:
+            if request:
+                return request.build_absolute_uri(obj.author.profile_picture.url)
+            return obj.author.profile_picture.url
+        return None
 
     def create(self, validated_data):
         request = self.context.get('request')

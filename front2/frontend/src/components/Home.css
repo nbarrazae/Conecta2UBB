@@ -1,0 +1,28 @@
+.contenedor-home {
+  width: 100%;
+  padding: 1rem 0;
+  box-sizing: border-box;
+}
+
+/* Contenedor de las tarjetas en Home */
+.contenedor-home .lista-eventos {
+  display: flex;
+  flex-direction: column;
+  gap: 0rem;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  transform: translateX(-220px); /* solo afecta al home */
+}
+
+/* Título "Eventos:" alineado al contenido */
+.titulo-eventos {
+  text-align: left;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem;
+}

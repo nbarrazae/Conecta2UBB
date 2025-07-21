@@ -41,6 +41,8 @@ const EventoCard = ({
   event_date,
   participants,
   max_participants,
+  sinSombra = false,
+  ocultarBotonInscripcion = false, // ✅ Nueva prop
 }) => {
   const navigate = useNavigate();
   const [yaInscrito, setYaInscrito] = useState(false);
@@ -66,22 +68,27 @@ const EventoCard = ({
 
   return (
     <div
-      className="evento-card compacto aparecer"
+      className={`evento-card compacto ${sinSombra ? "sin-sombra" : ""}`}
       onClick={() => navigate(`/ver-evento/${id}`)}
-      style={{ cursor: "pointer", position: "relative" }}
+      style={{ cursor: "pointer", position: "relative" }} // ✅ volvemos a ponerlo
     >
-      {/* 🎯 Botón de inscripción arriba a la derecha */}
-      <div
-        className="evento-inscribir-top"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <BotonInscripcion
-          eventId={id}
-          yaInscrito={yaInscrito}
-          estaLleno={estaLleno}
-          onCambio={() => window.location.reload()}
-        />
-      </div>
+      {/* 🎯 Solo se muestra si no está oculto */}
+      {!ocultarBotonInscripcion && (
+        <div
+          className="evento-inscribir-top"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <BotonInscripcion
+            eventId={id}
+            yaInscrito={yaInscrito}
+            estaLleno={estaLleno}
+            onCambio={(accion) => {
+              if (accion === "inscrito") setYaInscrito(true);
+              if (accion === "desinscrito") setYaInscrito(false);
+            }}
+          />
+        </div>
+      )}
 
       <div className="evento-icono">{iconoCategoria(nombreCategoria)}</div>
 
