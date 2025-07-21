@@ -12,6 +12,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("todos");
+  const [animating, setAnimating] = useState(false);
+
   const navigate = useNavigate();
 
   // Snackbar state
@@ -27,7 +29,6 @@ const Home = () => {
 
   const GetData = () => {
     AxiosInstance.get("user_data/").then((res) => {
-      console.log("Usuario logeado (completo):", res.data);
       setMyData(res.data);
       setLoading(false);
     });
@@ -35,7 +36,6 @@ const Home = () => {
 
   const GetEvents = () => {
     AxiosInstance.get("eventos/").then((res) => {
-      console.log("Eventos recibidos:", res.data);
       const eventosOrdenados = res.data.sort((a, b) =>
         a.event_date > b.event_date ? 1 : -1
       );
@@ -48,9 +48,17 @@ const Home = () => {
     GetEvents();
   }, []);
 
-  // Filtro de eventos según pestaña activa
+  const handleTabChange = (nuevaTab) => {
+    if (nuevaTab === activeTab) return;
+    setAnimating(true);
+    setTimeout(() => {
+      setActiveTab(nuevaTab);
+      setAnimating(false);
+    }, 300); // Coincide con la duración del CSS
+  };
+
   const eventosFiltrados =
-    activeTab === "para-ti" && myData?.interests && myData.interests.length > 0
+    activeTab === "para-ti" && myData?.interests?.length > 0
       ? events.filter((event) => {
           const categoriaEvento = event.category_name
             ? event.category_name.trim().toLowerCase()
@@ -58,11 +66,7 @@ const Home = () => {
           const interesesUsuario = myData.interests.map((i) =>
             i.name.trim().toLowerCase()
           );
-          const incluido = interesesUsuario.includes(categoriaEvento);
-          console.log(
-            `[DEBUG] Evento: ${event.title} | Categoría: "${categoriaEvento}" | Intereses: ${interesesUsuario} | ¿Incluido?: ${incluido}`
-          );
-          return incluido;
+          return interesesUsuario.includes(categoriaEvento);
         })
       : events;
 
@@ -77,22 +81,23 @@ const Home = () => {
       ) : (
         <div className="contenedor-home">
           <div className="zona-tabs">
-            <TabsEventos activeTab={activeTab} onChangeTab={setActiveTab} />
+            <TabsEventos activeTab={activeTab} onChangeTab={handleTabChange} />
           </div>
 
-          {/* 🔹 La barra de búsqueda debe estar centrada */}
-          <div className="zona-busqueda">
-            <BarraBusqueda />
+          <div className="zona-busqueda-wrapper">
+            <div className="zona-busqueda-con-boton">
+              <div className="barra-wrapper">
+                <BarraBusqueda />
+              </div>
+              <button className="boton-crear-evento" onClick={handleRedirect}>
+                + Crear evento
+              </button>
+            </div>
           </div>
 
-          {/* 🔹 Solo movemos el bloque de eventos */}
-          <div className="bloque-eventos">
-            <h2 className="titulo-eventos">
-              {activeTab === "para-ti"
-                ? "Eventos para ti:"
-                : "Todos los eventos:"}
-            </h2>
-
+          <div
+            className={`bloque-eventos ${animating ? "fade-out" : "fade-in"}`}
+          >
             {eventosFiltrados.length === 0 ? (
               <p style={{ textAlign: "center", marginTop: "1rem" }}>
                 No se encontraron eventos.

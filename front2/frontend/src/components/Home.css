@@ -25,7 +25,7 @@
   width: 100%;
   max-width: 600px;
   margin-bottom: 2rem;
-  transform: translate(-180px, 0px);
+  transform: translate(-160px, 0px);
   position: relative;
   z-index: 100; /* asegura una capa superior */
 }
@@ -45,4 +45,60 @@
   max-width: 600px;
   transform: translateX(-180px);
   margin-top: -1.25rem;
+}
+
+.fade-in {
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* 🔵 Contenedor que limita el ancho total */
+.zona-busqueda-wrapper {
+  width: 100%;
+  max-width: 650px; /* igual al ancho de tus publicaciones */
+  transform: translateX(-160px);
+  margin: 0 auto 1rem auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+/* 🔵 Layout horizontal entre barra + botón */
+.zona-busqueda-con-boton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* 🔵 Ajuste para barra de búsqueda */
+.barra-wrapper {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* 🔵 Botón */
+.boton-crear-evento {
+  padding: 0.65rem 1.2rem;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 26px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  white-space: nowrap;
+  margin: 0 auto 1.5rem auto;
+  margin-right: 2rem;
+}
+
+.boton-crear-evento:hover {
+  background-color: #1259a4;
 }
