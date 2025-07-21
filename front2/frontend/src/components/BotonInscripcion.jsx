@@ -2,32 +2,49 @@ import React, { useState } from "react";
 import { Button, Snackbar, Alert } from "@mui/material";
 import AxiosInstance from "./axiosInstance";
 
-const BotonInscripcion = ({ eventId, yaInscrito, estaLleno, onCambio }) => {
+const BotonInscripcion = ({
+  eventId,
+  yaInscrito,
+  estaLleno,
+  onCambio,
+  mostrarSnackbar, // puede venir o no
+}) => {
   const [hovered, setHovered] = useState(false);
+
+  // fallback local
   const [open, setOpen] = useState(false);
   const [mensaje, setMensaje] = useState("");
-  const [tipo, setTipo] = useState("success"); // success | error
+  const [tipo, setTipo] = useState("success");
 
-  const mostrarMensaje = (texto, tipoMensaje = "success") => {
-    setMensaje(texto);
-    setTipo(tipoMensaje);
+  const fallbackSnackbar = (mensaje, tipo = "success") => {
+    setMensaje(mensaje);
+    setTipo(tipo);
     setOpen(true);
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const handleSuccess = (mensaje) => {
+    if (mostrarSnackbar) {
+      mostrarSnackbar(mensaje, "success");
+    } else {
+      fallbackSnackbar(mensaje, "success");
+    }
+  };
+
+  const handleError = (mensaje) => {
+    if (mostrarSnackbar) {
+      mostrarSnackbar(mensaje, "error");
+    } else {
+      fallbackSnackbar(mensaje, "error");
+    }
   };
 
   const handleInscribirse = async () => {
     try {
       const res = await AxiosInstance.post(`/eventos/${eventId}/inscribirse/`);
-      mostrarMensaje(res.data.message, "success");
-      onCambio?.();
+      handleSuccess(res.data.message);
+      onCambio?.("inscrito");
     } catch (err) {
-      mostrarMensaje(
-        err.response?.data?.error || "Error al inscribirse.",
-        "error"
-      );
+      handleError(err.response?.data?.error || "Error al inscribirse.");
     }
   };
 
@@ -36,19 +53,16 @@ const BotonInscripcion = ({ eventId, yaInscrito, estaLleno, onCambio }) => {
       const res = await AxiosInstance.post(
         `/eventos/${eventId}/desinscribirse/`
       );
-      mostrarMensaje(res.data.message, "success");
-      onCambio?.();
+      handleSuccess(res.data.message);
+      onCambio?.("desinscrito");
     } catch (err) {
-      mostrarMensaje(
-        err.response?.data?.error || "Error al desinscribirse.",
-        "error"
-      );
+      handleError(err.response?.data?.error || "Error al desinscribirse.");
     }
   };
 
-  if (!yaInscrito && estaLleno) {
-    return (
-      <>
+  return (
+    <>
+      {!yaInscrito && estaLleno ? (
         <span
           style={{
             color: "gray",
@@ -59,28 +73,7 @@ const BotonInscripcion = ({ eventId, yaInscrito, estaLleno, onCambio }) => {
         >
           Evento lleno
         </span>
-        <Snackbar
-          open={open}
-          autoHideDuration={3000}
-          onClose={handleClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        >
-          <Alert
-            onClose={handleClose}
-            severity={tipo}
-            variant="filled"
-            sx={{ width: "100%" }}
-          >
-            {mensaje}
-          </Alert>
-        </Snackbar>
-      </>
-    );
-  }
-
-  return (
-    <>
-      {yaInscrito ? (
+      ) : yaInscrito ? (
         <Button
           variant="outlined"
           size="small"
@@ -115,21 +108,31 @@ const BotonInscripcion = ({ eventId, yaInscrito, estaLleno, onCambio }) => {
         </Button>
       )}
 
-      <Snackbar
-        open={open}
-        autoHideDuration={3000}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleClose}
-          severity={tipo}
-          variant="filled"
-          sx={{ width: "100%" }}
+      {/* Snackbar fallback si no se pasa mostrarSnackbar */}
+      {!mostrarSnackbar && (
+        <Snackbar
+          open={open}
+          autoHideDuration={3000}
+          onClose={() => setOpen(false)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          sx={{
+            position: "fixed !important",
+            bottom: "20px !important",
+            right: "20px !important",
+            zIndex: 13000,
+            transform: "none !important",
+          }}
         >
-          {mensaje}
-        </Alert>
-      </Snackbar>
+          <Alert
+            onClose={() => setOpen(false)}
+            severity={tipo}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {mensaje}
+          </Alert>
+        </Snackbar>
+      )}
     </>
   );
 };

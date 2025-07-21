@@ -6,29 +6,30 @@
 
 .buscar-page {
   width: 100%;
-  max-width: 1200px; /* igual que perfil */
-  padding: 2rem 1rem;
+  max-width: 1200px;
+  padding: 0rem 1rem 2rem 1rem; /* menos padding arriba */
   box-sizing: border-box;
 }
 
 .buscar-contenido {
   width: 100%;
-  max-width: 800px; /* igual que perfil-content */
+  max-width: 800px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
+  min-height: 500px; /* ✅ evita corte del dropdown */
+  position: relative; /* ✅ permite que el dropdown se posicione bien */
 }
 
 .barra-busqueda {
-  width: 100%;
-  max-width: 600px;
-  padding: 0.65rem 1rem;
+  flex: 1;
+  border: none;
+  outline: none;
   font-size: 1rem;
-  border-radius: 14px;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: transparent;
+  color: #333;
+  padding: 0.4rem 0;
 }
 
 .barra-busqueda:focus {
@@ -41,37 +42,111 @@
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-top: -1rem;
+  justify-content: center;
   font-size: 0.9rem;
   color: #333;
+  margin-top: 0.5rem;
 }
+
 .filtros-fecha-orden label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.filtros-fecha-orden select,
-.filtros-fecha-orden input[type="date"] {
-  padding: 0.5rem 0.75rem;
-  border-radius: 12px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: #333;
-  font-size: 0.95rem;
-  transition: border-color 0.2s ease;
-  min-width: 160px;
-  cursor: pointer;
+.tipo-chip-selector {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 0.5rem 0;
 }
 
-.filtros-fecha-orden select:focus,
-.filtros-fecha-orden input[type="date"]:focus {
-  outline: none;
+.tipo-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  border-radius: 30px;
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tipo-chip:hover {
+  background-color: #f2f2f2;
+}
+
+.tipo-chip.activo {
+  background-color: #1976d2;
+  color: white;
+  border-color: #1976d2;
+}
+
+.barra-busqueda-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 0.4rem 0.75rem;
+  gap: 0.5rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.barra-busqueda-wrapper:focus-within {
   border-color: #1976d2;
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
 }
 
-.filtros-fecha-orden select:hover,
-.filtros-fecha-orden input[type="date"]:hover {
-  border-color: #999;
+.icono-busqueda {
+  color: #888;
+}
+
+.filtro-con-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  position: relative;
+}
+
+.badge {
+  background-color: #1976d2;
+  color: white;
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  line-height: 1;
+  display: inline-block;
+}
+
+.filtro-activo-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.filtro-clear-x {
+  font-size: 0.85rem;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 999px;
+  padding: 0px 6px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  line-height: 1;
+  transition: background 0.2s ease;
+}
+
+.filtro-clear-x:hover {
+  background: #bbdefb;
 }

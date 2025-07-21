@@ -63,3 +63,45 @@
   flex-direction: column;
   gap: 1.2rem; /* Aumentamos el espacio vertical entre tarjetas */
 }
+
+.eventos-usuario-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: -0.5rem 0 1rem;
+  flex-wrap: wrap;
+}
+
+.rol-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+  color: #333;
+}
+
+.chip-rol {
+  background-color: #f0f0f0;
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.chip-rol:hover {
+  background-color: #e4e4e4;
+}
+
+/* Colores activos según rol */
+.chip-rol.activo.organizador {
+  background-color: #1976d2;
+  color: white;
+}
+
+.chip-rol.activo.asistente {
+  background-color: #1976d2;
+  color: white;
+}

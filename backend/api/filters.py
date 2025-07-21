@@ -4,7 +4,7 @@ from .models import Evento
 
 class EventoFilter(filters.FilterSet):
     palabra_clave = filters.CharFilter(method='buscar_por_palabra', label='Buscar')
-    categoria = filters.CharFilter(field_name='category__name', lookup_expr='icontains')
+    categoria = filters.CharFilter(method='filtrar_categoria_multiple')
     ubicacion = filters.CharFilter(field_name='location', lookup_expr='icontains')
     fecha__gte = filters.DateFilter(field_name='event_date', lookup_expr='gte')
     fecha__lte = filters.DateFilter(field_name='event_date', lookup_expr='lte')
@@ -19,3 +19,9 @@ class EventoFilter(filters.FilterSet):
             Q(description__icontains=value) |
             Q(location__icontains=value)
         )
+
+    def filtrar_categoria_multiple(self, queryset, name, value):
+        categorias = [cat.strip() for cat in value.split(',') if cat.strip()]
+        if "Todos" in categorias:
+            return queryset
+        return queryset.filter(category__name__in=categorias)

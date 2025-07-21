@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import AxiosInstance from "../axiosInstance";
 import CakeIcon from "@mui/icons-material/Cake";
 import InfoIcon from "@mui/icons-material/Info";
+import EventIcon from "@mui/icons-material/Event";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EventosUsuario from "./EventosUsuario";
@@ -68,9 +69,20 @@ const UserProfile = () => {
   if (loading) return <p className="perfil-loading">Cargando perfil...</p>;
   if (!perfil)
     return <p className="perfil-error">No se pudo cargar el perfil.</p>;
+
   console.log("👤 Usuario logeado:", usernameLogeado);
   console.log("📄 Perfil cargado:", perfil?.username);
   console.log("✅ Es mi perfil:", esPerfilPropio);
+
+  // ✅ Combinar eventos y eliminar duplicados por ID
+  const eventosCombinados = [
+    ...perfil.eventos_participados.map((e) => ({ ...e })),
+    ...perfil.eventos_organizados.map((e) => ({ ...e })),
+  ];
+
+  const eventosUnicos = Array.from(
+    new Map(eventosCombinados.map((e) => [e.id, e])).values()
+  );
 
   return (
     <>
@@ -142,7 +154,18 @@ const UserProfile = () => {
               </div>
             </div>
 
-            <EventosUsuario eventos={perfil.eventos_participados} />
+            <div className="perfil-section">
+              <div className="perfil-section-title">
+                <EventIcon />
+                Mis eventos
+              </div>
+            </div>
+
+            <EventosUsuario
+              eventos={eventosUnicos}
+              username={perfil.username}
+              email={perfil.email}
+            />
 
             {esPerfilPropio && showModal && (
               <EditarPerfil
