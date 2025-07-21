@@ -208,6 +208,43 @@ const VerEvento = () => {
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
           fetchComments();
+    };
+
+    // cuando se abre el diálogo, llena los datos actuales
+    const handleOpenEditDialog = () => {
+        setEditData({
+            title: evento.title || '',
+            description: evento.description || '',
+            event_date: evento.event_date ? evento.event_date.slice(0, 16) : '', // formato YYYY-MM-DDTHH:mm
+            location: evento.location || '',
+            category: evento.category || '',
+            max_participants: evento.max_participants || '',
+        });
+        setEditError('');
+        setOpenEditDialog(true);
+    };
+
+    // handler para cambios en los campos
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // guardar cambios
+    const handleEditSubmit = async () => {
+        setEditLoading(true);
+        setEditError('');
+        try {
+            await AxiosInstance.patch(`/eventos/${evento.id}/`, {
+                ...editData,
+            });
+            setOpenEditDialog(false);
+            await fetchEvento(); // recarga datos del evento
+        } catch (err) {
+            console.error(err);
+            setEditError('Error al guardar los cambios. Revisa los campos.');
+        } finally {
+            setEditLoading(false);
         }
       });
       if (node) observer.current.observe(node);
@@ -308,6 +345,12 @@ const VerEvento = () => {
             style={{ marginLeft: "20px" }}
           />
           {isAuthenticated && (
+
+    // Solo comentarios raíz
+    const rootComments = comments.filter(c => c.parent === null);
+
+    return (
+        <div style={styles.container}>
             <Button
               variant="outlined"
               color="error"
@@ -374,6 +417,75 @@ const VerEvento = () => {
           {imagenes.map((img, idx) => (
             <div key={idx} style={styles.imageWrapper}>
               <img src={img.url} alt={`imagen-${idx}`} style={styles.image} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2 style={styles.title}>
+                    {evento.title}
+                </h2>
+                <div>
+                    <BotonInscripcion
+                        eventId={evento.id}
+                        yaInscrito={yaInscrito}
+                        estaLleno={estaLleno}
+                        onCambio={fetchEvento}
+                        style={{ marginLeft: '20px' }}
+                    />
+                    {isAuthenticated && myData.username !== evento.author_username && (
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            sx={{ mt: 2, ml: 2 }}
+                            onClick={() => setOpenReportModal(true)}
+                        >
+                            Reportar Evento
+                        </Button>
+                    )}
+                    {/* Botón solo para el autor */}
+                    {myData.email === evento.author || myData.username === evento.author_username ? (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            sx={{ mt: 2, ml: 2 }}
+                            onClick={handleOpenEditDialog}
+                        >
+                            Editar Evento
+                        </Button>
+                    ) : null}
+                    {/* SOLO PARA MODERADORES */}
+                    {myData.is_staff && (
+                        <Button
+                            variant="contained"
+                            color="error"
+                            sx={{ mt: 2, ml: 2 }}
+                            onClick={() => setOpenDeleteDialog(true)}
+                        >
+                            Eliminar Evento
+                        </Button>
+                    )}
+                </div>
+            </div>
+            <div style={styles.section}>
+                <h3 style={styles.sectionTitle}>Información</h3>
+                <p><strong>Lugar:</strong> {evento.location}</p>
+                <p><strong>Fecha:</strong> {new Date(evento.event_date).toISOString().split("T")[0]}</p>
+                <p><strong>Categoría:</strong> {categoriasDisponibles.find(cat => cat.id === evento.category)?.name || 'Sin categoría'}</p>
+                <p><strong>Creador del Evento:</strong> {evento.author_username}</p>
+                <p><strong>Participantes:</strong> {evento.participants.length}/{evento.max_participants}</p>
+            </div>
+
+            <div style={styles.section}>
+                <h3 style={styles.sectionTitle}>Sobre el Evento + Imagenes del Evento</h3>
+                <p>{evento.description}</p>
+                <div style={styles.imageContainer}>
+                    {imagenes.map((img, idx) => (
+                        <div key={idx} style={styles.imageWrapper}>
+                            <img
+                                src={img.url}
+                                alt={`imagen-${idx}`}
+                                style={styles.image}
+                            />
+                        </div>
+                    ))}
+                </div>
             </div>
           ))}
         </div>
@@ -484,6 +596,58 @@ const VerEvento = () => {
           )}
 
           <FormControl fullWidth sx={{ mt: 2 }}>
+                    Comentar
+                </Button>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            {rootComments.length === 0 && !loadingComments ? (
+                <Typography variant="body1" color="text.secondary">
+                    Aún no hay comentarios. ¡Sé el primero en comentar!
+                </Typography>
+            ) : (
+                rootComments.map((comment, index) => {
+                    if (rootComments.length === index + 1) {
+                        return (
+                            <Box key={comment.id} ref={lastCommentRef} sx={{ mb: 2 }}>
+                                <CommentTree comment={comment} onReply={handleReply} myData={myData} />
+                                <Divider sx={{ my: 1 }} />
+                            </Box>
+                        );
+                    } else {
+                        return (
+                            <Box key={comment.id} sx={{ mb: 2 }}>
+                                <CommentTree comment={comment} onReply={handleReply} myData={myData} />
+                                <Divider sx={{ my: 1 }} />
+                            </Box>
+                        );
+                    }
+                })
+            )}
+
+                {loadingComments && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                        <CircularProgress />
+                    </Box>
+                )}
+            </Box>
+            <Dialog
+    open={openReportModal}
+    onClose={() => {
+        setOpenReportModal(false);
+        setReportError('');
+        setReportSuccess('');
+    }}
+    fullWidth
+    maxWidth="sm"
+>
+    <DialogTitle>Reportar Evento</DialogTitle>
+    <DialogContent>
+        {reportError && <Alert severity="error" sx={{ mb: 2 }}>{reportError}</Alert>}
+        {reportSuccess && <Alert severity="success" sx={{ mb: 2 }}>{reportSuccess}</Alert>}
+
+        <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Motivo del Reporte</InputLabel>
             <Select
               label="Motivo del Reporte"

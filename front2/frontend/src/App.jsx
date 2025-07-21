@@ -15,6 +15,7 @@ import AdminReports from "./components/AdminReports";
 import Perfil from "./components/Perfil/Perfil";
 import BuscarEventos from "./components/Buscar/BuscarEventos";
 import AdminModeration from "./components/AdminModeration";
+import AdminUserManagement from "./components/AdminUserManagement";
 
 function App() {
   const location = useLocation();
@@ -39,6 +40,7 @@ function App() {
     "/crear-evento",
     "/ver-evento",
     "/admin-reports",
+    "/admin-users",
     "/perfil",
     "/perfil-publico", // 👈 añadida base para detectar
     "/buscar",
@@ -85,7 +87,10 @@ function App() {
               <Route path="/perfil-publico/:username" element={<Perfil />} />
               <Route path="/buscar" element={<BuscarEventos />} />
               {isAdmin() && (
-                <Route path="/admin-reports" element={<AdminModeration />} />
+                <>
+                  <Route path="/admin-reports" element={<AdminModeration />} />
+                  <Route path="/admin-users" element={<AdminUserManagement />} />
+                </>
               )}
             </Route>
           </Routes>

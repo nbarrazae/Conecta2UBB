@@ -68,9 +68,9 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # backend por defecto (necesario para el admin)
 ]
 
-# CORS_ALLOWED_ORIGINS = [
-#     'http://192.168.X.X:3000',
-#     'http://localhost:3000',
+#CORS_ALLOWED_ORIGINS = [
+#    "https://146.83.198.35:1258",
+#    "https://146.83.198.35:1242",
 # ]
 
 
@@ -142,6 +142,13 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # o la carpeta donde guardas js/css/img
+]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'

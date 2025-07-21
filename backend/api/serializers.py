@@ -68,6 +68,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     eventos_participados = serializers.SerializerMethodField()
     eventos_organizados = serializers.SerializerMethodField()  # 🔹 Nuevo campo
+    date_joined = serializers.DateTimeField(format="%d/%m/%Y %H:%M", read_only=True)
+    last_login = serializers.DateTimeField(format="%d/%m/%Y %H:%M", read_only=True)
 
     class Meta:
         model = CustomUser
@@ -77,8 +79,11 @@ class ProfileSerializer(serializers.ModelSerializer):
             'interests', 'interest_ids',
             'eventos_participados',  # ✅ Ya existente
             'eventos_organizados'   # ✅ Ahora también se entrega este
+            'id', 'email', 'username', 'birthday', 'full_name', 'bio',
+            'profile_picture', 'interests', 'interest_ids', 'eventos_participados',
+            'is_active', 'date_joined', 'last_login'
         ]
-        read_only_fields = ['id', 'email']
+        read_only_fields = ['id', 'email', 'date_joined', 'last_login']
 
     def get_eventos_participados(self, obj):
         eventos = obj.eventos_participados.all()
