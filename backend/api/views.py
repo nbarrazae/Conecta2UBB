@@ -182,15 +182,45 @@ class EventoViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
+        # Obtener el objeto antes de las modificaciones
+        original_instance = self.get_object()
+        
+        # Campos importantes que justifican una notificación
+        important_fields = ['title', 'description', 'event_date', 'location', 'max_participants', 'category']
+        
+        # Verificar si hubo cambios en campos importantes
+        has_important_changes = False
+        for field in important_fields:
+            old_value = getattr(original_instance, field, None)
+            new_value = serializer.validated_data.get(field, old_value)
+            
+            # Comparar valores (considerando diferentes tipos de datos)
+            if field == 'category' and old_value and new_value:
+                # Para campos relacionados, comparar IDs
+                if hasattr(old_value, 'id') and hasattr(new_value, 'id'):
+                    if old_value.id != new_value.id:
+                        has_important_changes = True
+                        break
+                elif old_value != new_value:
+                    has_important_changes = True
+                    break
+            elif old_value != new_value:
+                has_important_changes = True
+                break
+        
+        # Guardar los cambios
         instance = serializer.save()
-        participantes = instance.participants.all()
-        for user in participantes:
-            Notification.objects.create(
-                user=user,
-                notification_type='evento',
-                message=f'El evento "{instance.title}" ha sido modificado.',
-                url=f'http://localhost:3000/ver-evento/{instance.id}'
-            )
+        
+        # Solo notificar si hubo cambios importantes
+        if has_important_changes:
+            participantes = instance.participants.exclude(id=self.request.user.id)
+            for user in participantes:
+                Notification.objects.create(
+                    user=user,
+                    notification_type='evento',
+                    message=f'El evento "{instance.title}" ha sido modificado.',
+                    url=f'http://localhost:5173/ver-evento/{instance.id}' 
+                )
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def inscribirse(self, request, pk=None):
@@ -362,13 +392,30 @@ class CommentViewSet(viewsets.ModelViewSet):
         if not self.request.user.is_active:
             raise PermissionDenied("Tu usuario está suspendido y no puede comentar.")
         instance = serializer.save()
+        
+        # Notificar al autor del comentario padre si es una respuesta
         if instance.parent:
             parent_user = instance.parent.author
             if parent_user != self.request.user:
+                # Truncar la respuesta si es muy larga
+                reply_preview = instance.content[:40] + "..." if len(instance.content) > 40 else instance.content
                 Notification.objects.create(
                     user=parent_user,
                     notification_type='comentario',
-                    message=f'Te han respondido en un comentario.',
+                    message=f'{self.request.user.username} te respondió: "{reply_preview}"',
+                    url=f'http://localhost:5173/ver-evento/{instance.evento.id}'
+                )
+        
+        # Notificar al creador del evento cuando alguien comenta (solo si es comentario raíz)
+        if not instance.parent and instance.evento:
+            event_author = instance.evento.author
+            if event_author != self.request.user:
+                # Truncar el comentario si es muy largo
+                comment_preview = instance.content[:50] + "..." if len(instance.content) > 50 else instance.content
+                Notification.objects.create(
+                    user=event_author,
+                    notification_type='comentario',
+                    message=f'{self.request.user.username} comentó en tu evento "{instance.evento.title}": "{comment_preview}"',
                     url=f'http://localhost:5173/ver-evento/{instance.evento.id}'
                 )
 

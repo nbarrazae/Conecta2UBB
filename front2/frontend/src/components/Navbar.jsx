@@ -32,19 +32,15 @@ import DialogContent from "@mui/material/DialogContent";
 import Person2Icon from "@mui/icons-material/Person2";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from '@mui/icons-material/Add';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Tooltip from '@mui/material/Tooltip';
 
 import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-
-
 import Badge from "@mui/material/Badge";
-import Popover from "@mui/material/Popover";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
+
+import NotificationDropdown from "./NotificationDropdown";
 
 import { isSameDay } from 'date-fns';
 import { PickersDay } from '@mui/x-date-pickers/PickersDay';
@@ -61,10 +57,6 @@ export default function Navbar({ content }) {
   const [profilePicture, setProfilePicture] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-
-  const [notifications, setNotifications] = useState([]);
-  const [anchorNotif, setAnchorNotif] = useState(null);
-  const [tabValue, setTabValue] = useState(0);
 
   const [upcomingEvents, setUpcomingEvents] = useState([]);
 
@@ -96,38 +88,6 @@ const CustomDay = ({ day, outsideCurrentMonth, ...other }) => {
     );
 };
 
-  const fetchNotifications = async () => {
-    try {
-        const res = await AxiosInstance.get('/notifications/');
-        setNotifications(res.data);
-    } catch (err) {
-        console.error(err);
-    }
-};
-
-useEffect(() => {
-  fetchNotifications(); // inicial
-
-  const interval = setInterval(() => {
-      fetchNotifications();
-  }, 10000); // cada 10 segundos
-
-  return () => clearInterval(interval);
-}, []);
-
-
-
-const handleNotifClick = (event) => {
-  setAnchorNotif(event.currentTarget);
-  markAllAsRead();
-};
-
-const handleNotifClose = () => {
-  setAnchorNotif(null);
-};
-
-const unreadCount = notifications.filter(n => !n.is_read).length;
-
   useEffect(() => {
     const fetchProfilePicture = async () => {
         try {
@@ -135,11 +95,11 @@ const unreadCount = notifications.filter(n => !n.is_read).length;
             if (res.data.profile_picture) {
                 setProfilePicture(`http://localhost:8000${res.data.profile_picture}`);
             } else {
-                setProfilePicture(defaultAvatar);
+                setProfilePicture(null);
             }
         } catch (error) {
             console.error("Error al obtener imagen de perfil:", error);
-            setProfilePicture(defaultAvatar);
+            setProfilePicture(null);
         }
     };
 
@@ -149,14 +109,6 @@ const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const handleCrearEvento = () => {
     navigate("/crear-evento");
-};
-
-const handleNotificaciones = () => {
-    navigate("/notificaciones"); // O ruta que utilices
-};
-
-const handlePerfil = () => {
-    navigate("/perfil");
 };
 
 const handleAvatarClick = (event) => {
@@ -178,15 +130,6 @@ const handleLogoutClick = () => {
       navigate("/login");
   });
   handleMenuClose();
-};
-
-const markAllAsRead = async () => {
-  try {
-      await AxiosInstance.patch('/notifications/mark_all_as_read/');
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-  } catch (error) {
-      console.error("Error al marcar como leídas:", error);
-  }
 };
 
 
@@ -340,12 +283,7 @@ const markAllAsRead = async () => {
               <AddIcon />
           </IconButton>
 
-          <IconButton color="inherit" onClick={handleNotifClick}>
-            <Badge badgeContent={unreadCount} color="error">
-              <NotificationsIcon />
-              
-           </Badge>
-          </IconButton>
+          <NotificationDropdown />
 
 
           <Tooltip title="Opciones de perfil">
@@ -399,44 +337,6 @@ const markAllAsRead = async () => {
         <LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Logout
     </MenuItem>
 </Menu>
-
-<Popover
-  open={Boolean(anchorNotif)}
-  anchorEl={anchorNotif}
-  onClose={handleNotifClose}
-  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
->
-  <Tabs
-    value={tabValue}
-    onChange={(e, newValue) => setTabValue(newValue)}
-    variant="fullWidth"
-  >
-    <Tab label="Eventos" />
-    <Tab label="Comentarios" />
-  </Tabs>
-
-  <List dense sx={{ maxHeight: 300, overflow: 'auto', width: 300 }}>
-    {notifications
-      .filter(n => (tabValue === 0 ? n.notification_type === 'evento' : n.notification_type === 'comentario'))
-      .map(n => (
-        <ListItem
-          key={n.id}
-          button
-          onClick={() => {
-            window.location.href = n.url;
-          }}
-        >
-          <ListItemText
-            primary={n.message}
-            secondary={new Date(n.created_at).toLocaleString()}
-          />
-          {!n.is_read && <span style={{ color: 'red', fontSize: '1.5em' }}>•</span>}
-        </ListItem>
-      ))
-    }
-  </List>
-</Popover>
 
 
 
