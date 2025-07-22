@@ -33,6 +33,7 @@ from django.utils import timezone
 
 from rest_framework.decorators import action
 from django.db.models import Q
+from django.db import IntegrityError
 
 
 User = get_user_model()
@@ -57,6 +58,9 @@ class LoginViewset(viewsets.ViewSet):
                     {"message": "Tu cuenta ha sido suspendida por un moderador."},
                     status=403
                 )
+            # Actualiza el campo last_login
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
             _, token = AuthToken.objects.create(user)
             user_data = {
                 "id": user.id,
@@ -591,16 +595,32 @@ class CommentReportViewSet(viewsets.ModelViewSet):
 class UserAdminViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAdminUser]  # Solo moderadores
+    permission_classes = [permissions.IsAdminUser]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        token = ResetPasswordToken.objects.create(user=user)
+        send_welcome_email(user, token)
+        return Response(self.get_serializer(user).data, status=201)
 
     def partial_update(self, request, pk=None):
         user = self.get_object()
-        is_active = request.data.get('is_active')
-        if is_active is not None:
-            user.is_active = bool(is_active)
-            user.save()
-            return Response({'status': 'updated', 'is_active': user.is_active})
-        return Response({'error': 'No se proporcionó is_active'}, status=400)
+        serializer = self.get_serializer(user, data=request.data, partial=True, context={'request': request})
+        try:
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+        except IntegrityError as e:
+            error_str = str(e).lower()
+            # Busca por 'unique' o 'llave duplicada' y 'email' o el nombre de la restricción
+            if (
+                ('unique' in error_str or 'llave duplicada' in error_str)
+                and ('email' in error_str or 'correo' in error_str or 'api_customuser_email_key' in error_str)
+            ):
+                return Response({'error': 'El correo ya existe.'}, status=400)
+            return Response({'error': 'Error de integridad.'}, status=400)
+        return Response(serializer.data)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

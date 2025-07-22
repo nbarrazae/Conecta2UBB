@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import *
 from django.contrib.auth import get_user_model
 from django.utils.crypto import get_random_string
+from django.utils import timezone
+
 User = get_user_model()
 
 
@@ -95,7 +97,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'followers', 'following',
             'followers_count', 'following_count',
         ]
-        read_only_fields = ['id', 'email', 'date_joined', 'last_login']
+        read_only_fields = ['id', 'date_joined', 'last_login']
 
 
     def get_eventos_participados(self, obj):
@@ -107,16 +109,27 @@ class ProfileSerializer(serializers.ModelSerializer):
         return EventoSimpleSerializer(eventos, many=True).data
 
     def update(self, instance, validated_data):
+        print("DEBUG validated_data:", validated_data)
         request = self.context.get('request')
-        raw_interest_ids = request.data.getlist('interest_ids') if request else []
-
-        if raw_interest_ids == ["0"]:
+        raw_interest_ids = []
+        if request:
+            # Si viene como lista (por ejemplo, desde form-data)
+            if hasattr(request.data, "getlist"):
+                raw_interest_ids = request.data.getlist('interest_ids')
+            # Si viene como JSON
+            elif 'interest_ids' in request.data:
+                raw_interest_ids = request.data['interest_ids']
+                if isinstance(raw_interest_ids, str):
+                    # Intenta convertir string de números separados por coma a lista
+                    raw_interest_ids = [int(i) for i in raw_interest_ids.split(",") if i.strip().isdigit()]
+        if raw_interest_ids == ["0"] or raw_interest_ids == []:
             instance.interests.clear()
             validated_data.pop('interest_ids', None)
         elif 'interest_ids' in validated_data:
             interest_ids = validated_data.pop('interest_ids')
+            if isinstance(interest_ids, str):
+                interest_ids = [int(i) for i in interest_ids.split(",") if i.strip().isdigit()]
             instance.interests.set(interest_ids)
-
         return super().update(instance, validated_data)
     
     def get_followers_count(self, obj):
@@ -126,6 +139,29 @@ class ProfileSerializer(serializers.ModelSerializer):
         return obj.following.count()
 
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # ajustar date_joined
+        if instance.date_joined:
+            local_date_joined = timezone.localtime(instance.date_joined)
+            data['date_joined'] = local_date_joined.strftime("%d/%m/%Y %H:%M")
+        # ajustar last_login
+        if instance.last_login:
+            local_last_login = timezone.localtime(instance.last_login)
+            data['last_login'] = local_last_login.strftime("%d/%m/%Y %H:%M")
+        return data
+
+    def validate_birthday(self, value):
+        if value in ("", None):
+            return None
+        return value
+
+    def create(self, validated_data):
+        interest_ids = validated_data.pop('interest_ids', [])
+        user = CustomUser.objects.create(**validated_data)
+        if interest_ids:
+            user.interests.set(interest_ids)
+        return user
 
 
 
