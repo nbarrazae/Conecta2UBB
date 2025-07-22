@@ -54,20 +54,28 @@ const EventoCard = ({
   max_participants,
   sinSombra = false,
   ocultarBotonInscripcion = false,
+  mostrarSnackbar,
 }) => {
   const navigate = useNavigate();
   const [yaInscrito, setYaInscrito] = useState(false);
   const [mostrarParticipantes, setMostrarParticipantes] = useState(false);
   const [inscritos, setInscritos] = useState([]);
 
+  // ✅ Estado interno que reemplaza a participants
+  const [listaParticipantes, setListaParticipantes] = useState(
+    participants || []
+  );
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (user?.email) {
       setYaInscrito(
-        participants?.some((p) => p.toLowerCase() === user.email.toLowerCase())
+        listaParticipantes.some(
+          (p) => p.toLowerCase() === user.email.toLowerCase()
+        )
       );
     }
-  }, [participants]);
+  }, [listaParticipantes]);
 
   const obtenerInscritos = async (e) => {
     e.stopPropagation();
@@ -99,15 +107,10 @@ const EventoCard = ({
     defaultAvatar;
 
   const nombreCategoria = category_name || category;
-  const estaLleno = participants?.length >= max_participants;
+  const estaLleno = listaParticipantes.length >= max_participants;
 
   return (
-    <div
-      className={`evento-card compacto ${sinSombra ? "sin-sombra" : ""}`}
-      style={{ position: "relative" }}
-    >
-      {/* 🔴 Botón flotante eliminado */}
-
+    <div className={`evento-card compacto ${sinSombra ? "sin-sombra" : ""}`}>
       <div className="evento-icono">{iconoCategoria(nombreCategoria)}</div>
 
       <div className="evento-detalles">
@@ -138,7 +141,7 @@ const EventoCard = ({
           <div className="evento-info-item">
             <GroupIcon fontSize="small" />
             <span className={estaLleno ? "evento-lleno" : ""}>
-              {participants?.length || 0}/{max_participants}
+              {listaParticipantes.length}/{max_participants}
             </span>
           </div>
           {nombreCategoria && (
@@ -149,24 +152,32 @@ const EventoCard = ({
         </div>
 
         <div className="evento-botones">
-          {/* 🔵 Botón Inscribirse ahora aquí */}
           {!ocultarBotonInscripcion && (
             <BotonInscripcion
               eventId={id}
               yaInscrito={yaInscrito}
               estaLleno={estaLleno}
               onCambio={(accion) => {
-                if (accion === "inscrito") setYaInscrito(true);
-                if (accion === "desinscrito") setYaInscrito(false);
+                const user = JSON.parse(localStorage.getItem("user"));
+                const email = user?.email?.toLowerCase();
+                if (!email) return;
+
+                if (accion === "inscrito") {
+                  setListaParticipantes((prev) => [...prev, email]);
+                  setYaInscrito(true);
+                  mostrarSnackbar?.("Te has inscrito al evento.", "success");
+                } else if (accion === "desinscrito") {
+                  setListaParticipantes((prev) =>
+                    prev.filter((p) => p.toLowerCase() !== email)
+                  );
+                  setYaInscrito(false);
+                  mostrarSnackbar?.("Te has desinscrito del evento.", "info");
+                }
               }}
             />
           )}
 
-          <button
-            className="boton-inscritos"
-            onClick={obtenerInscritos}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
+          <button className="boton-inscritos" onClick={obtenerInscritos}>
             {mostrarParticipantes ? (
               <>
                 <VisibilityOffIcon fontSize="small" />
@@ -182,11 +193,7 @@ const EventoCard = ({
 
           <button
             className="boton-inscritos"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/ver-evento/${id}`);
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
+            onClick={() => navigate(`/ver-evento/${id}`)}
           >
             <InfoIcon fontSize="small" />
             <span>Ver Evento</span>

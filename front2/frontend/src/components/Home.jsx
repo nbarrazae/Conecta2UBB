@@ -36,8 +36,8 @@ const Home = () => {
 
   const GetEvents = () => {
     AxiosInstance.get("eventos/").then((res) => {
-      const eventosOrdenados = res.data.sort((a, b) =>
-        a.event_date > b.event_date ? 1 : -1
+      const eventosOrdenados = res.data.sort(
+        (a, b) => new Date(b.event_date) - new Date(a.event_date)
       );
       setEvents(eventosOrdenados);
     });

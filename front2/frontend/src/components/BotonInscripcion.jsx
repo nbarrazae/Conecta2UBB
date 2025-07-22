@@ -81,13 +81,13 @@ const BotonInscripcion = ({
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           style={{
-            marginTop: "8px",
+            marginTop: "11px",
             borderColor: hovered ? "#c62828" : "#2e7d32",
             color: hovered ? "#c62828" : "#2e7d32",
             backgroundColor: hovered ? "#fceaea" : "#e8f5e9",
             fontWeight: "bold",
             transition: "all 0.2s ease-in-out",
-            borderRadius: "20px",
+            borderRadius: "8px",
           }}
         >
           {hovered ? "Desinscribirse" : "Inscrito"}
@@ -99,8 +99,8 @@ const BotonInscripcion = ({
           size="small"
           onClick={handleInscribirse}
           style={{
-            marginTop: "8px",
-            borderRadius: "20px",
+            marginTop: "11px",
+            borderRadius: "8px",
           }}
         >
           Inscribirme
