@@ -135,6 +135,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             return None
         return value
 
+    def create(self, validated_data):
+        interest_ids = validated_data.pop('interest_ids', [])
+        user = CustomUser.objects.create(**validated_data)
+        if interest_ids:
+            user.interests.set(interest_ids)
+        return user
+
 
 
 

@@ -445,7 +445,15 @@ class CommentReportViewSet(viewsets.ModelViewSet):
 class UserAdminViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAdminUser]  # Solo moderadores
+    permission_classes = [permissions.IsAdminUser]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        token = ResetPasswordToken.objects.create(user=user)
+        send_welcome_email(user, token)
+        return Response(self.get_serializer(user).data, status=201)
 
     def partial_update(self, request, pk=None):
         user = self.get_object()
