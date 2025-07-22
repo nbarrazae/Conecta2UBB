@@ -6,6 +6,7 @@ import EventoPostCard from "./EventoPostCard";
 import BarraBusqueda from "./BarraBusqueda";
 import TabsEventos from "./TabsEventos";
 import "./Home.css";
+import UsuarioSugerido from "../components/Perfil/UsuarioSugerido";
 
 const Home = () => {
   const [myData, setMyData] = useState(null);
@@ -13,6 +14,7 @@ const Home = () => {
   const [events, setEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("todos");
   const [animating, setAnimating] = useState(false);
+  const [usuariosSugeridos, setUsuariosSugeridos] = useState([]);
 
   const navigate = useNavigate();
 
@@ -34,8 +36,14 @@ const Home = () => {
     });
   };
 
-  const GetEvents = () => {
-    AxiosInstance.get("eventos/").then((res) => {
+  const GetEvents = (tab = "todos") => {
+    let url = "eventos/";
+
+    if (tab === "siguiendo") {
+      url += "?siguiendo=true";
+    }
+
+    AxiosInstance.get(url).then((res) => {
       const eventosOrdenados = res.data.sort(
         (a, b) => new Date(b.event_date) - new Date(a.event_date)
       );
@@ -45,7 +53,7 @@ const Home = () => {
 
   useEffect(() => {
     GetData();
-    GetEvents();
+    GetEvents(activeTab);
   }, []);
 
   const handleTabChange = (nuevaTab) => {
@@ -53,8 +61,12 @@ const Home = () => {
     setAnimating(true);
     setTimeout(() => {
       setActiveTab(nuevaTab);
+      GetEvents(nuevaTab);
+      if (nuevaTab === "siguiendo") {
+        cargarUsuariosSugeridos();
+      }
       setAnimating(false);
-    }, 300); // Coincide con la duración del CSS
+    }, 300);
   };
 
   const eventosFiltrados =
@@ -72,6 +84,18 @@ const Home = () => {
 
   const handleRedirect = () => {
     navigate("/crear-evento");
+  };
+
+  const cargarUsuariosSugeridos = async () => {
+    try {
+      const res = await AxiosInstance.get("/users/buscar/");
+      const usuarios = res.data.filter(
+        (u) => u.id !== myData?.id && !myData?.following_ids?.includes(u.id)
+      );
+      setUsuariosSugeridos(usuarios.slice(0, 5));
+    } catch (err) {
+      console.error("Error al cargar usuarios sugeridos:", err);
+    }
   };
 
   return (
@@ -99,9 +123,43 @@ const Home = () => {
             className={`bloque-eventos ${animating ? "fade-out" : "fade-in"}`}
           >
             {eventosFiltrados.length === 0 ? (
-              <p style={{ textAlign: "center", marginTop: "1rem" }}>
-                No se encontraron eventos.
-              </p>
+              <div style={{ textAlign: "center", marginTop: "1rem" }}>
+                {activeTab === "siguiendo" ? (
+                  <>
+                    <p>
+                      Aún no sigues a ningún usuario o las personas que sigues
+                      no han creado eventos.
+                    </p>
+
+                    {usuariosSugeridos.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: "1.5rem",
+                          textAlign: "left",
+                          maxWidth: "600px",
+                          marginInline: "auto",
+                        }}
+                      >
+                        <h4
+                          style={{
+                            marginBottom: "0.75rem",
+                            fontSize: "0.95rem",
+                            color: "#333",
+                            fontWeight: 600,
+                          }}
+                        >
+                          USUARIOS RECOMENDADOS:
+                        </h4>
+                        {usuariosSugeridos.map((user) => (
+                          <UsuarioSugerido key={user.id} user={user} />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p>No se encontraron eventos.</p>
+                )}
+              </div>
             ) : (
               eventosFiltrados.map((event) => (
                 <EventoPostCard

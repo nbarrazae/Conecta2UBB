@@ -21,7 +21,7 @@
   display: flex;
   gap: 2rem;
   padding: 0.5rem 0;
-  transform: translateX(520px); /* correcto */
+  transform: translateX(470px); /* correcto */
   position: relative;
   z-index: 1; /* para que quede sobre la línea */
 }

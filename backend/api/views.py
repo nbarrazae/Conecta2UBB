@@ -315,6 +315,19 @@ class EventoViewSet(viewsets.ModelViewSet):
         } for e in eventos]
 
         return Response(data)
+    
+    def get_queryset(self):
+        queryset = Evento.objects.all()
+        user = self.request.user
+
+        siguiendo = self.request.query_params.get("siguiendo")
+
+        if siguiendo and siguiendo.lower() == "true" and user.is_authenticated:
+            seguidos = user.following.all()
+            queryset = queryset.filter(author__in=seguidos)
+
+        return queryset
+
 
 
 class MisInscripcionesViewSet(viewsets.ViewSet):
