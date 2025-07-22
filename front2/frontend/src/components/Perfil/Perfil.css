@@ -5,11 +5,12 @@
 }
 
 .perfil-page {
-  width: 100%;
-  max-width: 1200px;
-  margin-top: -2rem; /* ⬅️ Aumentamos margen superior para separarlo del navbar fijo */
-  padding: 1rem; /* ⬅️ Reemplaza el padding inválido -1rem */
-  box-sizing: border-box;
+  margin-top: 0rem;
+  margin-left: -40px; /* ⬅️ Empuja todo hacia la derecha */
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .perfil-content {

@@ -47,6 +47,8 @@ import Tab from "@mui/material/Tab";
 
 import { isSameDay } from "date-fns";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
+import { useRef } from "react"; // si aún no lo tienes
+import SidebarUI from "./SidebarUI";
 
 const drawerWidth = 240;
 const widgetWidth = 400;
@@ -55,6 +57,8 @@ export default function Navbar({ content }) {
   const location = useLocation();
   const path = location.pathname;
   const navigate = useNavigate();
+  const notifAnchorRef = useRef(null);
+  const [notifAnchorEl, setNotifAnchorEl] = useState(null);
 
   const [profilePicture, setProfilePicture] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -62,6 +66,8 @@ export default function Navbar({ content }) {
 
   const [notifications, setNotifications] = useState([]);
   const [anchorNotif, setAnchorNotif] = useState(null);
+  const [showNotifPopover, setShowNotifPopover] = useState(false);
+
   const [tabValue, setTabValue] = useState(0);
 
   const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -117,13 +123,15 @@ export default function Navbar({ content }) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleNotifClick = (event) => {
-    setAnchorNotif(event.currentTarget);
+  const handleNotifClick = () => {
+    setAnchorNotif(notifAnchorRef.current); // ancla al lado derecho
+    setShowNotifPopover(true); // muestra popover
     markAllAsRead();
   };
 
   const handleNotifClose = () => {
     setAnchorNotif(null);
+    setShowNotifPopover(false); // lo oculta
   };
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -201,8 +209,22 @@ export default function Navbar({ content }) {
     });
   };
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const isAdmin = !!(user && (user.is_staff || user.is_superuser));
+  const [userData, setUserData] = useState({});
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const res = await AxiosInstance.get("/users/ver_perfil/");
+        setUserData(res.data);
+      } catch (err) {
+        console.error("Error al obtener datos del usuario:", err);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const isAdmin = !!(userData && (userData.is_staff || userData.is_superuser));
 
   const drawerContent = (
     <Box sx={{ overflow: "auto" }}>
@@ -304,218 +326,79 @@ export default function Navbar({ content }) {
   );
 
   return (
-    <Box sx={{ display: "flex", width: "100vw", overflowX: "hidden" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        height: "100vh", // ✅ ocupa alto total de pantalla
+        width: "100vw",
+        overflow: "hidden",
+      }}
+    >
       <CssBaseline />
 
-      {/* AppBar */}
-      <AppBar
-        position="fixed"
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
-      >
-        <Toolbar>
-          {isMobile && (
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Plataforma de actividades
-          </Typography>
-
-          <IconButton color="inherit" onClick={handleCrearEvento}>
-            <AddIcon />
-          </IconButton>
-
-          <IconButton color="inherit" onClick={handleNotifClick}>
-            <Badge badgeContent={unreadCount} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-
-          <Tooltip title="Opciones de perfil">
-            <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 1 }}>
-              <Avatar
-                src={profilePicture}
-                alt="Perfil"
-                sx={{ width: 36, height: 36 }}
-              />
-            </IconButton>
-          </Tooltip>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleMenuClose}
-            onClick={handleMenuClose}
-            PaperProps={{
-              elevation: 0,
-              sx: {
-                overflow: "visible",
-                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-                mt: 1.5,
-                "& .MuiAvatar-root": {
-                  width: 32,
-                  height: 32,
-                  ml: -0.5,
-                  mr: 1,
-                },
-                "&:before": {
-                  content: '""',
-                  display: "block",
-                  position: "absolute",
-                  top: 0,
-                  right: 14,
-                  width: 10,
-                  height: 10,
-                  bgcolor: "background.paper",
-                  transform: "translateY(-50%) rotate(45deg)",
-                  zIndex: 0,
-                },
-              },
-            }}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-          >
-            <MenuItem onClick={handlePerfilClick}>
-              <Avatar src={profilePicture} /> Mi Perfil
-            </MenuItem>
-            <MenuItem onClick={handleLogoutClick}>
-              <LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Logout
-            </MenuItem>
-          </Menu>
-
-          <Popover
-            open={Boolean(anchorNotif)}
-            anchorEl={anchorNotif}
-            onClose={handleNotifClose}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            transformOrigin={{ vertical: "top", horizontal: "right" }}
-          >
-            <Tabs
-              value={tabValue}
-              onChange={(e, newValue) => setTabValue(newValue)}
-              variant="fullWidth"
-            >
-              <Tab label="Eventos" />
-              <Tab label="Comentarios" />
-              <Tab label="Seguidores" />
-            </Tabs>
-
-            <List dense sx={{ maxHeight: 300, overflow: "auto", width: 300 }}>
-              {notifications
-                .filter((n) => {
-                  if (tabValue === 0) return n.notification_type === "evento";
-                  if (tabValue === 1)
-                    return n.notification_type === "comentario";
-                  if (tabValue === 2)
-                    return n.notification_type === "seguimiento";
-                  return false;
-                })
-                .map((n) => (
-                  <ListItem
-                    key={n.id}
-                    button
-                    onClick={() => (window.location.href = n.url)}
-                  >
-                    {n.notification_type === "seguimiento" &&
-                      n.emisor_profile_picture && (
-                        <img
-                          src={n.emisor_profile_picture}
-                          alt={n.emisor_username}
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: "50%",
-                            marginRight: 10,
-                            objectFit: "cover",
-                            border: "1px solid #ccc",
-                          }}
-                        />
-                      )}
-                    <ListItemText
-                      primary={n.message}
-                      secondary={new Date(n.created_at).toLocaleString()}
-                    />
-                    {!n.is_read && (
-                      <span style={{ color: "red", fontSize: "1.5em" }}>•</span>
-                    )}
-                  </ListItem>
-                ))}
-            </List>
-          </Popover>
-
-          {/* <IconButton color="inherit" onClick={handlePerfil}>
-    <AccountCircleIcon />
-</IconButton> */}
-        </Toolbar>
-      </AppBar>
-
-      {/* Drawer para escritorio */}
+      {/* 🟦 Sidebar izquierda (Drawer) */}
       {!isMobile && (
         <Drawer
           variant="permanent"
           sx={{
-            width: drawerWidth,
+            width: 260,
             flexShrink: 0,
             [`& .MuiDrawer-paper`]: {
-              width: drawerWidth,
+              width: 260,
               boxSizing: "border-box",
+              backgroundColor: "#fff",
+              borderRight: "1px solid #e0e0e0",
             },
           }}
         >
-          {drawerContent}
+          <SidebarUI
+            profilePicture={profilePicture}
+            user={userData} // 🔹 nuevo
+            handleCrearEvento={handleCrearEvento}
+            handleAvatarClick={handleAvatarClick}
+            anchorEl={anchorEl}
+            open={open}
+            handleMenuClose={handleMenuClose}
+            handlePerfilClick={handlePerfilClick}
+            handleLogoutClick={handleLogoutClick}
+            handleNotifClick={handleNotifClick}
+            anchorNotif={anchorNotif}
+            handleNotifClose={handleNotifClose}
+            notifications={notifications}
+            unreadCount={unreadCount}
+            tabValue={tabValue}
+            setTabValue={setTabValue}
+            notifAnchorRef={notifAnchorRef}
+            showNotifPopover={showNotifPopover}
+          />
         </Drawer>
       )}
 
-      {/* Drawer para móviles */}
-      {isMobile && (
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            [`& .MuiDrawer-paper`]: { width: drawerWidth },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      )}
-
-      {/* Contenido principal */}
+      {/* 🟨 Contenido central */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          mt: 8,
-          minWidth: 0,
+          height: "100vh", // ✅ se asegura de ocupar todo el alto
+          overflowY: "auto",
+          padding: 3,
+          backgroundColor: "#f9f9f9",
         }}
       >
-        <Toolbar />
         {content}
       </Box>
 
-      {/* Widgets (solo en pantallas grandes) */}
+      {/* 🟥 Sidebar derecha */}
       {!isMobile && (
         <Box
           sx={{
             width: widgetWidth,
-            p: 2,
-            top: 64, // debajo del AppBar
-            right: 0,
-            position: "fixed",
-            height: "calc(100vh - 64px)",
+            height: "100vh", // ✅ full height
+            overflowY: "auto",
             borderLeft: "1px solid #ddd",
             backgroundColor: "#fafafa",
-            overflowY: "auto",
+            padding: 2,
           }}
         >
           <Typography variant="h6">Recordatorios</Typography>
@@ -542,7 +425,9 @@ export default function Navbar({ content }) {
             </List>
           )}
 
-          <Typography variant="h6">Calendario</Typography>
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            Calendario
+          </Typography>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DateCalendar
               slots={{
@@ -551,62 +436,6 @@ export default function Navbar({ content }) {
             />
           </LocalizationProvider>
         </Box>
-      )}
-      {/* Floating button + modal para móviles */}
-      {isMobile && (
-        <>
-          <Fab
-            color="primary"
-            aria-label="calendar"
-            onClick={() => setOpenWidgets(true)}
-            sx={{ position: "fixed", bottom: 16, right: 16, zIndex: 1300 }}
-          >
-            <CalendarMonthIcon />
-          </Fab>
-
-          <Dialog
-            open={openWidgets}
-            onClose={() => setOpenWidgets(false)}
-            fullWidth
-            maxWidth="sm"
-          >
-            <DialogTitle>Calendario y recordatorios</DialogTitle>
-            <DialogContent>
-              <Typography variant="subtitle1">Recordatorios</Typography>
-              {upcomingEvents.length === 0 ? (
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                  No tienes eventos próximos.
-                </Typography>
-              ) : (
-                <List dense>
-                  {upcomingEvents.map((event) => (
-                    <ListItem
-                      key={event.id}
-                      button
-                      onClick={() => navigate(`/ver-evento/${event.id}`)}
-                    >
-                      <ListItemText
-                        primary={event.titulo}
-                        secondary={`Límite: ${new Date(
-                          event.fecha_limite
-                        ).toLocaleString()}`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              )}
-
-              <Typography variant="subtitle1">Calendario</Typography>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DateCalendar
-                  slots={{
-                    day: CustomDay,
-                  }}
-                />
-              </LocalizationProvider>
-            </DialogContent>
-          </Dialog>
-        </>
       )}
     </Box>
   );

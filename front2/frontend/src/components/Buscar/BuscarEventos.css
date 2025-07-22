@@ -7,8 +7,13 @@
 .buscar-page {
   width: 100%;
   max-width: 1200px;
-  padding: 0rem 1rem 2rem 1rem; /* menos padding arriba */
+  padding: 2rem 1rem 2rem 1rem;
   box-sizing: border-box;
+
+  /* ✅ Añadir desplazamiento horizontal visual */
+  transform: translateX(
+    190px
+  ); /* Ajusta el valor según la alineación deseada */
 }
 
 .buscar-contenido {
