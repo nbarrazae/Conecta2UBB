@@ -22,6 +22,7 @@ import AddIcon from "@mui/icons-material/Add";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import NotificationDropdown from "./NotificationDropdown";
 
 import { useLocation, Link } from "react-router-dom";
 
@@ -53,6 +54,16 @@ const SidebarUI = ({
     { label: "Mi Perfil", icon: <AccountCircleIcon />, path: "/perfil" }, // ✅ nuevo
     { label: "Sobre", icon: <InfoIcon />, path: "/about" },
   ];
+
+  const hasUnreadEventos = notifications.some(
+    (n) => !n.is_read && n.notification_type === "evento"
+  );
+  const hasUnreadComentarios = notifications.some(
+    (n) => !n.is_read && n.notification_type === "comentario"
+  );
+  const hasUnreadSeguidores = notifications.some(
+    (n) => !n.is_read && n.notification_type === "seguimiento"
+  );
 
   return (
     <Box
@@ -171,64 +182,13 @@ const SidebarUI = ({
         />
 
         {/* Popover de notificaciones */}
-        <Popover
-          open={showNotifPopover}
+        <NotificationDropdown
           anchorEl={notifAnchorRef.current}
+          open={showNotifPopover}
           onClose={handleNotifClose}
-          anchorOrigin={{ vertical: "top", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <Tabs
-            value={tabValue}
-            onChange={(e, newValue) => setTabValue(newValue)}
-            variant="fullWidth"
-          >
-            <Tab label="Eventos" />
-            <Tab label="Comentarios" />
-            <Tab label="Seguidores" />
-          </Tabs>
-
-          <List dense sx={{ maxHeight: 300, overflow: "auto", width: 300 }}>
-            {notifications
-              .filter((n) => {
-                if (tabValue === 0) return n.notification_type === "evento";
-                if (tabValue === 1) return n.notification_type === "comentario";
-                if (tabValue === 2)
-                  return n.notification_type === "seguimiento";
-                return false;
-              })
-              .map((n) => (
-                <ListItem
-                  key={n.id}
-                  button
-                  onClick={() => (window.location.href = n.url)}
-                >
-                  {n.notification_type === "seguimiento" &&
-                    n.emisor_profile_picture && (
-                      <img
-                        src={n.emisor_profile_picture}
-                        alt={n.emisor_username}
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "50%",
-                          marginRight: 10,
-                          objectFit: "cover",
-                          border: "1px solid #ccc",
-                        }}
-                      />
-                    )}
-                  <ListItemText
-                    primary={n.message}
-                    secondary={new Date(n.created_at).toLocaleString()}
-                  />
-                  {!n.is_read && (
-                    <span style={{ color: "red", fontSize: "1.5em" }}>•</span>
-                  )}
-                </ListItem>
-              ))}
-          </List>
-        </Popover>
+          tabValue={tabValue}
+          setTabValue={setTabValue}
+        />
       </Box>
 
       {/* Sección fija inferior: perfil + logout */}
