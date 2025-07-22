@@ -82,6 +82,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     following = SimpleUserSerializer(many=True, read_only=True)
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
+    is_staff = serializers.BooleanField(read_only=True)
+    is_superuser = serializers.BooleanField(read_only=True)
+
 
 
     class Meta:
@@ -92,10 +95,11 @@ class ProfileSerializer(serializers.ModelSerializer):
             'interests', 'interest_ids',
             'eventos_participados',
             'eventos_organizados',
-            'is_active', 'date_joined', 'last_login',
+            'is_active', 'is_staff', 'is_superuser',
             # 👇 Nuevos campos de seguidores
             'followers', 'following',
             'followers_count', 'following_count',
+            'date_joined', 'last_login'  # ✅ Agrega estos dos
         ]
         read_only_fields = ['id', 'date_joined', 'last_login']
 

@@ -23,6 +23,8 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import NotificationDropdown from "./NotificationDropdown";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import FlagCircleIcon from "@mui/icons-material/FlagCircle";
 
 import { useLocation, Link } from "react-router-dom";
 
@@ -42,6 +44,7 @@ const SidebarUI = ({
 }) => {
   const location = useLocation();
   const path = location.pathname;
+  console.log("Usuario logeado:", user);
 
   const navItems = [
     { label: "Inicio", icon: <HomeIcon />, path: "/home" },
@@ -51,9 +54,21 @@ const SidebarUI = ({
       icon: <NotificationsIcon />,
       path: "#notificaciones",
     },
-    { label: "Mi Perfil", icon: <AccountCircleIcon />, path: "/perfil" }, // ✅ nuevo
+    { label: "Mi Perfil", icon: <AccountCircleIcon />, path: "/perfil" },
     { label: "Sobre", icon: <InfoIcon />, path: "/about" },
   ];
+
+  // Si el usuario es admin, añade ítems especiales
+  if (user?.is_staff || user?.is_superuser) {
+    navItems.push(
+      {
+        label: "Usuarios",
+        icon: <AdminPanelSettingsIcon />,
+        path: "/admin-users",
+      },
+      { label: "Reportes", icon: <FlagCircleIcon />, path: "/admin-reports" }
+    );
+  }
 
   const hasUnreadEventos = notifications.some(
     (n) => !n.is_read && n.notification_type === "evento"
