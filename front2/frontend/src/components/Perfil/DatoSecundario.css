@@ -1,0 +1,14 @@
+.dato-secundario-wrapper {
+  border-left: 3px solid #ccc;
+  padding-left: 10px;
+  margin-top: 12px;
+  margin-bottom: 14px;
+  color: #555;
+}
+
+.dato-secundario-contenido {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+}

@@ -1,0 +1,45 @@
+.boton-seguir {
+  padding: 6px 16px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.boton-seguir.no-siguiendo {
+  background-color: #0f1419;
+  color: white;
+  border: none;
+}
+
+.boton-seguir.no-siguiendo:hover {
+  background-color: #272c30;
+}
+
+.boton-seguir.siguiendo {
+  background-color: transparent;
+  color: black;
+  border: 1px solid #cfd9de;
+}
+
+.boton-seguir.siguiendo.hover-danger {
+  background-color: #ffe6e6;
+  color: red;
+  border: 1px solid red;
+}
+
+.perfil-nombre-seguir-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.perfil-follow-stats {
+  margin-top: 4px;
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.95rem;
+  color: #333;
+}

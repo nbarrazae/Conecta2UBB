@@ -10,6 +10,10 @@ import EventosUsuario from "./EventosUsuario";
 import EditarPerfil from "./EditarPerfil";
 import defaultAvatar from "../../assets/default-avatar.jpg";
 import "./Perfil.css";
+import BotonSeguir from "./BotonSeguir";
+import DatoSecundario from "./DatoSecundario";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
+import ListaUsuariosModal from "./ListaUsuariosModal";
 
 const UserProfile = () => {
   const { username } = useParams();
@@ -19,6 +23,7 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [mostrarLista, setMostrarLista] = useState(null); // "seguidores" | "seguidos" | null
 
   const usuarioLogeado = JSON.parse(localStorage.getItem("user") || "{}");
   const usernameLogeado = usuarioLogeado?.username;
@@ -104,17 +109,34 @@ const UserProfile = () => {
               />
               <div className="perfil-header-info">
                 <div className="perfil-nombre-wrapper">
-                  <h2
-                    className="perfil-nombre-usuario"
-                    title={perfil.full_name}
-                  >
-                    {perfil.full_name || "Sin nombre"}
-                  </h2>
+                  <div className="perfil-nombre-seguir-row">
+                    <h2
+                      className="perfil-nombre-usuario"
+                      title={perfil.full_name}
+                    >
+                      {perfil.full_name || "Sin nombre"}
+                    </h2>
+
+                    {!esPerfilPropio && perfil?.id !== undefined && (
+                      <BotonSeguir targetUserId={perfil.id} />
+                    )}
+                  </div>
+
                   <p className="perfil-username">@{perfil.username}</p>
-                  <p className="perfil-birthday">
-                    <CakeIcon fontSize="small" style={{ marginRight: "4px" }} />
-                    {getFechaFormateada()}
-                  </p>
+                  <div className="perfil-follow-stats">
+                    <span
+                      onClick={() => setMostrarLista("seguidos")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <strong>{perfil.following_count}</strong> Siguiendo
+                    </span>
+                    <span
+                      onClick={() => setMostrarLista("seguidores")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <strong>{perfil.followers_count}</strong> Seguidores
+                    </span>
+                  </div>
                 </div>
 
                 {esPerfilPropio && (
@@ -133,7 +155,17 @@ const UserProfile = () => {
                 <InfoIcon />
                 Sobre mí
               </div>
+
               <p className="perfil-bio">{perfil.bio || "Sin biografía"}</p>
+
+              <DatoSecundario
+                icono={<CakeIcon fontSize="small" />}
+                texto={getFechaFormateada()}
+              />
+              <DatoSecundario
+                icono={<MailOutlineIcon fontSize="small" />}
+                texto={perfil.email}
+              />
             </div>
 
             <div className="perfil-section">
@@ -183,6 +215,14 @@ const UserProfile = () => {
           <CheckCircleIcon style={{ marginRight: "8px" }} />
           Cambios aplicados con éxito
         </div>
+      )}
+
+      {mostrarLista && (
+        <ListaUsuariosModal
+          userId={perfil.id}
+          tipo={mostrarLista}
+          onClose={() => setMostrarLista(null)}
+        />
       )}
     </>
   );

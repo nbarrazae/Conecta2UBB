@@ -50,6 +50,12 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name']
 
+class SimpleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'full_name', 'profile_picture']
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     birthday = serializers.DateField(
         format="%d/%m/%Y",
@@ -70,6 +76,11 @@ class ProfileSerializer(serializers.ModelSerializer):
     eventos_organizados = serializers.SerializerMethodField()  # 🔹 Nuevo campo
     date_joined = serializers.DateTimeField(format="%d/%m/%Y %H:%M", read_only=True)
     last_login = serializers.DateTimeField(format="%d/%m/%Y %H:%M", read_only=True)
+    followers = SimpleUserSerializer(many=True, read_only=True)
+    following = SimpleUserSerializer(many=True, read_only=True)
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+
 
     class Meta:
         model = CustomUser
@@ -79,7 +90,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             'interests', 'interest_ids',
             'eventos_participados',
             'eventos_organizados',
-            'is_active', 'date_joined', 'last_login'
+            'is_active', 'date_joined', 'last_login',
+            # 👇 Nuevos campos de seguidores
+            'followers', 'following',
+            'followers_count', 'following_count',
         ]
         read_only_fields = ['id', 'email', 'date_joined', 'last_login']
 
@@ -104,6 +118,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             instance.interests.set(interest_ids)
 
         return super().update(instance, validated_data)
+    
+    def get_followers_count(self, obj):
+        return obj.followers.count()
+
+    def get_following_count(self, obj):
+        return obj.following.count()
+
 
 
 

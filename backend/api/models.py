@@ -39,6 +39,14 @@ class CustomUser(AbstractUser):
     
     interests = models.ManyToManyField('Category', blank=True, related_name='interested_users')
 
+     # 👇 Seguidores / seguidos
+    following = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        related_name='followers',
+        blank=True
+    )
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'

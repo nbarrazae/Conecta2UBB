@@ -166,6 +166,51 @@ class UserDataViewset(viewsets.ViewSet):
         user = request.user
         serializer = self.serializer_class(user)
         return Response(serializer.data, status=200)
+    
+# --- FUNCIONALIDAD DE SEGUIR / DEJAR DE SEGUIR / VER FOLLOWERS ---
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def seguir_usuario(request, user_id):
+    target_user = get_object_or_404(CustomUser, id=user_id)
+    if target_user == request.user:
+        return Response({'error': 'No puedes seguirte a ti mismo.'}, status=status.HTTP_400_BAD_REQUEST)
+    if request.user.following.filter(id=target_user.id).exists():
+        return Response({'error': 'Ya estás siguiendo a este usuario.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    request.user.following.add(target_user)
+    return Response({'status': f'Siguiendo a {target_user.username}.'}, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def dejar_de_seguir_usuario(request, user_id):
+    target_user = get_object_or_404(CustomUser, id=user_id)
+    request.user.following.remove(target_user)
+    return Response({'status': f'Dejaste de seguir a {target_user.username}.'}, status=200)
+
+@api_view(['GET'])
+def ver_seguidores(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    seguidores = user.followers.all()
+    serializer = SimpleUserSerializer(seguidores, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def ver_seguidos(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    seguidos = user.following.all()
+    serializer = SimpleUserSerializer(seguidos, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def esta_siguiendo(request, user_id):
+    target_user = get_object_or_404(CustomUser, id=user_id)
+    is_following = request.user.following.filter(id=target_user.id).exists()
+    return Response({'esta_siguiendo': is_following})
+
+# ---------------------------------------------------------------------------------
 
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
