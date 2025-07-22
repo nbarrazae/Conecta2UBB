@@ -179,6 +179,13 @@ def seguir_usuario(request, user_id):
         return Response({'error': 'Ya estás siguiendo a este usuario.'}, status=status.HTTP_400_BAD_REQUEST)
     
     request.user.following.add(target_user)
+    Notification.objects.create(
+        user=target_user,
+        emisor=request.user,
+        notification_type='seguimiento',
+        message=f'{request.user.username} comenzó a seguirte',
+        url=f'http://localhost:5173/perfil-publico/{request.user.username}/'
+    )
     return Response({'status': f'Siguiendo a {target_user.username}.'}, status=200)
 
 
@@ -469,6 +476,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
     @action(detail=False, methods=['post'])
     def mark_as_read(self, request):
@@ -480,6 +492,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def mark_all_as_read(self, request):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({'status': 'all marked as read'})
+    
+
 
 class CommentReportViewSet(viewsets.ModelViewSet):
     queryset = CommentReport.objects.all()

@@ -199,9 +199,28 @@ class CommentSerializer(serializers.ModelSerializer):
     
 
 class NotificationSerializer(serializers.ModelSerializer):
+    emisor_profile_picture = serializers.SerializerMethodField()
+    emisor_username = serializers.SerializerMethodField()
+
     class Meta:
         model = Notification
-        fields = '__all__'
+        fields = [
+            'id', 'notification_type', 'message', 'url', 'created_at', 'is_read', 'user', 'emisor',
+            'emisor_profile_picture', 'emisor_username'
+        ]
+
+    def get_emisor_profile_picture(self, obj):
+        if obj.emisor and obj.emisor.profile_picture:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(obj.emisor.profile_picture.url)
+            return obj.emisor.profile_picture.url
+        return None
+
+    def get_emisor_username(self, obj):
+        return obj.emisor.username if obj.emisor else None
+
+
 
 class CommentReportSerializer(serializers.ModelSerializer):
     comment = serializers.PrimaryKeyRelatedField(

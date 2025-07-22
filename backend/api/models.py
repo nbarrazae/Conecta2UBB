@@ -169,6 +169,7 @@ class Notification(models.Model):
     NOTIFICATION_TYPES = (
         ('evento', 'Evento'),
         ('comentario', 'Comentario'),
+        ('seguimiento', 'Seguimiento'),
     )
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
@@ -177,6 +178,8 @@ class Notification(models.Model):
     url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
+    emisor = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="notificaciones_enviadas")
+
 
     def __str__(self):
         return f'{self.notification_type} - {self.message} - {self.user}'

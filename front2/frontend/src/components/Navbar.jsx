@@ -31,24 +31,22 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import Person2Icon from "@mui/icons-material/Person2";
 import SearchIcon from "@mui/icons-material/Search";
-import AddIcon from '@mui/icons-material/Add';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import Tooltip from '@mui/material/Tooltip';
+import AddIcon from "@mui/icons-material/Add";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import Tooltip from "@mui/material/Tooltip";
 
 import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-
 
 import Badge from "@mui/material/Badge";
 import Popover from "@mui/material/Popover";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
-import { isSameDay } from 'date-fns';
-import { PickersDay } from '@mui/x-date-pickers/PickersDay';
-
+import { isSameDay } from "date-fns";
+import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 
 const drawerWidth = 240;
 const widgetWidth = 400;
@@ -69,129 +67,126 @@ export default function Navbar({ content }) {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
 
   const fetchUpcomingEvents = async () => {
-      try {
-          const res = await AxiosInstance.get('/eventos/upcoming/');
-          setUpcomingEvents(res.data);
-      } catch (err) {
-          console.error(err);
-      }
+    try {
+      const res = await AxiosInstance.get("/eventos/upcoming/");
+      setUpcomingEvents(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
   useEffect(() => {
     fetchUpcomingEvents();
-}, []);
+  }, []);
 
-const CustomDay = ({ day, outsideCurrentMonth, ...other }) => {
-    const hasEvent = upcomingEvents.some(event =>
-        isSameDay(new Date(event.fecha_limite), day)
+  const CustomDay = ({ day, outsideCurrentMonth, ...other }) => {
+    const hasEvent = upcomingEvents.some((event) =>
+      isSameDay(new Date(event.fecha_limite), day)
     );
 
     return (
-        <Badge
-            overlap="circular"
-            color="primary"
-            variant={hasEvent ? "dot" : "standard"}
-        >
-            <PickersDay day={day} outsideCurrentMonth={outsideCurrentMonth} {...other} />
-        </Badge>
+      <Badge
+        overlap="circular"
+        color="primary"
+        variant={hasEvent ? "dot" : "standard"}
+      >
+        <PickersDay
+          day={day}
+          outsideCurrentMonth={outsideCurrentMonth}
+          {...other}
+        />
+      </Badge>
     );
-};
+  };
 
   const fetchNotifications = async () => {
     try {
-        const res = await AxiosInstance.get('/notifications/');
-        setNotifications(res.data);
+      const res = await AxiosInstance.get("/notifications/");
+      setNotifications(res.data);
     } catch (err) {
-        console.error(err);
+      console.error(err);
     }
-};
+  };
 
-useEffect(() => {
-  fetchNotifications(); // inicial
+  useEffect(() => {
+    fetchNotifications(); // inicial
 
-  const interval = setInterval(() => {
+    const interval = setInterval(() => {
       fetchNotifications();
-  }, 10000); // cada 10 segundos
+    }, 10000); // cada 10 segundos
 
-  return () => clearInterval(interval);
-}, []);
+    return () => clearInterval(interval);
+  }, []);
 
+  const handleNotifClick = (event) => {
+    setAnchorNotif(event.currentTarget);
+    markAllAsRead();
+  };
 
+  const handleNotifClose = () => {
+    setAnchorNotif(null);
+  };
 
-const handleNotifClick = (event) => {
-  setAnchorNotif(event.currentTarget);
-  markAllAsRead();
-};
-
-const handleNotifClose = () => {
-  setAnchorNotif(null);
-};
-
-const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   useEffect(() => {
     const fetchProfilePicture = async () => {
-        try {
-            const res = await AxiosInstance.get("/users/ver_perfil/");
-            if (res.data.profile_picture) {
-                setProfilePicture(`http://localhost:8000${res.data.profile_picture}`);
-            } else {
-                setProfilePicture(defaultAvatar);
-            }
-        } catch (error) {
-            console.error("Error al obtener imagen de perfil:", error);
-            setProfilePicture(defaultAvatar);
+      try {
+        const res = await AxiosInstance.get("/users/ver_perfil/");
+        if (res.data.profile_picture) {
+          setProfilePicture(`http://localhost:8000${res.data.profile_picture}`);
+        } else {
+          setProfilePicture(defaultAvatar);
         }
+      } catch (error) {
+        console.error("Error al obtener imagen de perfil:", error);
+        setProfilePicture(defaultAvatar);
+      }
     };
 
     fetchProfilePicture();
-}, []);
-
+  }, []);
 
   const handleCrearEvento = () => {
     navigate("/crear-evento");
-};
+  };
 
-const handleNotificaciones = () => {
+  const handleNotificaciones = () => {
     navigate("/notificaciones"); // O ruta que utilices
-};
+  };
 
-const handlePerfil = () => {
+  const handlePerfil = () => {
     navigate("/perfil");
-};
+  };
 
-const handleAvatarClick = (event) => {
-  setAnchorEl(event.currentTarget);
-};
+  const handleAvatarClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-const handleMenuClose = () => {
-  setAnchorEl(null);
-};
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
-const handlePerfilClick = () => {
-  navigate("/perfil");
-  handleMenuClose();
-};
+  const handlePerfilClick = () => {
+    navigate("/perfil");
+    handleMenuClose();
+  };
 
-const handleLogoutClick = () => {
-  AxiosInstance.post(`logoutall/`, {}).then(() => {
+  const handleLogoutClick = () => {
+    AxiosInstance.post(`logoutall/`, {}).then(() => {
       localStorage.removeItem("Token");
       navigate("/login");
-  });
-  handleMenuClose();
-};
+    });
+    handleMenuClose();
+  };
 
-const markAllAsRead = async () => {
-  try {
-      await AxiosInstance.patch('/notifications/mark_all_as_read/');
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-  } catch (error) {
+  const markAllAsRead = async () => {
+    try {
+      await AxiosInstance.patch("/notifications/mark_all_as_read/");
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    } catch (error) {
       console.error("Error al marcar como leídas:", error);
-  }
-};
-
-
-
-
+    }
+  };
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -309,7 +304,6 @@ const markAllAsRead = async () => {
   );
 
   return (
-    
     <Box sx={{ display: "flex", width: "100vw", overflowX: "hidden" }}>
       <CssBaseline />
 
@@ -330,121 +324,136 @@ const markAllAsRead = async () => {
               <MenuIcon />
             </IconButton>
           )}
-          
-          
+
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Plataforma de actividades
           </Typography>
 
           <IconButton color="inherit" onClick={handleCrearEvento}>
-              <AddIcon />
+            <AddIcon />
           </IconButton>
 
           <IconButton color="inherit" onClick={handleNotifClick}>
             <Badge badgeContent={unreadCount} color="error">
               <NotificationsIcon />
-              
-           </Badge>
+            </Badge>
           </IconButton>
 
-
           <Tooltip title="Opciones de perfil">
-    <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 1 }}>
-        <Avatar
-            src={profilePicture}
-            alt="Perfil"
-            sx={{ width: 36, height: 36 }}
-        />
-    </IconButton>
-</Tooltip>
+            <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 1 }}>
+              <Avatar
+                src={profilePicture}
+                alt="Perfil"
+                sx={{ width: 36, height: 36 }}
+              />
+            </IconButton>
+          </Tooltip>
 
-<Menu
-    anchorEl={anchorEl}
-    open={open}
-    onClose={handleMenuClose}
-    onClick={handleMenuClose}
-    PaperProps={{
-        elevation: 0,
-        sx: {
-            overflow: 'visible',
-            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-            mt: 1.5,
-            '& .MuiAvatar-root': {
-                width: 32,
-                height: 32,
-                ml: -0.5,
-                mr: 1,
-            },
-            '&:before': {
-                content: '""',
-                display: 'block',
-                position: 'absolute',
-                top: 0,
-                right: 14,
-                width: 10,
-                height: 10,
-                bgcolor: 'background.paper',
-                transform: 'translateY(-50%) rotate(45deg)',
-                zIndex: 0,
-            },
-        },
-    }}
-    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
->
-    <MenuItem onClick={handlePerfilClick}>
-        <Avatar src={profilePicture} /> Mi Perfil
-    </MenuItem>
-    <MenuItem onClick={handleLogoutClick}>
-        <LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Logout
-    </MenuItem>
-</Menu>
+          <Menu
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleMenuClose}
+            onClick={handleMenuClose}
+            PaperProps={{
+              elevation: 0,
+              sx: {
+                overflow: "visible",
+                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+                mt: 1.5,
+                "& .MuiAvatar-root": {
+                  width: 32,
+                  height: 32,
+                  ml: -0.5,
+                  mr: 1,
+                },
+                "&:before": {
+                  content: '""',
+                  display: "block",
+                  position: "absolute",
+                  top: 0,
+                  right: 14,
+                  width: 10,
+                  height: 10,
+                  bgcolor: "background.paper",
+                  transform: "translateY(-50%) rotate(45deg)",
+                  zIndex: 0,
+                },
+              },
+            }}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+          >
+            <MenuItem onClick={handlePerfilClick}>
+              <Avatar src={profilePicture} /> Mi Perfil
+            </MenuItem>
+            <MenuItem onClick={handleLogoutClick}>
+              <LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Logout
+            </MenuItem>
+          </Menu>
 
-<Popover
-  open={Boolean(anchorNotif)}
-  anchorEl={anchorNotif}
-  onClose={handleNotifClose}
-  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
->
-  <Tabs
-    value={tabValue}
-    onChange={(e, newValue) => setTabValue(newValue)}
-    variant="fullWidth"
-  >
-    <Tab label="Eventos" />
-    <Tab label="Comentarios" />
-  </Tabs>
+          <Popover
+            open={Boolean(anchorNotif)}
+            anchorEl={anchorNotif}
+            onClose={handleNotifClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+          >
+            <Tabs
+              value={tabValue}
+              onChange={(e, newValue) => setTabValue(newValue)}
+              variant="fullWidth"
+            >
+              <Tab label="Eventos" />
+              <Tab label="Comentarios" />
+              <Tab label="Seguidores" />
+            </Tabs>
 
-  <List dense sx={{ maxHeight: 300, overflow: 'auto', width: 300 }}>
-    {notifications
-      .filter(n => (tabValue === 0 ? n.notification_type === 'evento' : n.notification_type === 'comentario'))
-      .map(n => (
-        <ListItem
-          key={n.id}
-          button
-          onClick={() => {
-            window.location.href = n.url;
-          }}
-        >
-          <ListItemText
-            primary={n.message}
-            secondary={new Date(n.created_at).toLocaleString()}
-          />
-          {!n.is_read && <span style={{ color: 'red', fontSize: '1.5em' }}>•</span>}
-        </ListItem>
-      ))
-    }
-  </List>
-</Popover>
+            <List dense sx={{ maxHeight: 300, overflow: "auto", width: 300 }}>
+              {notifications
+                .filter((n) => {
+                  if (tabValue === 0) return n.notification_type === "evento";
+                  if (tabValue === 1)
+                    return n.notification_type === "comentario";
+                  if (tabValue === 2)
+                    return n.notification_type === "seguimiento";
+                  return false;
+                })
+                .map((n) => (
+                  <ListItem
+                    key={n.id}
+                    button
+                    onClick={() => (window.location.href = n.url)}
+                  >
+                    {n.notification_type === "seguimiento" &&
+                      n.emisor_profile_picture && (
+                        <img
+                          src={n.emisor_profile_picture}
+                          alt={n.emisor_username}
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            marginRight: 10,
+                            objectFit: "cover",
+                            border: "1px solid #ccc",
+                          }}
+                        />
+                      )}
+                    <ListItemText
+                      primary={n.message}
+                      secondary={new Date(n.created_at).toLocaleString()}
+                    />
+                    {!n.is_read && (
+                      <span style={{ color: "red", fontSize: "1.5em" }}>•</span>
+                    )}
+                  </ListItem>
+                ))}
+            </List>
+          </Popover>
 
-
-
-{/* <IconButton color="inherit" onClick={handlePerfil}>
+          {/* <IconButton color="inherit" onClick={handlePerfil}>
     <AccountCircleIcon />
 </IconButton> */}
-
-
         </Toolbar>
       </AppBar>
 
@@ -511,35 +520,36 @@ const markAllAsRead = async () => {
         >
           <Typography variant="h6">Recordatorios</Typography>
           {upcomingEvents.length === 0 ? (
-    <Typography variant="body2" sx={{ mb: 2 }}>
-        No tienes eventos próximos.
-    </Typography>
-) : (
-    <List dense>
-        {upcomingEvents.map(event => (
-            <ListItem
-                key={event.id}
-                button
-                onClick={() => navigate(`/ver-evento/${event.id}`)}
-            >
-                <ListItemText
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              No tienes eventos próximos.
+            </Typography>
+          ) : (
+            <List dense>
+              {upcomingEvents.map((event) => (
+                <ListItem
+                  key={event.id}
+                  button
+                  onClick={() => navigate(`/ver-evento/${event.id}`)}
+                >
+                  <ListItemText
                     primary={event.titulo}
-                    secondary={`Límite: ${new Date(event.fecha_limite).toLocaleString()}`}
-                />
-            </ListItem>
-        ))}
-    </List>
-)}
-
+                    secondary={`Límite: ${new Date(
+                      event.fecha_limite
+                    ).toLocaleString()}`}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
 
           <Typography variant="h6">Calendario</Typography>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-    <DateCalendar
-        slots={{
-            day: CustomDay
-        }}
-    />
-</LocalizationProvider>
+            <DateCalendar
+              slots={{
+                day: CustomDay,
+              }}
+            />
+          </LocalizationProvider>
         </Box>
       )}
       {/* Floating button + modal para móviles */}
@@ -564,35 +574,36 @@ const markAllAsRead = async () => {
             <DialogContent>
               <Typography variant="subtitle1">Recordatorios</Typography>
               {upcomingEvents.length === 0 ? (
-    <Typography variant="body2" sx={{ mb: 2 }}>
-        No tienes eventos próximos.
-    </Typography>
-) : (
-    <List dense>
-        {upcomingEvents.map(event => (
-            <ListItem
-                key={event.id}
-                button
-                onClick={() => navigate(`/ver-evento/${event.id}`)}
-            >
-                <ListItemText
-                    primary={event.titulo}
-                    secondary={`Límite: ${new Date(event.fecha_limite).toLocaleString()}`}
-                />
-            </ListItem>
-        ))}
-    </List>
-)}
-
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  No tienes eventos próximos.
+                </Typography>
+              ) : (
+                <List dense>
+                  {upcomingEvents.map((event) => (
+                    <ListItem
+                      key={event.id}
+                      button
+                      onClick={() => navigate(`/ver-evento/${event.id}`)}
+                    >
+                      <ListItemText
+                        primary={event.titulo}
+                        secondary={`Límite: ${new Date(
+                          event.fecha_limite
+                        ).toLocaleString()}`}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
 
               <Typography variant="subtitle1">Calendario</Typography>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
-    <DateCalendar
-        slots={{
-            day: CustomDay
-        }}
-    />
-</LocalizationProvider>
+                <DateCalendar
+                  slots={{
+                    day: CustomDay,
+                  }}
+                />
+              </LocalizationProvider>
             </DialogContent>
           </Dialog>
         </>
