@@ -6,6 +6,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EditIcon from "@mui/icons-material/Edit";
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { Link } from "react-router-dom";
 import Tooltip from "@mui/material/Tooltip";
 import "./AdminUserManagement.css";
@@ -267,9 +268,19 @@ const AdminUserManagement = () => {
             variant="contained"
             color="primary"
             onClick={handleCreateOpen}
-            sx={{ mb: 2 }}
+            startIcon={<PersonAddIcon />}
+            sx={{
+              mb: 2,
+              borderRadius: "30px",
+              fontWeight: "bold",
+              fontSize: 14,
+              px: 2,
+              py: 0.8,
+              boxShadow: 3,
+              textTransform: "none"
+            }}
           >
-            Crear nuevo usuario
+            Crear usuario
           </Button>
           <Box sx={{ height: 500, width: "100%" }}>
             <DataGrid
