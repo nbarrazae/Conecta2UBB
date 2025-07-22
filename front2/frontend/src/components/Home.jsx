@@ -7,6 +7,7 @@ import BarraBusqueda from "./BarraBusqueda";
 import TabsEventos from "./TabsEventos";
 import "./Home.css";
 import UsuarioSugerido from "../components/Perfil/UsuarioSugerido";
+import BurbujaActividad from "./BurbujaActividad";
 
 const Home = () => {
   const [myData, setMyData] = useState(null);
@@ -38,10 +39,7 @@ const Home = () => {
 
   const GetEvents = (tab = "todos") => {
     let url = "eventos/";
-
-    if (tab === "siguiendo") {
-      url += "?siguiendo=true";
-    }
+    if (tab === "siguiendo") url += "?siguiendo=true";
 
     AxiosInstance.get(url).then((res) => {
       const eventosOrdenados = res.data.sort(
@@ -130,7 +128,6 @@ const Home = () => {
                       Aún no sigues a ningún usuario o las personas que sigues
                       no han creado eventos.
                     </p>
-
                     {usuariosSugeridos.length > 0 && (
                       <div
                         style={{
@@ -173,6 +170,10 @@ const Home = () => {
         </div>
       )}
 
+      {/* ✅ Burbuja flotante con dropdown de actividad */}
+      <BurbujaActividad />
+
+      {/* Snackbar de notificaciones */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}

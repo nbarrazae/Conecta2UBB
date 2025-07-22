@@ -1,0 +1,30 @@
+.burbuja-actividad {
+  position: fixed;
+  bottom: 680px;
+  right: 430px;
+  z-index: 1200;
+  cursor: pointer;
+  background-color: white;
+  padding: 4px;
+  border-radius: 50%;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.burbuja-actividad:hover {
+  transform: scale(1.05);
+}
+
+.burbuja-actividad-feed::-webkit-scrollbar {
+  width: 6px;
+}
+
+.burbuja-actividad-feed::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 3px;
+}
+
+.burbuja-actividad-feed {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 transparent;
+}

@@ -1,15 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import defaultAvatar from "../assets/default-avatar.jpg";
+import BotonSeguir from "./Perfil/BotonSeguir"; // ✅ nuevo
 import "./styles/Participantes.css";
 
 const ListaInscritos = ({ inscritos }) => {
-  console.log("Inscritos recibidos:", inscritos);
+  const usuarioLogeado = JSON.parse(localStorage.getItem("user") || "{}");
+
   return (
     <div className="seccion-participantes">
       <h4>USUARIOS INSCRITOS:</h4>
       <ul className="lista-participantes">
         {inscritos.length === 0 && <li>No hay participantes aún.</li>}
+
         {inscritos.map((user) => {
           const foto = user.profile_picture?.startsWith("http")
             ? user.profile_picture
@@ -22,6 +25,7 @@ const ListaInscritos = ({ inscritos }) => {
                 alt="avatar"
                 className="avatar-participante"
               />
+
               <div className="participante-datos">
                 <span className="participante-nombre">
                   {user.full_name?.trim() || "Sin nombre"}
@@ -34,6 +38,12 @@ const ListaInscritos = ({ inscritos }) => {
                   @{user.username}
                 </Link>
               </div>
+
+              {user.id !== usuarioLogeado?.id && (
+                <div className="boton-participante">
+                  <BotonSeguir targetUserId={user.id} />
+                </div>
+              )}
             </li>
           );
         })}

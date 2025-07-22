@@ -7,7 +7,8 @@ from .views import (
     dejar_de_seguir_usuario,
     ver_seguidores,
     ver_seguidos,
-    esta_siguiendo
+    esta_siguiendo,
+    actividad_reciente
 )
 
 router = DefaultRouter()
@@ -32,4 +33,5 @@ urlpatterns = router.urls + [
     path('seguidores/<int:user_id>/', ver_seguidores, name='ver-seguidores'),
     path('seguidos/<int:user_id>/', ver_seguidos, name='ver-seguidos'),
     path('esta_siguiendo/<int:user_id>/', esta_siguiendo, name='esta-siguiendo'),
+    path('actividad_reciente/', actividad_reciente, name='actividad-reciente'),
 ]

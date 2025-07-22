@@ -253,6 +253,14 @@ class EventoViewSet(viewsets.ModelViewSet):
             return Response({"error": "No hay cupos disponibles para este evento."}, status=status.HTTP_400_BAD_REQUEST)
 
         evento.participants.add(request.user)
+
+        # 🔽 Registrar actividad reciente
+        Actividad.objects.create(
+            usuario=request.user,
+            tipo='inscripcion',
+            evento=evento
+        )
+
         return Response({"message": "Inscripción exitosa."}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
@@ -328,6 +336,23 @@ class EventoViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+    # Después de guardar el evento con éxito, registramos la actividad
+        if response.status_code == 201:
+            evento_id = response.data.get("id")
+            try:
+                evento = Evento.objects.get(id=evento_id)
+                Actividad.objects.create(
+                    usuario=request.user,
+                    tipo="creacion",
+                    evento=evento
+                )
+            except Evento.DoesNotExist:
+                pass  # Silencioso: no rompemos nada si falla
+
+        return response
 
 
 class MisInscripcionesViewSet(viewsets.ViewSet):
@@ -516,6 +541,13 @@ class UserAdminViewSet(viewsets.ModelViewSet):
             return Response({'status': 'updated', 'is_active': user.is_active})
         return Response({'error': 'No se proporcionó is_active'}, status=400)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def actividad_reciente(request):
+    seguidos = request.user.following.all()
+    actividades = Actividad.objects.filter(usuario__in=seguidos).order_by('-fecha')[:50]
+    serializer = ActividadSerializer(actividades, many=True)
+    return Response(serializer.data)
 
 
 

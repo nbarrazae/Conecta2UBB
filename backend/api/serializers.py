@@ -232,3 +232,13 @@ class CommentReportSerializer(serializers.ModelSerializer):
         model = CommentReport
         fields = ['id', 'comment', 'reporter', 'reason', 'reason_display', 'status', 'status_display', 'created_at']
         read_only_fields = ['status', 'created_at', 'reporter']
+
+class ActividadSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='usuario.username', read_only=True)
+    full_name = serializers.CharField(source='usuario.full_name', read_only=True)
+    profile_picture = serializers.ImageField(source='usuario.profile_picture', read_only=True)
+    evento_title = serializers.CharField(source='evento.title', read_only=True)
+    
+    class Meta:
+        model = Actividad
+        fields = ['id', 'tipo', 'evento', 'evento_title', 'texto', 'fecha', 'username', 'full_name', 'profile_picture']
