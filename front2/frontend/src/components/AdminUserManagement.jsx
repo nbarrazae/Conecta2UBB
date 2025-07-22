@@ -26,6 +26,17 @@ const AdminUserManagement = () => {
   const [errorMsg, setErrorMsg] = useState(""); // Nuevo estado para el error
   const [successMsg, setSuccessMsg] = useState(""); // Nuevo estado
   const [categories, setCategories] = useState([]);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: "",
+    username: "",
+    full_name: "",
+    bio: "",
+    birthday: "",
+    interest_ids: [],
+  });
+  const [createError, setCreateError] = useState("");
+  const [createSuccess, setCreateSuccess] = useState("");
 
   useEffect(() => {
     AxiosInstance.get("/user-admin/")
@@ -101,6 +112,51 @@ const AdminUserManagement = () => {
         const msg = err.response?.data?.error || "Error al guardar cambios";
         setErrorMsg(msg);
         setSuccessMsg("");
+      });
+  };
+
+  const handleCreateOpen = () => {
+    setCreateForm({
+      email: "",
+      username: "",
+      full_name: "",
+      bio: "",
+      birthday: "",
+      interest_ids: [],
+    });
+    setCreateError("");
+    setCreateOpen(true);
+  };
+
+  const handleCreateClose = () => {
+    setCreateOpen(false);
+  };
+
+  const handleCreateSave = () => {
+    let birthdayFormatted = createForm.birthday;
+    if (birthdayFormatted && birthdayFormatted.includes("/")) {
+      // Si el usuario editó manualmente y puso dd/mm/yyyy
+      birthdayFormatted = birthdayFormatted.split("/").reverse().join("-");
+    }
+    const dataToSend = {
+      ...createForm,
+      birthday: birthdayFormatted === "" ? null : birthdayFormatted,
+      interest_ids: Array.isArray(createForm.interest_ids) ? createForm.interest_ids : [],
+    };
+    AxiosInstance.post(`/user-admin/`, dataToSend)
+      .then(res => {
+        setUsers([...users, res.data]);
+        setCreateSuccess("Usuario creado correctamente."); // Mensaje de éxito
+        setCreateError("");
+        setTimeout(() => {
+          setCreateOpen(false);
+          setCreateSuccess("");
+        }, 1500);
+      })
+      .catch(err => {
+        const msg = err.response?.data?.error || "Error al crear usuario";
+        setCreateError(msg);
+        setCreateSuccess("");
       });
   };
 
@@ -207,6 +263,14 @@ const AdminUserManagement = () => {
           {/* <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>
             Gestión de Usuarios
           </Typography> */}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleCreateOpen}
+            sx={{ mb: 2 }}
+          >
+            Crear nuevo usuario
+          </Button>
           <Box sx={{ height: 500, width: "100%" }}>
             <DataGrid
               rows={users}
@@ -308,6 +372,96 @@ const AdminUserManagement = () => {
           <Stack direction="row" spacing={2} mt={2} justifyContent="flex-end">
             <Button onClick={() => setOpen(false)}>Cancelar</Button>
             <Button variant="contained" onClick={handleSave}>Guardar</Button>
+          </Stack>
+        </Box>
+      </Modal>
+      {/* Modal para crear usuario */}
+      <Modal open={createOpen} onClose={handleCreateClose}>
+        <Box sx={{
+          position: 'absolute', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)', bgcolor: 'background.paper',
+          boxShadow: 24, p: 4, borderRadius: 2, minWidth: 300
+        }}>
+          <Typography variant="h6" mb={2}>Crear nuevo usuario</Typography>
+          {createSuccess && (
+            <Alert severity="success" sx={{ mb: 2, fontWeight: "bold", fontSize: 16 }}>
+              {createSuccess}
+            </Alert>
+          )}
+          {createError && (
+            <Alert severity="error" sx={{ mb: 2, fontWeight: "bold", fontSize: 16 }}>
+              {createError}
+            </Alert>
+          )}
+          <TextField
+            label="Usuario"
+            value={createForm.username}
+            onChange={e => setCreateForm({ ...createForm, username: e.target.value })}
+            fullWidth margin="normal"
+          />
+          <TextField
+            label="Email"
+            value={createForm.email}
+            onChange={e => {
+              setCreateForm({ ...createForm, email: e.target.value });
+              if (createError && createError.toLowerCase().includes("correo")) setCreateError("");
+            }}
+            fullWidth
+            margin="normal"
+            error={!!createError && createError.toLowerCase().includes("correo")}
+            helperText={createError && createError.toLowerCase().includes("correo") ? createError : ""}
+            className={createError && createError.toLowerCase().includes("correo") ? "shake" : ""}
+          />
+          <TextField
+            label="Nombre completo"
+            value={createForm.full_name}
+            onChange={e => setCreateForm({ ...createForm, full_name: e.target.value })}
+            fullWidth margin="normal"
+          />
+          <TextField
+            label="Biografía"
+            value={createForm.bio}
+            onChange={e => setCreateForm({ ...createForm, bio: e.target.value })}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Fecha de nacimiento"
+            type="date"
+            value={createForm.birthday}
+            onChange={e => setCreateForm({ ...createForm, birthday: e.target.value || null })}
+            fullWidth
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="interests-label-create">Intereses</InputLabel>
+            <Select
+              labelId="interests-label-create"
+              multiple
+              value={createForm.interest_ids || []}
+              onChange={e => setCreateForm({ ...createForm, interest_ids: e.target.value })}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => {
+                    const category = categories.find(c => c.id === value);
+                    return (
+                      <Chip key={value} label={category ? category.name : value} />
+                    );
+                  })}
+                </Box>
+              )}
+            >
+              {categories.map((category) => (
+                <MenuItem key={category.id} value={category.id}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Stack direction="row" spacing={2} mt={2} justifyContent="flex-end">
+            <Button onClick={handleCreateClose}>Cancelar</Button>
+            <Button variant="contained" onClick={handleCreateSave}>Crear</Button>
           </Stack>
         </Box>
       </Modal>
