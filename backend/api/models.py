@@ -39,6 +39,14 @@ class CustomUser(AbstractUser):
     
     interests = models.ManyToManyField('Category', blank=True, related_name='interested_users')
 
+     # 👇 Seguidores / seguidos
+    following = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        related_name='followers',
+        blank=True
+    )
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
@@ -161,6 +169,7 @@ class Notification(models.Model):
     NOTIFICATION_TYPES = (
         ('evento', 'Evento'),
         ('comentario', 'Comentario'),
+        ('seguimiento', 'Seguimiento'),
     )
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
@@ -169,6 +178,8 @@ class Notification(models.Model):
     url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
+    emisor = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="notificaciones_enviadas")
+
 
     def __str__(self):
         return f'{self.notification_type} - {self.message} - {self.user}'
@@ -196,3 +207,19 @@ class CommentReport(models.Model):
 
     def __str__(self):
         return f"Reporte de comentario {self.comment.id if self.comment else 'eliminado'} por {self.reporter.email} ({self.get_reason_display()})"
+    
+class Actividad(models.Model):
+    TIPO_CHOICES = [
+        ('inscripcion', 'Inscripción a evento'),
+        ('creacion', 'Creación de evento'),
+        ('comentario', 'Comentario en evento'),
+    ]
+
+    usuario = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="actividades")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, null=True, blank=True)
+    texto = models.TextField(blank=True)  # Solo se usa en comentarios
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.usuario.username or self.usuario.email} realizó {self.get_tipo_display()} el {self.fecha.strftime('%Y-%m-%d %H:%M')}"

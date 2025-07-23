@@ -48,3 +48,57 @@
   background-color: transparent;
   padding: 0;
 }
+
+.boton-inscritos {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.9rem;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  color: black;
+}
+
+.boton-inscritos:hover {
+  background-color: #f0f0f0;
+}
+
+/* Variantes para estado del botón de inscripción */
+.boton-inscritos.inscrito {
+  color: #2e7d32;
+  border-color: #2e7d32;
+  background-color: #e8f5e9;
+}
+
+.boton-inscritos.cancelar-inscripcion {
+  color: #c62828;
+  border-color: #c62828;
+  background-color: #fceaea;
+}
+
+.evento-acciones-top {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.evento-accion-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.evento-accion-btn:hover {
+  background-color: #f0f0f0;
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import "./BuscarEventos.css";
 import EventoCard from "../EventoCard";
 import ListaUsuarios from "./ListaUsuarios";
@@ -11,6 +12,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
 
 const BuscarEventos = () => {
+  const location = useLocation();
   const [filtroCategoria, setFiltroCategoria] = useState(["Todos"]);
   const [busqueda, setBusqueda] = useState("");
   const [rangoFecha, setRangoFecha] = useState("todos");
@@ -19,6 +21,7 @@ const BuscarEventos = () => {
   const [eventos, setEventos] = useState([]);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [categorias, setCategorias] = useState([]);
+  const [categoriasCompletas, setCategoriasCompletas] = useState([]);
   const [tipoBusqueda, setTipoBusqueda] = useState("eventos");
 
   // 🔎 Búsqueda de usuarios
@@ -51,13 +54,23 @@ const BuscarEventos = () => {
         const res = await AxiosInstance.get("/categories/");
         const nombres = res.data.map((cat) => cat.name);
         setCategorias(["Todos", ...nombres]);
+        setCategoriasCompletas(res.data); // Guardamos las categorías completas con ID y nombre
+        
+        // Verificar si viene una categoría seleccionada desde la navegación
+        const selectedCategoryId = location.state?.selectedCategory;
+        if (selectedCategoryId) {
+          const categoriaSeleccionada = res.data.find(cat => cat.id === selectedCategoryId);
+          if (categoriaSeleccionada) {
+            setFiltroCategoria([categoriaSeleccionada.name]);
+          }
+        }
       } catch (error) {
         console.error("Error al obtener categorías:", error);
       }
     };
 
     fetchCategorias();
-  }, []);
+  }, [location.state]);
 
   // 📥 Cargar eventos si se selecciona tipo "eventos"
   useEffect(() => {

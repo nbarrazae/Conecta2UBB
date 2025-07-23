@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import *
 from django.contrib.auth import get_user_model
 from django.utils.crypto import get_random_string
+from django.utils import timezone
+
 User = get_user_model()
 
 
@@ -50,6 +52,12 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name']
 
+class SimpleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'full_name', 'profile_picture']
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     birthday = serializers.DateField(
         format="%d/%m/%Y",
@@ -70,6 +78,14 @@ class ProfileSerializer(serializers.ModelSerializer):
     eventos_organizados = serializers.SerializerMethodField()  # 🔹 Nuevo campo
     date_joined = serializers.DateTimeField(format="%d/%m/%Y %H:%M", read_only=True)
     last_login = serializers.DateTimeField(format="%d/%m/%Y %H:%M", read_only=True)
+    followers = SimpleUserSerializer(many=True, read_only=True)
+    following = SimpleUserSerializer(many=True, read_only=True)
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    is_staff = serializers.BooleanField(read_only=True)
+    is_superuser = serializers.BooleanField(read_only=True)
+
+
 
     class Meta:
         model = CustomUser
@@ -79,9 +95,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             'interests', 'interest_ids',
             'eventos_participados',
             'eventos_organizados',
-            'is_active', 'date_joined', 'last_login'
+            'is_active', 'is_staff', 'is_superuser',
+            # 👇 Nuevos campos de seguidores
+            'followers', 'following',
+            'followers_count', 'following_count',
+            'date_joined', 'last_login'  # ✅ Agrega estos dos
         ]
-        read_only_fields = ['id', 'email', 'date_joined', 'last_login']
+        read_only_fields = ['id', 'date_joined', 'last_login']
 
 
     def get_eventos_participados(self, obj):
@@ -93,18 +113,59 @@ class ProfileSerializer(serializers.ModelSerializer):
         return EventoSimpleSerializer(eventos, many=True).data
 
     def update(self, instance, validated_data):
+        print("DEBUG validated_data:", validated_data)
         request = self.context.get('request')
-        raw_interest_ids = request.data.getlist('interest_ids') if request else []
-
-        if raw_interest_ids == ["0"]:
+        raw_interest_ids = []
+        if request:
+            # Si viene como lista (por ejemplo, desde form-data)
+            if hasattr(request.data, "getlist"):
+                raw_interest_ids = request.data.getlist('interest_ids')
+            # Si viene como JSON
+            elif 'interest_ids' in request.data:
+                raw_interest_ids = request.data['interest_ids']
+                if isinstance(raw_interest_ids, str):
+                    # Intenta convertir string de números separados por coma a lista
+                    raw_interest_ids = [int(i) for i in raw_interest_ids.split(",") if i.strip().isdigit()]
+        if raw_interest_ids == ["0"] or raw_interest_ids == []:
             instance.interests.clear()
             validated_data.pop('interest_ids', None)
         elif 'interest_ids' in validated_data:
             interest_ids = validated_data.pop('interest_ids')
+            if isinstance(interest_ids, str):
+                interest_ids = [int(i) for i in interest_ids.split(",") if i.strip().isdigit()]
             instance.interests.set(interest_ids)
-
         return super().update(instance, validated_data)
+    
+    def get_followers_count(self, obj):
+        return obj.followers.count()
 
+    def get_following_count(self, obj):
+        return obj.following.count()
+
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # ajustar date_joined
+        if instance.date_joined:
+            local_date_joined = timezone.localtime(instance.date_joined)
+            data['date_joined'] = local_date_joined.strftime("%d/%m/%Y %H:%M")
+        # ajustar last_login
+        if instance.last_login:
+            local_last_login = timezone.localtime(instance.last_login)
+            data['last_login'] = local_last_login.strftime("%d/%m/%Y %H:%M")
+        return data
+
+    def validate_birthday(self, value):
+        if value in ("", None):
+            return None
+        return value
+
+    def create(self, validated_data):
+        interest_ids = validated_data.pop('interest_ids', [])
+        user = CustomUser.objects.create(**validated_data)
+        if interest_ids:
+            user.interests.set(interest_ids)
+        return user
 
 
 
@@ -178,9 +239,28 @@ class CommentSerializer(serializers.ModelSerializer):
     
 
 class NotificationSerializer(serializers.ModelSerializer):
+    emisor_profile_picture = serializers.SerializerMethodField()
+    emisor_username = serializers.SerializerMethodField()
+
     class Meta:
         model = Notification
-        fields = '__all__'
+        fields = [
+            'id', 'notification_type', 'message', 'url', 'created_at', 'is_read', 'user', 'emisor',
+            'emisor_profile_picture', 'emisor_username'
+        ]
+
+    def get_emisor_profile_picture(self, obj):
+        if obj.emisor and obj.emisor.profile_picture:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(obj.emisor.profile_picture.url)
+            return obj.emisor.profile_picture.url
+        return None
+
+    def get_emisor_username(self, obj):
+        return obj.emisor.username if obj.emisor else None
+
+
 
 class CommentReportSerializer(serializers.ModelSerializer):
     comment = serializers.PrimaryKeyRelatedField(
@@ -211,3 +291,13 @@ class CommentReportSerializer(serializers.ModelSerializer):
         model = CommentReport
         fields = ['id', 'comment', 'reporter', 'reason', 'reason_display', 'status', 'status_display', 'created_at']
         read_only_fields = ['status', 'created_at', 'reporter']
+
+class ActividadSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='usuario.username', read_only=True)
+    full_name = serializers.CharField(source='usuario.full_name', read_only=True)
+    profile_picture = serializers.ImageField(source='usuario.profile_picture', read_only=True)
+    evento_title = serializers.CharField(source='evento.title', read_only=True)
+    
+    class Meta:
+        model = Actividad
+        fields = ['id', 'tipo', 'evento', 'evento_title', 'texto', 'fecha', 'username', 'full_name', 'profile_picture']

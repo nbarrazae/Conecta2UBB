@@ -112,7 +112,10 @@ const EventoPostCard = ({ event, mostrarSnackbar }) => {
         participants={listaParticipantes}
         max_participants={max_participants}
         sinSombra={true}
-        ocultarBotonInscripcion={true}
+        mostrarSnackbar={mostrarSnackbar}
+        yaInscrito={yaInscrito}
+        onCambio={handleCambioInscripcion}
+        estaLleno={listaParticipantes.length >= max_participants}
       />
 
       <div className="evento-post-separador" />
@@ -132,16 +135,6 @@ const EventoPostCard = ({ event, mostrarSnackbar }) => {
 
       <div className="evento-post-footer">
         <div className="evento-comentarios-header">
-          <div className="evento-comentarios-boton">
-            <BotonInscripcion
-              eventId={id}
-              yaInscrito={yaInscrito}
-              estaLleno={listaParticipantes.length >= max_participants}
-              onCambio={handleCambioInscripcion}
-              mostrarSnackbar={mostrarSnackbar}
-            />
-          </div>
-
           <div className="evento-comentarios-resumen">
             <ChatBubbleOutlineIcon
               fontSize="small"

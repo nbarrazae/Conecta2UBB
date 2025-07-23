@@ -1,48 +1,102 @@
 .contenedor-home {
   width: 100%;
-  padding: 0;
+  padding: 30px 20px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* 🔹 Esta clase ya no se usará si separas la barra */
+/* 🔹 Bloque central no utilizado */
 .bloque-central {
   display: none;
 }
 
-/* Tabs */
+/* 🔹 Tabs: centradas y separadas del borde superior */
 .zona-tabs {
   width: 100%;
   display: flex;
   justify-content: center;
-  transform: translateY(-66px);
+  margin-bottom: 1rem;
+  margin-top: -2rem; /* ✅ elimina espacio superior */
+  margin-left: -2rem; /* ✅ elimina espacio superior */
+  padding-top: 0.25rem; /* ✅ opcional, para que no quede cortado */
 }
 
-/* 🔹 Mantiene centrada la barra de búsqueda */
-.zona-busqueda {
+/* 🔹 Contenedor barra de búsqueda + botón */
+.zona-busqueda-wrapper {
   width: 100%;
-  max-width: 600px;
-  margin-bottom: 2rem;
-  transform: translate(-180px, 0px);
-  position: relative;
-  z-index: 100; /* asegura una capa superior */
+  max-width: 700px;
+  margin: 0 auto 1.5rem auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  z-index: 10;
 }
 
-/* Título */
+/* 🔹 Distribución horizontal */
+.zona-busqueda-con-boton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* 🔹 Envoltura de la barra */
+.barra-wrapper {
+  flex: 1;
+  min-width: 200px;
+}
+
+.boton-crear-evento {
+  height: 42px; /* o la misma que la barra de búsqueda visual */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.2rem;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+
+  /* 🔥 Ajuste fino vertical */
+  position: relative;
+  top: -10px; /* 👈 este empuje vertical corrige la desalineación exacta */
+}
+
+.boton-crear-evento:hover {
+  background-color: #1259a4;
+}
+
+/* 🔹 Feed de eventos */
+.bloque-eventos {
+  width: 100%;
+  max-width: 700px;
+  margin-top: -1.5rem;
+}
+
+/* 🔹 Transiciones animadas */
+.fade-in {
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* 🔹 Título centralizado (si se usa) */
 .titulo-eventos {
   text-align: center;
   font-size: 1.8rem;
   margin-bottom: 2rem;
   width: 100%;
   padding: 0 1rem;
-}
-
-/* 🔹 Solo este bloque se mueve a la izquierda */
-.bloque-eventos {
-  width: 100%;
-  max-width: 600px;
-  transform: translateX(-180px);
-  margin-top: -1.25rem;
 }

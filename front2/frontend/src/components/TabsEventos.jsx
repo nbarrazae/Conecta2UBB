@@ -17,6 +17,12 @@ const TabsEventos = ({ activeTab, onChangeTab }) => {
         >
           Todos
         </button>
+        <button
+          className={`tab-btn ${activeTab === "siguiendo" ? "active" : ""}`}
+          onClick={() => onChangeTab("siguiendo")}
+        >
+          Siguiendo
+        </button>
       </div>
     </div>
   );

@@ -33,6 +33,7 @@ from django.utils import timezone
 
 from rest_framework.decorators import action
 from django.db.models import Q
+from django.db import IntegrityError
 
 
 User = get_user_model()
@@ -57,6 +58,9 @@ class LoginViewset(viewsets.ViewSet):
                     {"message": "Tu cuenta ha sido suspendida por un moderador."},
                     status=403
                 )
+            # Actualiza el campo last_login
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
             _, token = AuthToken.objects.create(user)
             user_data = {
                 "id": user.id,
@@ -166,6 +170,58 @@ class UserDataViewset(viewsets.ViewSet):
         user = request.user
         serializer = self.serializer_class(user)
         return Response(serializer.data, status=200)
+    
+# --- FUNCIONALIDAD DE SEGUIR / DEJAR DE SEGUIR / VER FOLLOWERS ---
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def seguir_usuario(request, user_id):
+    target_user = get_object_or_404(CustomUser, id=user_id)
+    if target_user == request.user:
+        return Response({'error': 'No puedes seguirte a ti mismo.'}, status=status.HTTP_400_BAD_REQUEST)
+    if request.user.following.filter(id=target_user.id).exists():
+        return Response({'error': 'Ya estás siguiendo a este usuario.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    request.user.following.add(target_user)
+    Notification.objects.create(
+        user=target_user,
+        emisor=request.user,
+        notification_type='seguimiento',
+        message=f'{request.user.username} comenzó a seguirte',
+        url=f'http://localhost:5173/perfil-publico/{request.user.username}/'
+    )
+    return Response({'status': f'Siguiendo a {target_user.username}.'}, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def dejar_de_seguir_usuario(request, user_id):
+    target_user = get_object_or_404(CustomUser, id=user_id)
+    request.user.following.remove(target_user)
+    return Response({'status': f'Dejaste de seguir a {target_user.username}.'}, status=200)
+
+@api_view(['GET'])
+def ver_seguidores(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    seguidores = user.followers.all()
+    serializer = SimpleUserSerializer(seguidores, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def ver_seguidos(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    seguidos = user.following.all()
+    serializer = SimpleUserSerializer(seguidos, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def esta_siguiendo(request, user_id):
+    target_user = get_object_or_404(CustomUser, id=user_id)
+    is_following = request.user.following.filter(id=target_user.id).exists()
+    return Response({'esta_siguiendo': is_following})
+
+# ---------------------------------------------------------------------------------
 
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
@@ -182,15 +238,45 @@ class EventoViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
+        # Obtener el objeto antes de las modificaciones
+        original_instance = self.get_object()
+        
+        # Campos importantes que justifican una notificación
+        important_fields = ['title', 'description', 'event_date', 'location', 'max_participants', 'category']
+        
+        # Verificar si hubo cambios en campos importantes
+        has_important_changes = False
+        for field in important_fields:
+            old_value = getattr(original_instance, field, None)
+            new_value = serializer.validated_data.get(field, old_value)
+            
+            # Comparar valores (considerando diferentes tipos de datos)
+            if field == 'category' and old_value and new_value:
+                # Para campos relacionados, comparar IDs
+                if hasattr(old_value, 'id') and hasattr(new_value, 'id'):
+                    if old_value.id != new_value.id:
+                        has_important_changes = True
+                        break
+                elif old_value != new_value:
+                    has_important_changes = True
+                    break
+            elif old_value != new_value:
+                has_important_changes = True
+                break
+        
+        # Guardar los cambios
         instance = serializer.save()
-        participantes = instance.participants.all()
-        for user in participantes:
-            Notification.objects.create(
-                user=user,
-                notification_type='evento',
-                message=f'El evento "{instance.title}" ha sido modificado.',
-                url=f'http://localhost:3000/ver-evento/{instance.id}'
-            )
+        
+        # Solo notificar si hubo cambios importantes
+        if has_important_changes:
+            participantes = instance.participants.exclude(id=self.request.user.id)
+            for user in participantes:
+                Notification.objects.create(
+                    user=user,
+                    notification_type='evento',
+                    message=f'El evento "{instance.title}" ha sido modificado.',
+                    url=f'http://localhost:5173/ver-evento/{instance.id}' 
+                )
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def inscribirse(self, request, pk=None):
@@ -208,21 +294,35 @@ class EventoViewSet(viewsets.ModelViewSet):
             return Response({"error": "No hay cupos disponibles para este evento."}, status=status.HTTP_400_BAD_REQUEST)
 
         evento.participants.add(request.user)
+
+        # 🔽 Registrar actividad reciente
+        Actividad.objects.create(
+            usuario=request.user,
+            tipo='inscripcion',
+            evento=evento
+        )
+
         return Response({"message": "Inscripción exitosa."}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def inscritos(self, request, pk=None):
         evento = self.get_object()
         inscritos = evento.participants.all()
+
         data = [
             {
                 "id": usuario.id,
+                "full_name": usuario.full_name,
                 "username": usuario.username,
-                "email": usuario.email
+                "email": usuario.email,
+                "profile_picture": request.build_absolute_uri(usuario.profile_picture.url)
+                if usuario.profile_picture else None
             }
             for usuario in inscritos
         ]
+
         return Response(data, status=status.HTTP_200_OK)
+
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -264,6 +364,36 @@ class EventoViewSet(viewsets.ModelViewSet):
         } for e in eventos]
 
         return Response(data)
+    
+    def get_queryset(self):
+        queryset = Evento.objects.all()
+        user = self.request.user
+
+        siguiendo = self.request.query_params.get("siguiendo")
+
+        if siguiendo and siguiendo.lower() == "true" and user.is_authenticated:
+            seguidos = user.following.all()
+            queryset = queryset.filter(author__in=seguidos)
+
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+    # Después de guardar el evento con éxito, registramos la actividad
+        if response.status_code == 201:
+            evento_id = response.data.get("id")
+            try:
+                evento = Evento.objects.get(id=evento_id)
+                Actividad.objects.create(
+                    usuario=request.user,
+                    tipo="creacion",
+                    evento=evento
+                )
+            except Evento.DoesNotExist:
+                pass  # Silencioso: no rompemos nada si falla
+
+        return response
 
 
 class MisInscripcionesViewSet(viewsets.ViewSet):
@@ -362,13 +492,30 @@ class CommentViewSet(viewsets.ModelViewSet):
         if not self.request.user.is_active:
             raise PermissionDenied("Tu usuario está suspendido y no puede comentar.")
         instance = serializer.save()
+        
+        # Notificar al autor del comentario padre si es una respuesta
         if instance.parent:
             parent_user = instance.parent.author
             if parent_user != self.request.user:
+                # Truncar la respuesta si es muy larga
+                reply_preview = instance.content[:40] + "..." if len(instance.content) > 40 else instance.content
                 Notification.objects.create(
                     user=parent_user,
                     notification_type='comentario',
-                    message=f'Te han respondido en un comentario.',
+                    message=f'{self.request.user.username} te respondió: "{reply_preview}"',
+                    url=f'http://localhost:5173/ver-evento/{instance.evento.id}'
+                )
+        
+        # Notificar al creador del evento cuando alguien comenta (solo si es comentario raíz)
+        if not instance.parent and instance.evento:
+            event_author = instance.evento.author
+            if event_author != self.request.user:
+                # Truncar el comentario si es muy largo
+                comment_preview = instance.content[:50] + "..." if len(instance.content) > 50 else instance.content
+                Notification.objects.create(
+                    user=event_author,
+                    notification_type='comentario',
+                    message=f'{self.request.user.username} comentó en tu evento "{instance.evento.title}": "{comment_preview}"',
                     url=f'http://localhost:5173/ver-evento/{instance.evento.id}'
                 )
 
@@ -380,6 +527,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
     @action(detail=False, methods=['post'])
     def mark_as_read(self, request):
@@ -391,6 +543,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def mark_all_as_read(self, request):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({'status': 'all marked as read'})
+    
+
 
 class CommentReportViewSet(viewsets.ModelViewSet):
     queryset = CommentReport.objects.all()
@@ -441,17 +595,40 @@ class CommentReportViewSet(viewsets.ModelViewSet):
 class UserAdminViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAdminUser]  # Solo moderadores
+    permission_classes = [permissions.IsAdminUser]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        token = ResetPasswordToken.objects.create(user=user)
+        send_welcome_email(user, token)
+        return Response(self.get_serializer(user).data, status=201)
 
     def partial_update(self, request, pk=None):
         user = self.get_object()
-        is_active = request.data.get('is_active')
-        if is_active is not None:
-            user.is_active = bool(is_active)
-            user.save()
-            return Response({'status': 'updated', 'is_active': user.is_active})
-        return Response({'error': 'No se proporcionó is_active'}, status=400)
+        serializer = self.get_serializer(user, data=request.data, partial=True, context={'request': request})
+        try:
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+        except IntegrityError as e:
+            error_str = str(e).lower()
+            # Busca por 'unique' o 'llave duplicada' y 'email' o el nombre de la restricción
+            if (
+                ('unique' in error_str or 'llave duplicada' in error_str)
+                and ('email' in error_str or 'correo' in error_str or 'api_customuser_email_key' in error_str)
+            ):
+                return Response({'error': 'El correo ya existe.'}, status=400)
+            return Response({'error': 'Error de integridad.'}, status=400)
+        return Response(serializer.data)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def actividad_reciente(request):
+    seguidos = request.user.following.all()
+    actividades = Actividad.objects.filter(usuario__in=seguidos).order_by('-fecha')[:50]
+    serializer = ActividadSerializer(actividades, many=True)
+    return Response(serializer.data)
 
 
 

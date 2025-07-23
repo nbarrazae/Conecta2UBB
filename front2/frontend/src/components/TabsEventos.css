@@ -1,32 +1,38 @@
 .tabs-eventos-contenedor {
   width: 100%;
-  position: relative; /* nuevo */
-  height: auto;
-  margin: 0;
+  max-width: 700px; /* mismo que .bloque-eventos */
+  margin: 0 auto;
+  position: relative;
+  padding-bottom: 4px;
+  box-sizing: border-box;
 }
 
-/* esta línea ocupa el 100% visual y se posiciona de forma absoluta */
 .tabs-eventos-contenedor::after {
   content: "";
   position: absolute;
   bottom: 0;
-  left: -100vw; /* ← ¡nuevo! empuja visualmente a la izquierda */
+  left: 0;
+  right: 0; /* 🔥 importante para que se centre con base en `left` y `right` */
+  transform: translateX(-50vw); /* desplaza la barra sin mover el contenido */
+  width: 200vw;
   height: 2px;
-  width: 300vw; /* ← ¡nuevo! asegura que cubra a izquierda y derecha */
   background-color: #ddd;
   z-index: 0;
 }
 
+/* Contenedor de botones (centrado y encima de la línea) */
 .tabs-eventos-wrapper {
   display: flex;
   gap: 2rem;
-  padding: 0.5rem 0;
-  transform: translateX(520px); /* correcto */
   position: relative;
-  z-index: 1; /* para que quede sobre la línea */
+  z-index: 1;
+
+  /* ✅ Aquí se aplica el empuje visual hacia la derecha */
+  transform: translateX(
+    200px
+  ); /* ajusta este valor según cuánto quieras moverlas */
 }
 
-/* Botones */
 .tab-btn {
   background: none;
   border: none;
@@ -35,13 +41,20 @@
   font-size: 1rem;
   font-weight: 500;
   color: #555;
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   position: relative;
-  transition: color 0.2s;
+  transition: color 0.2s, background-color 0.2s;
+  border-radius: 6px;
+}
+
+/* 🎯 Efecto hover tipo Twitter */
+.tab-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* gris claro */
 }
 
 .tab-btn.active {
   color: #1976d2;
+  background-color: transparent;
 }
 
 .tab-btn.active::after {

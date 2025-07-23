@@ -1,14 +1,12 @@
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
-import AppBar from "@mui/material/AppBar";
 import CssBaseline from "@mui/material/CssBaseline";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -18,196 +16,156 @@ import HomeIcon from "@mui/icons-material/Home";
 import InfoIcon from "@mui/icons-material/Info";
 import LogoutIcon from "@mui/icons-material/Logout";
 import FlagIcon from "@mui/icons-material/Flag";
+import Person2Icon from "@mui/icons-material/Person2";
+import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from "@mui/icons-material/Add";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import Tooltip from "@mui/material/Tooltip";
+import Avatar from "@mui/material/Avatar";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Badge from "@mui/material/Badge";
+
 import { useTheme, useMediaQuery } from "@mui/material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import AxiosInstance from "./axiosInstance";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
-import Fab from "@mui/material/Fab";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import Person2Icon from "@mui/icons-material/Person2";
-import SearchIcon from "@mui/icons-material/Search";
-import AddIcon from '@mui/icons-material/Add';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import Tooltip from '@mui/material/Tooltip';
+import { isSameDay } from "date-fns";
+import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 
-import Avatar from "@mui/material/Avatar";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
+import SidebarUI from "./SidebarUI";
 
-
-import Badge from "@mui/material/Badge";
-import Popover from "@mui/material/Popover";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-
-import { isSameDay } from 'date-fns';
-import { PickersDay } from '@mui/x-date-pickers/PickersDay';
-
-
-const drawerWidth = 240;
+const drawerWidth = 260;
 const widgetWidth = 400;
 
 export default function Navbar({ content }) {
   const location = useLocation();
   const path = location.pathname;
   const navigate = useNavigate();
+  const notifAnchorRef = useRef(null);
 
-  const [profilePicture, setProfilePicture] = useState(null);
+  const [notifAnchorEl, setNotifAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
   const [notifications, setNotifications] = useState([]);
   const [anchorNotif, setAnchorNotif] = useState(null);
+  const [showNotifPopover, setShowNotifPopover] = useState(false);
   const [tabValue, setTabValue] = useState(0);
-
+  const [profilePicture, setProfilePicture] = useState(null);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [userData, setUserData] = useState({});
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const fetchUpcomingEvents = async () => {
-      try {
-          const res = await AxiosInstance.get('/eventos/upcoming/');
-          setUpcomingEvents(res.data);
-      } catch (err) {
-          console.error(err);
-      }
+    try {
+      const res = await AxiosInstance.get("/eventos/upcoming/");
+      setUpcomingEvents(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
+
   useEffect(() => {
     fetchUpcomingEvents();
-}, []);
+  }, []);
 
-const CustomDay = ({ day, outsideCurrentMonth, ...other }) => {
-    const hasEvent = upcomingEvents.some(event =>
-        isSameDay(new Date(event.fecha_limite), day)
+  const CustomDay = ({ day, outsideCurrentMonth, ...other }) => {
+    const hasEvent = upcomingEvents.some((event) =>
+      isSameDay(new Date(event.fecha_limite), day)
     );
 
     return (
-        <Badge
-            overlap="circular"
-            color="primary"
-            variant={hasEvent ? "dot" : "standard"}
-        >
-            <PickersDay day={day} outsideCurrentMonth={outsideCurrentMonth} {...other} />
-        </Badge>
+      <Badge
+        overlap="circular"
+        color="primary"
+        variant={hasEvent ? "dot" : "standard"}
+      >
+        <PickersDay
+          day={day}
+          outsideCurrentMonth={outsideCurrentMonth}
+          {...other}
+        />
+      </Badge>
     );
-};
+  };
 
   const fetchNotifications = async () => {
     try {
-        const res = await AxiosInstance.get('/notifications/');
-        setNotifications(res.data);
+      const res = await AxiosInstance.get("/notifications/");
+      setNotifications(res.data);
     } catch (err) {
-        console.error(err);
+      console.error(err);
     }
-};
+  };
 
-useEffect(() => {
-  fetchNotifications(); // inicial
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const interval = setInterval(() => {
-      fetchNotifications();
-  }, 10000); // cada 10 segundos
+  const handleNotifClick = () => {
+    setAnchorNotif(notifAnchorRef.current);
+    setShowNotifPopover(true);
+    markAllAsRead();
+  };
 
-  return () => clearInterval(interval);
-}, []);
+  const handleNotifClose = () => {
+    setAnchorNotif(null);
+    setShowNotifPopover(false);
+  };
 
-
-
-const handleNotifClick = (event) => {
-  setAnchorNotif(event.currentTarget);
-  markAllAsRead();
-};
-
-const handleNotifClose = () => {
-  setAnchorNotif(null);
-};
-
-const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   useEffect(() => {
     const fetchProfilePicture = async () => {
-        try {
-            const res = await AxiosInstance.get("/users/ver_perfil/");
-            if (res.data.profile_picture) {
-                setProfilePicture(`http://localhost:8000${res.data.profile_picture}`);
-            } else {
-                setProfilePicture(defaultAvatar);
-            }
-        } catch (error) {
-            console.error("Error al obtener imagen de perfil:", error);
-            setProfilePicture(defaultAvatar);
-        }
+      try {
+        const res = await AxiosInstance.get("/users/ver_perfil/");
+        setProfilePicture(
+          res.data.profile_picture
+            ? `http://localhost:8000${res.data.profile_picture}`
+            : null
+        );
+        setUserData(res.data);
+      } catch (error) {
+        console.error("Error al obtener datos de usuario:", error);
+        setProfilePicture(null);
+      }
     };
-
     fetchProfilePicture();
-}, []);
+  }, []);
 
-
-  const handleCrearEvento = () => {
-    navigate("/crear-evento");
-};
-
-const handleNotificaciones = () => {
-    navigate("/notificaciones"); // O ruta que utilices
-};
-
-const handlePerfil = () => {
+  const handleCrearEvento = () => navigate("/crear-evento");
+  const handleAvatarClick = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handlePerfilClick = () => {
     navigate("/perfil");
-};
+    handleMenuClose();
+  };
 
-const handleAvatarClick = (event) => {
-  setAnchorEl(event.currentTarget);
-};
-
-const handleMenuClose = () => {
-  setAnchorEl(null);
-};
-
-const handlePerfilClick = () => {
-  navigate("/perfil");
-  handleMenuClose();
-};
-
-const handleLogoutClick = () => {
-  AxiosInstance.post(`logoutall/`, {}).then(() => {
-      localStorage.removeItem("Token");
-      navigate("/login");
-  });
-  handleMenuClose();
-};
-
-const markAllAsRead = async () => {
-  try {
-      await AxiosInstance.patch('/notifications/mark_all_as_read/');
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-  } catch (error) {
-      console.error("Error al marcar como leídas:", error);
-  }
-};
-
-
-
-
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const [openWidgets, setOpenWidgets] = React.useState(false);
-
-  const [mobileOpen, setMobileOpen] = React.useState(false);
-
-  const logoutUser = () => {
+  const handleLogoutClick = () => {
     AxiosInstance.post(`logoutall/`, {}).then(() => {
       localStorage.removeItem("Token");
       navigate("/login");
     });
+    handleMenuClose();
   };
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const isAdmin = !!(user && (user.is_staff || user.is_superuser));
+  const markAllAsRead = async () => {
+    try {
+      await AxiosInstance.patch("/notifications/mark_all_as_read/");
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    } catch (error) {
+      console.error("Error al marcar como leídas:", error);
+    }
+  };
+
+  const isAdmin = !!(userData && (userData.is_staff || userData.is_superuser));
 
   const drawerContent = (
     <Box sx={{ overflow: "auto" }}>
@@ -253,202 +211,51 @@ const markAllAsRead = async () => {
         </ListItem>
 
         {isAdmin && (
-          <ListItem disablePadding>
-            <ListItemButton
-              component={Link}
-              to="/admin-users"
-              selected={path === "/admin-users"}
-            >
-              <ListItemIcon>
-                <Person2Icon />
-              </ListItemIcon>
-              <ListItemText primary="Gestionar Usuarios" />
-            </ListItemButton>
-          </ListItem>
+          <>
+            <ListItem disablePadding>
+              <ListItemButton
+                component={Link}
+                to="/admin-users"
+                selected={path === "/admin-users"}
+              >
+                <ListItemIcon>
+                  <Person2Icon />
+                </ListItemIcon>
+                <ListItemText primary="Gestionar Usuarios" />
+              </ListItemButton>
+            </ListItem>
+
+            <ListItem disablePadding>
+              <ListItemButton
+                component={Link}
+                to="/admin-reports"
+                selected={path === "/admin-reports"}
+              >
+                <ListItemIcon>
+                  <FlagIcon />
+                </ListItemIcon>
+                <ListItemText primary="Gestionar Reportes" />
+              </ListItemButton>
+            </ListItem>
+          </>
         )}
-
-        {isAdmin && (
-          <ListItem disablePadding>
-            <ListItemButton
-              component={Link}
-              to="/admin-reports"
-              selected={path === "/admin-reports"}
-            >
-              <ListItemIcon>
-                <FlagIcon />
-              </ListItemIcon>
-              <ListItemText primary="Gestionar Reportes" />
-            </ListItemButton>
-          </ListItem>
-        )}
-
-        {/* <ListItem disablePadding>
-          <ListItemButton
-            component={Link}
-            to="/perfil"
-            selected={path === "/perfil"}
-          >
-            <ListItemIcon>
-              <Person2Icon />
-            </ListItemIcon>
-            <ListItemText primary="Mi Perfil" />
-          </ListItemButton>
-        </ListItem>
-
-        <ListItem disablePadding>
-          <ListItemButton onClick={logoutUser}>
-            <ListItemIcon>
-              <LogoutIcon />
-            </ListItemIcon>
-            <ListItemText primary="Logout" />
-          </ListItemButton>
-        </ListItem> */}
       </List>
       <Divider />
     </Box>
   );
 
   return (
-    
-    <Box sx={{ display: "flex", width: "100vw", overflowX: "hidden" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        height: "100vh",
+        width: "100vw",
+        overflow: "hidden",
+      }}
+    >
       <CssBaseline />
 
-      {/* AppBar */}
-      <AppBar
-        position="fixed"
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
-      >
-        <Toolbar>
-          {isMobile && (
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-          
-          
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Plataforma de actividades
-          </Typography>
-
-          <IconButton color="inherit" onClick={handleCrearEvento}>
-              <AddIcon />
-          </IconButton>
-
-          <IconButton color="inherit" onClick={handleNotifClick}>
-            <Badge badgeContent={unreadCount} color="error">
-              <NotificationsIcon />
-              
-           </Badge>
-          </IconButton>
-
-
-          <Tooltip title="Opciones de perfil">
-    <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 1 }}>
-        <Avatar
-            src={profilePicture}
-            alt="Perfil"
-            sx={{ width: 36, height: 36 }}
-        />
-    </IconButton>
-</Tooltip>
-
-<Menu
-    anchorEl={anchorEl}
-    open={open}
-    onClose={handleMenuClose}
-    onClick={handleMenuClose}
-    PaperProps={{
-        elevation: 0,
-        sx: {
-            overflow: 'visible',
-            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-            mt: 1.5,
-            '& .MuiAvatar-root': {
-                width: 32,
-                height: 32,
-                ml: -0.5,
-                mr: 1,
-            },
-            '&:before': {
-                content: '""',
-                display: 'block',
-                position: 'absolute',
-                top: 0,
-                right: 14,
-                width: 10,
-                height: 10,
-                bgcolor: 'background.paper',
-                transform: 'translateY(-50%) rotate(45deg)',
-                zIndex: 0,
-            },
-        },
-    }}
-    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
->
-    <MenuItem onClick={handlePerfilClick}>
-        <Avatar src={profilePicture} /> Mi Perfil
-    </MenuItem>
-    <MenuItem onClick={handleLogoutClick}>
-        <LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Logout
-    </MenuItem>
-</Menu>
-
-<Popover
-  open={Boolean(anchorNotif)}
-  anchorEl={anchorNotif}
-  onClose={handleNotifClose}
-  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
->
-  <Tabs
-    value={tabValue}
-    onChange={(e, newValue) => setTabValue(newValue)}
-    variant="fullWidth"
-  >
-    <Tab label="Eventos" />
-    <Tab label="Comentarios" />
-  </Tabs>
-
-  <List dense sx={{ maxHeight: 300, overflow: 'auto', width: 300 }}>
-    {notifications
-      .filter(n => (tabValue === 0 ? n.notification_type === 'evento' : n.notification_type === 'comentario'))
-      .map(n => (
-        <ListItem
-          key={n.id}
-          button
-          onClick={() => {
-            window.location.href = n.url;
-          }}
-        >
-          <ListItemText
-            primary={n.message}
-            secondary={new Date(n.created_at).toLocaleString()}
-          />
-          {!n.is_read && <span style={{ color: 'red', fontSize: '1.5em' }}>•</span>}
-        </ListItem>
-      ))
-    }
-  </List>
-</Popover>
-
-
-
-{/* <IconButton color="inherit" onClick={handlePerfil}>
-    <AccountCircleIcon />
-</IconButton> */}
-
-
-        </Toolbar>
-      </AppBar>
-
-      {/* Drawer para escritorio */}
       {!isMobile && (
         <Drawer
           variant="permanent"
@@ -458,144 +265,88 @@ const markAllAsRead = async () => {
             [`& .MuiDrawer-paper`]: {
               width: drawerWidth,
               boxSizing: "border-box",
+              backgroundColor: "#fff",
+              borderRight: "1px solid #e0e0e0",
             },
           }}
         >
-          {drawerContent}
+          <SidebarUI
+            profilePicture={profilePicture}
+            user={userData}
+            handleCrearEvento={handleCrearEvento}
+            handleAvatarClick={handleAvatarClick}
+            anchorEl={anchorEl}
+            open={open}
+            handleMenuClose={handleMenuClose}
+            handlePerfilClick={handlePerfilClick}
+            handleLogoutClick={handleLogoutClick}
+            handleNotifClick={handleNotifClick}
+            anchorNotif={anchorNotif}
+            handleNotifClose={handleNotifClose}
+            notifications={notifications}
+            unreadCount={unreadCount}
+            tabValue={tabValue}
+            setTabValue={setTabValue}
+            notifAnchorRef={notifAnchorRef}
+            showNotifPopover={showNotifPopover}
+          />
         </Drawer>
       )}
 
-      {/* Drawer para móviles */}
-      {isMobile && (
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            [`& .MuiDrawer-paper`]: { width: drawerWidth },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      )}
-
-      {/* Contenido principal */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          mt: 8,
-          minWidth: 0,
+          height: "100vh",
+          overflowY: "auto",
+          padding: 3,
+          backgroundColor: "#f9f9f9",
         }}
       >
-        <Toolbar />
         {content}
       </Box>
 
-      {/* Widgets (solo en pantallas grandes) */}
       {!isMobile && (
         <Box
           sx={{
             width: widgetWidth,
-            p: 2,
-            top: 64, // debajo del AppBar
-            right: 0,
-            position: "fixed",
-            height: "calc(100vh - 64px)",
+            height: "100vh",
+            overflowY: "auto",
             borderLeft: "1px solid #ddd",
             backgroundColor: "#fafafa",
-            overflowY: "auto",
+            padding: 2,
           }}
         >
           <Typography variant="h6">Recordatorios</Typography>
           {upcomingEvents.length === 0 ? (
-    <Typography variant="body2" sx={{ mb: 2 }}>
-        No tienes eventos próximos.
-    </Typography>
-) : (
-    <List dense>
-        {upcomingEvents.map(event => (
-            <ListItem
-                key={event.id}
-                button
-                onClick={() => navigate(`/ver-evento/${event.id}`)}
-            >
-                <ListItemText
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              No tienes eventos próximos.
+            </Typography>
+          ) : (
+            <List dense>
+              {upcomingEvents.map((event) => (
+                <ListItem
+                  key={event.id}
+                  button
+                  onClick={() => navigate(`/ver-evento/${event.id}`)}
+                >
+                  <ListItemText
                     primary={event.titulo}
-                    secondary={`Límite: ${new Date(event.fecha_limite).toLocaleString()}`}
-                />
-            </ListItem>
-        ))}
-    </List>
-)}
-
-
-          <Typography variant="h6">Calendario</Typography>
+                    secondary={`Límite: ${new Date(
+                      event.fecha_limite
+                    ).toLocaleString()}`}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            Calendario
+          </Typography>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-    <DateCalendar
-        slots={{
-            day: CustomDay
-        }}
-    />
-</LocalizationProvider>
+            <DateCalendar slots={{ day: CustomDay }} />
+          </LocalizationProvider>
         </Box>
-      )}
-      {/* Floating button + modal para móviles */}
-      {isMobile && (
-        <>
-          <Fab
-            color="primary"
-            aria-label="calendar"
-            onClick={() => setOpenWidgets(true)}
-            sx={{ position: "fixed", bottom: 16, right: 16, zIndex: 1300 }}
-          >
-            <CalendarMonthIcon />
-          </Fab>
-
-          <Dialog
-            open={openWidgets}
-            onClose={() => setOpenWidgets(false)}
-            fullWidth
-            maxWidth="sm"
-          >
-            <DialogTitle>Calendario y recordatorios</DialogTitle>
-            <DialogContent>
-              <Typography variant="subtitle1">Recordatorios</Typography>
-              {upcomingEvents.length === 0 ? (
-    <Typography variant="body2" sx={{ mb: 2 }}>
-        No tienes eventos próximos.
-    </Typography>
-) : (
-    <List dense>
-        {upcomingEvents.map(event => (
-            <ListItem
-                key={event.id}
-                button
-                onClick={() => navigate(`/ver-evento/${event.id}`)}
-            >
-                <ListItemText
-                    primary={event.titulo}
-                    secondary={`Límite: ${new Date(event.fecha_limite).toLocaleString()}`}
-                />
-            </ListItem>
-        ))}
-    </List>
-)}
-
-
-              <Typography variant="subtitle1">Calendario</Typography>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-    <DateCalendar
-        slots={{
-            day: CustomDay
-        }}
-    />
-</LocalizationProvider>
-            </DialogContent>
-          </Dialog>
-        </>
       )}
     </Box>
   );

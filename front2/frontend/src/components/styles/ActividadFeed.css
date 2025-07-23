@@ -1,0 +1,39 @@
+.actividad-feed {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.actividad-lista {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.actividad-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.actividad-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.actividad-detalle p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.actividad-fecha {
+  font-size: 0.8rem;
+  color: #888;
+}

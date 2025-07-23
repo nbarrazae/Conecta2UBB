@@ -11,15 +11,18 @@ import TheaterComedyIcon from "@mui/icons-material/TheaterComedy";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import AxiosInstance from "./axiosInstance";
+import InfoIcon from "@mui/icons-material/Info";
 
+import AxiosInstance from "./axiosInstance";
 import BotonInscripcion from "./BotonInscripcion";
-//import "./EventoCard.css";
+
 import "./styles/EventoCard.css";
 import "./styles/EventoDetalles.css";
 import "./styles/Participantes.css";
 import "./styles/BotonVerInscritos.css";
 import "./styles/Comentarios.css";
+
+import ListaInscritos from "./ListaInscritos";
 
 const iconMap = [
   { keyword: "videojuego", icon: <SportsEsportsIcon fontSize="inherit" /> },
@@ -51,29 +54,35 @@ const EventoCard = ({
   max_participants,
   sinSombra = false,
   ocultarBotonInscripcion = false,
+  mostrarSnackbar,
 }) => {
   const navigate = useNavigate();
   const [yaInscrito, setYaInscrito] = useState(false);
   const [mostrarParticipantes, setMostrarParticipantes] = useState(false);
   const [inscritos, setInscritos] = useState([]);
 
+  // ✅ Estado interno que reemplaza a participants
+  const [listaParticipantes, setListaParticipantes] = useState(
+    participants || []
+  );
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (user?.email) {
       setYaInscrito(
-        participants?.some((p) => p.toLowerCase() === user.email.toLowerCase())
+        listaParticipantes.some(
+          (p) => p.toLowerCase() === user.email.toLowerCase()
+        )
       );
     }
-  }, [participants]);
+  }, [listaParticipantes]);
 
   const obtenerInscritos = async (e) => {
     e.stopPropagation();
-
     if (mostrarParticipantes) {
       setMostrarParticipantes(false);
       return;
     }
-
     try {
       const res = await AxiosInstance.get(`/eventos/${id}/inscritos/`);
       if (Array.isArray(res.data)) {
@@ -98,31 +107,10 @@ const EventoCard = ({
     defaultAvatar;
 
   const nombreCategoria = category_name || category;
-  const estaLleno = participants?.length >= max_participants;
+  const estaLleno = listaParticipantes.length >= max_participants;
 
   return (
-    <div
-      className={`evento-card compacto ${sinSombra ? "sin-sombra" : ""}`}
-      onClick={() => navigate(`/ver-evento/${id}`)}
-      style={{ cursor: "pointer", position: "relative" }}
-    >
-      {!ocultarBotonInscripcion && (
-        <div
-          className="evento-inscribir-top"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <BotonInscripcion
-            eventId={id}
-            yaInscrito={yaInscrito}
-            estaLleno={estaLleno}
-            onCambio={(accion) => {
-              if (accion === "inscrito") setYaInscrito(true);
-              if (accion === "desinscrito") setYaInscrito(false);
-            }}
-          />
-        </div>
-      )}
-
+    <div className={`evento-card compacto ${sinSombra ? "sin-sombra" : ""}`}>
       <div className="evento-icono">{iconoCategoria(nombreCategoria)}</div>
 
       <div className="evento-detalles">
@@ -153,7 +141,7 @@ const EventoCard = ({
           <div className="evento-info-item">
             <GroupIcon fontSize="small" />
             <span className={estaLleno ? "evento-lleno" : ""}>
-              {participants?.length || 0}/{max_participants}
+              {listaParticipantes.length}/{max_participants}
             </span>
           </div>
           {nombreCategoria && (
@@ -163,45 +151,61 @@ const EventoCard = ({
           )}
         </div>
 
-        <button
-          className="boton-inscritos"
-          onClick={obtenerInscritos}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          {mostrarParticipantes ? (
-            <>
-              <VisibilityOffIcon fontSize="small" />
-              <span>Ocultar inscritos</span>
-            </>
-          ) : (
-            <>
-              <VisibilityIcon fontSize="small" />
-              <span>Ver inscritos</span>
-            </>
+        <div className="evento-botones">
+          {!ocultarBotonInscripcion && (
+            <BotonInscripcion
+              eventId={id}
+              yaInscrito={yaInscrito}
+              estaLleno={estaLleno}
+              onCambio={(accion) => {
+                const user = JSON.parse(localStorage.getItem("user"));
+                const email = user?.email?.toLowerCase();
+                if (!email) return;
+
+                if (accion === "inscrito") {
+                  setListaParticipantes((prev) => [...prev, email]);
+                  setYaInscrito(true);
+                  mostrarSnackbar?.("Te has inscrito al evento.", "success");
+                } else if (accion === "desinscrito") {
+                  setListaParticipantes((prev) =>
+                    prev.filter((p) => p.toLowerCase() !== email)
+                  );
+                  setYaInscrito(false);
+                  mostrarSnackbar?.("Te has desinscrito del evento.", "info");
+                }
+              }}
+            />
           )}
-        </button>
+
+          <button className="boton-inscritos" onClick={obtenerInscritos}>
+            {mostrarParticipantes ? (
+              <>
+                <VisibilityOffIcon fontSize="small" />
+                <span>Ocultar inscritos</span>
+              </>
+            ) : (
+              <>
+                <VisibilityIcon fontSize="small" />
+                <span>Ver inscritos</span>
+              </>
+            )}
+          </button>
+
+          <button
+            className="boton-inscritos"
+            onClick={() => navigate(`/ver-evento/${id}`)}
+          >
+            <InfoIcon fontSize="small" />
+            <span>Ver Evento</span>
+          </button>
+        </div>
 
         {mostrarParticipantes && (
-          <div className="seccion-participantes">
-            <h4>USUARIOS INSCRITOS:</h4>
-            <ul className="lista-participantes">
-              {inscritos.length === 0 && <li>No hay participantes aún.</li>}
-              {inscritos.map((user) => (
-                <li key={user.id} className="participante-item">
-                  <img
-                    src={defaultAvatar}
-                    alt="avatar"
-                    className="avatar-participante"
-                  />
-                  <div className="participante-datos">
-                    <span className="participante-username">
-                      {user.username}
-                    </span>
-                    <span className="participante-email">{user.email}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+          <div
+            className="seccion-participantes"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ListaInscritos inscritos={inscritos} />
           </div>
         )}
       </div>

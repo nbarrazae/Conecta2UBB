@@ -6,12 +6,17 @@ import EventoPostCard from "./EventoPostCard";
 import BarraBusqueda from "./BarraBusqueda";
 import TabsEventos from "./TabsEventos";
 import "./Home.css";
+import UsuarioSugerido from "../components/Perfil/UsuarioSugerido";
+import BurbujaActividad from "./BurbujaActividad";
 
 const Home = () => {
   const [myData, setMyData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("todos");
+  const [animating, setAnimating] = useState(false);
+  const [usuariosSugeridos, setUsuariosSugeridos] = useState([]);
+
   const navigate = useNavigate();
 
   // Snackbar state
@@ -27,17 +32,18 @@ const Home = () => {
 
   const GetData = () => {
     AxiosInstance.get("user_data/").then((res) => {
-      console.log("Usuario logeado (completo):", res.data);
       setMyData(res.data);
       setLoading(false);
     });
   };
 
-  const GetEvents = () => {
-    AxiosInstance.get("eventos/").then((res) => {
-      console.log("Eventos recibidos:", res.data);
-      const eventosOrdenados = res.data.sort((a, b) =>
-        a.event_date > b.event_date ? 1 : -1
+  const GetEvents = (tab = "todos") => {
+    let url = "eventos/";
+    if (tab === "siguiendo") url += "?siguiendo=true";
+
+    AxiosInstance.get(url).then((res) => {
+      const eventosOrdenados = res.data.sort(
+        (a, b) => new Date(b.event_date) - new Date(a.event_date)
       );
       setEvents(eventosOrdenados);
     });
@@ -45,12 +51,24 @@ const Home = () => {
 
   useEffect(() => {
     GetData();
-    GetEvents();
+    GetEvents(activeTab);
   }, []);
 
-  // Filtro de eventos según pestaña activa
+  const handleTabChange = (nuevaTab) => {
+    if (nuevaTab === activeTab) return;
+    setAnimating(true);
+    setTimeout(() => {
+      setActiveTab(nuevaTab);
+      GetEvents(nuevaTab);
+      if (nuevaTab === "siguiendo") {
+        cargarUsuariosSugeridos();
+      }
+      setAnimating(false);
+    }, 300);
+  };
+
   const eventosFiltrados =
-    activeTab === "para-ti" && myData?.interests && myData.interests.length > 0
+    activeTab === "para-ti" && myData?.interests?.length > 0
       ? events.filter((event) => {
           const categoriaEvento = event.category_name
             ? event.category_name.trim().toLowerCase()
@@ -58,16 +76,24 @@ const Home = () => {
           const interesesUsuario = myData.interests.map((i) =>
             i.name.trim().toLowerCase()
           );
-          const incluido = interesesUsuario.includes(categoriaEvento);
-          console.log(
-            `[DEBUG] Evento: ${event.title} | Categoría: "${categoriaEvento}" | Intereses: ${interesesUsuario} | ¿Incluido?: ${incluido}`
-          );
-          return incluido;
+          return interesesUsuario.includes(categoriaEvento);
         })
       : events;
 
   const handleRedirect = () => {
     navigate("/crear-evento");
+  };
+
+  const cargarUsuariosSugeridos = async () => {
+    try {
+      const res = await AxiosInstance.get("/users/buscar/");
+      const usuarios = res.data.filter(
+        (u) => u.id !== myData?.id && !myData?.following_ids?.includes(u.id)
+      );
+      setUsuariosSugeridos(usuarios.slice(0, 5));
+    } catch (err) {
+      console.error("Error al cargar usuarios sugeridos:", err);
+    }
   };
 
   return (
@@ -77,26 +103,60 @@ const Home = () => {
       ) : (
         <div className="contenedor-home">
           <div className="zona-tabs">
-            <TabsEventos activeTab={activeTab} onChangeTab={setActiveTab} />
+            <TabsEventos activeTab={activeTab} onChangeTab={handleTabChange} />
           </div>
 
-          {/* 🔹 La barra de búsqueda debe estar centrada */}
-          <div className="zona-busqueda">
-            <BarraBusqueda />
+          <div className="zona-busqueda-wrapper">
+            <div className="zona-busqueda-con-boton">
+              <div className="barra-wrapper">
+                <BarraBusqueda />
+              </div>
+              <button className="boton-crear-evento" onClick={handleRedirect}>
+                + Crear evento
+              </button>
+            </div>
           </div>
 
-          {/* 🔹 Solo movemos el bloque de eventos */}
-          <div className="bloque-eventos">
-            <h2 className="titulo-eventos">
-              {activeTab === "para-ti"
-                ? "Eventos para ti:"
-                : "Todos los eventos:"}
-            </h2>
-
+          <div
+            className={`bloque-eventos ${animating ? "fade-out" : "fade-in"}`}
+          >
             {eventosFiltrados.length === 0 ? (
-              <p style={{ textAlign: "center", marginTop: "1rem" }}>
-                No se encontraron eventos.
-              </p>
+              <div style={{ textAlign: "center", marginTop: "1rem" }}>
+                {activeTab === "siguiendo" ? (
+                  <>
+                    <p>
+                      Aún no sigues a ningún usuario o las personas que sigues
+                      no han creado eventos.
+                    </p>
+                    {usuariosSugeridos.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: "1.5rem",
+                          textAlign: "left",
+                          maxWidth: "600px",
+                          marginInline: "auto",
+                        }}
+                      >
+                        <h4
+                          style={{
+                            marginBottom: "0.75rem",
+                            fontSize: "0.95rem",
+                            color: "#333",
+                            fontWeight: 600,
+                          }}
+                        >
+                          USUARIOS RECOMENDADOS:
+                        </h4>
+                        {usuariosSugeridos.map((user) => (
+                          <UsuarioSugerido key={user.id} user={user} />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p>No se encontraron eventos.</p>
+                )}
+              </div>
             ) : (
               eventosFiltrados.map((event) => (
                 <EventoPostCard
@@ -110,6 +170,10 @@ const Home = () => {
         </div>
       )}
 
+      {/* ✅ Burbuja flotante con dropdown de actividad */}
+      <BurbujaActividad />
+
+      {/* Snackbar de notificaciones */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}
