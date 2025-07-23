@@ -222,7 +222,26 @@ def esta_siguiendo(request, user_id):
     return Response({'esta_siguiendo': is_following})
 
 # ---------------------------------------------------------------------------------
+import uuid
+from datetime import timedelta
+from django.conf import settings
+from minio import Minio
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
+# Inicializar cliente MinIO
+minio_client = Minio(
+    settings.MINIO_ENDPOINT,
+    access_key=settings.MINIO_ACCESS_KEY,
+    secret_key=settings.MINIO_SECRET_KEY,
+    secure=settings.MINIO_USE_SSL,
+)
+
+# Verificar que el bucket existe (lo crea si no existe)
+found = minio_client.bucket_exists(settings.MINIO_BUCKET_NAME)
+if not found:
+    minio_client.make_bucket(settings.MINIO_BUCKET_NAME)
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
@@ -234,8 +253,99 @@ class EventoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if not self.request.user.is_active:
-            return Response({"error": "Tu usuario está suspendido y no puede crear eventos."}, status=status.HTTP_403_FORBIDDEN)
-        serializer.save(author=self.request.user)
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Tu usuario está suspendido y no puede crear eventos.")
+
+        evento = serializer.save(author=self.request.user)
+
+        imagenes = self.request.FILES.getlist('imagenes')
+        print(f"Se recibieron {len(imagenes)} imágenes")
+        uploaded_urls = []
+
+        for img in imagenes:
+            print(f"Subiendo {img.name}...")
+            try:
+                file_extension = img.name.split('.')[-1]
+                file_name = f"{uuid.uuid4()}.{file_extension}"
+
+                minio_client.put_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    img,
+                    length=img.size,
+                    content_type=img.content_type,
+                )
+                url = minio_client.presigned_get_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    expires=timedelta(days=7)
+                )
+                uploaded_urls.append(url)
+                print(f"Subida correcta: {url}")
+            except Exception as e:
+                print(f"Error subiendo imagen {img.name}: {e}")
+
+        # Puedes guardar las URLs en un campo JSON del modelo Evento si lo tienes
+        evento.imagenes_urls = uploaded_urls
+        evento.save()
+
+        # Registro actividad creación
+        Actividad.objects.create(
+            usuario=self.request.user,
+            tipo="creacion",
+            evento=evento
+        )
+
+
+    def create(self, request, *args, **kwargs):
+        imagenes = request.FILES.getlist('imagenes')
+        response = super().create(request, *args, **kwargs)
+        print("hola2")
+
+        print(f"Se recibieron {len(imagenes)} imágenes")
+
+        if response.status_code == 201:
+            uploaded_urls = []
+            for img in imagenes:
+                print(f"Subiendo {img.name}...")
+                try:
+                    file_extension = img.name.split('.')[-1]
+                    file_name = f"{uuid.uuid4()}.{file_extension}"
+
+                    minio_client.put_object(
+                        settings.MINIO_BUCKET_NAME,
+                        file_name,
+                        img,
+                        length=img.size,
+                        content_type=img.content_type,
+                    )
+                    url = minio_client.presigned_get_object(
+                        settings.MINIO_BUCKET_NAME,
+                        file_name,
+                        expires=timedelta(days=7)
+                    )
+                    uploaded_urls.append(url)
+                    print(f"Subida correcta: {url}")
+                except Exception as e:
+                    print(f"Error subiendo imagen {img.name}: {e}")
+
+            response.data['uploaded_images_urls'] = uploaded_urls
+
+            # Registro actividad creación
+            try:
+                evento_id = response.data.get("id")
+                evento = Evento.objects.get(id=evento_id)
+                Actividad.objects.create(
+                    usuario=request.user,
+                    tipo="creacion",
+                    evento=evento
+                )
+            except Exception:
+                pass
+
+        return response
+
+
 
     def perform_update(self, serializer):
         # Obtener el objeto antes de las modificaciones
@@ -632,3 +742,38 @@ def actividad_reciente(request):
 
 
 
+class FileUploadView(APIView):
+    def post(self, request, *args, **kwargs):
+        files = request.FILES.getlist("files")  # Obtener lista de archivos
+
+        if not files:
+            return Response({"error": "No files uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+
+        uploaded_files = []
+
+        for file_obj in files:
+            try:
+                file_extension = file_obj.name.split('.')[-1]
+                file_name = f"{uuid.uuid4()}.{file_extension}"
+
+                minio_client.put_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    file_obj.file,
+                    length=file_obj.size,
+                    content_type=file_obj.content_type,
+                )
+
+                url = minio_client.presigned_get_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    expires=timedelta(days=7)
+                )
+
+                uploaded_files.append({"file_name": file_name, "url": url})
+
+            except Exception as e:
+                # Puedes decidir si abortar todo o solo reportar error en ese archivo
+                return Response({"error": f"Error uploading {file_obj.name}: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"uploaded_files": uploaded_files}, status=status.HTTP_201_CREATED)
