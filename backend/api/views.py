@@ -229,6 +229,7 @@ from minio import Minio
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from io import BytesIO
 
 # Inicializar cliente MinIO
 minio_client = Minio(
@@ -242,6 +243,7 @@ minio_client = Minio(
 found = minio_client.bucket_exists(settings.MINIO_BUCKET_NAME)
 if not found:
     minio_client.make_bucket(settings.MINIO_BUCKET_NAME)
+    
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
@@ -250,6 +252,43 @@ class EventoViewSet(viewsets.ModelViewSet):
     filterset_class = EventoFilter
     ordering_fields = ['event_date']  # 👈 Campos que puedes ordenar (puedes agregar más si quieres)
     ordering = ['-event_date']  # 👈 Orden por defecto: eventos más recientes primero
+
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+
+        print(data)
+
+        if 'imagenes' not in data:
+            data['imagenes'] = EventoImagenSerializer(instance.imagenes.all(), many=True).data
+
+        return Response(data)
+
+
+
+    def get_serializer_class(self):
+        print("hola1")
+        print(f"Serializer utilizado para acción: {self.action}")
+        #raise Exception("SE ESTÁ EJECUTANDO ESTE get_queryset")
+        if self.action == 'retrieve':
+            return EventoSerializer
+        return EventoSimpleSerializer
+ 
+    def get_queryset(self):
+        print("🔥 get_queryset ejecutándose")
+        queryset = Evento.objects.all().prefetch_related('imagenes')
+        user = self.request.user
+
+        siguiendo = self.request.query_params.get("siguiendo")
+
+        if siguiendo and siguiendo.lower() == "true" and user.is_authenticated:
+            seguidos = user.following.all()
+            queryset = queryset.filter(author__in=seguidos)
+
+        return queryset
+
 
     def perform_create(self, serializer):
         if not self.request.user.is_active:
@@ -260,9 +299,8 @@ class EventoViewSet(viewsets.ModelViewSet):
 
         imagenes = self.request.FILES.getlist('imagenes')
         print(f"Se recibieron {len(imagenes)} imágenes")
-        uploaded_urls = []
 
-        for img in imagenes:
+        for idx, img in enumerate(imagenes):
             print(f"Subiendo {img.name}...")
             try:
                 file_extension = img.name.split('.')[-1]
@@ -280,72 +318,24 @@ class EventoViewSet(viewsets.ModelViewSet):
                     file_name,
                     expires=timedelta(days=7)
                 )
-                uploaded_urls.append(url)
+
+                # Crear registro asociado al evento con orden
+                EventoImagen.objects.create(
+                    evento=evento,
+                    url=url,
+                    orden=idx
+                )
                 print(f"Subida correcta: {url}")
+
             except Exception as e:
                 print(f"Error subiendo imagen {img.name}: {e}")
 
-        # Puedes guardar las URLs en un campo JSON del modelo Evento si lo tienes
-        evento.imagenes_urls = uploaded_urls
-        evento.save()
-
-        # Registro actividad creación
+        # Registrar actividad
         Actividad.objects.create(
             usuario=self.request.user,
             tipo="creacion",
             evento=evento
         )
-
-
-    def create(self, request, *args, **kwargs):
-        imagenes = request.FILES.getlist('imagenes')
-        response = super().create(request, *args, **kwargs)
-        print("hola2")
-
-        print(f"Se recibieron {len(imagenes)} imágenes")
-
-        if response.status_code == 201:
-            uploaded_urls = []
-            for img in imagenes:
-                print(f"Subiendo {img.name}...")
-                try:
-                    file_extension = img.name.split('.')[-1]
-                    file_name = f"{uuid.uuid4()}.{file_extension}"
-
-                    minio_client.put_object(
-                        settings.MINIO_BUCKET_NAME,
-                        file_name,
-                        img,
-                        length=img.size,
-                        content_type=img.content_type,
-                    )
-                    url = minio_client.presigned_get_object(
-                        settings.MINIO_BUCKET_NAME,
-                        file_name,
-                        expires=timedelta(days=7)
-                    )
-                    uploaded_urls.append(url)
-                    print(f"Subida correcta: {url}")
-                except Exception as e:
-                    print(f"Error subiendo imagen {img.name}: {e}")
-
-            response.data['uploaded_images_urls'] = uploaded_urls
-
-            # Registro actividad creación
-            try:
-                evento_id = response.data.get("id")
-                evento = Evento.objects.get(id=evento_id)
-                Actividad.objects.create(
-                    usuario=request.user,
-                    tipo="creacion",
-                    evento=evento
-                )
-            except Exception:
-                pass
-
-        return response
-
-
 
     def perform_update(self, serializer):
         # Obtener el objeto antes de las modificaciones
@@ -451,6 +441,8 @@ class EventoViewSet(viewsets.ModelViewSet):
         return Response({"message": "Te has desinscrito del evento."}, status=status.HTTP_200_OK)
 
     def get_serializer_context(self):
+        print("hola")
+
         context = super().get_serializer_context()
         context.update({"request": self.request})  # 👈 necesario para obtener la URL completa de imagen
         return context
@@ -475,35 +467,10 @@ class EventoViewSet(viewsets.ModelViewSet):
 
         return Response(data)
     
-    def get_queryset(self):
-        queryset = Evento.objects.all()
-        user = self.request.user
 
-        siguiendo = self.request.query_params.get("siguiendo")
 
-        if siguiendo and siguiendo.lower() == "true" and user.is_authenticated:
-            seguidos = user.following.all()
-            queryset = queryset.filter(author__in=seguidos)
 
-        return queryset
 
-    def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-
-    # Después de guardar el evento con éxito, registramos la actividad
-        if response.status_code == 201:
-            evento_id = response.data.get("id")
-            try:
-                evento = Evento.objects.get(id=evento_id)
-                Actividad.objects.create(
-                    usuario=request.user,
-                    tipo="creacion",
-                    evento=evento
-                )
-            except Evento.DoesNotExist:
-                pass  # Silencioso: no rompemos nada si falla
-
-        return response
 
 
 class MisInscripcionesViewSet(viewsets.ViewSet):

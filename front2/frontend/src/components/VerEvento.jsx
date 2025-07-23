@@ -149,6 +149,7 @@ const VerEvento = () => {
       const response = await AxiosInstance.get(`eventos/${id}/`);
       setEvento(response.data);
       setImagenes(response.data.imagenes || []);
+      console.log("Evento fetched:", response.data.imagenes);
     } catch (error) {
       console.error("Error fetching event:", error);
     }
