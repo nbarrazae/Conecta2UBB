@@ -550,8 +550,8 @@ const VerEvento = () => {
             <img
               src={
                 myData?.profile_picture
-                  ? `http://localhost:8000${myData.profile_picture}`
-                  : "https://via.placeholder.com/40x40/cccccc/666666?text=👤"
+                  ? myData.profile_picture // ✅ ya es URL completa
+                  : defaultAvatar
               }
               alt="Tu avatar"
               className="comentario-avatar"
@@ -862,9 +862,7 @@ const VerEvento = () => {
                       height: 45,
                       borderRadius: '50%',
                       backgroundImage: participant.profile_picture 
-                        ? `url(${participant.profile_picture.startsWith('http') 
-                            ? participant.profile_picture 
-                            : `http://localhost:8000${participant.profile_picture}`})`
+                        ? `url(${participant.profile_picture})`
                         : `url(${defaultAvatar})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',

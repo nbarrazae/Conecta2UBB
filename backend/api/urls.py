@@ -10,9 +10,6 @@ from .views import (
     esta_siguiendo,
     actividad_reciente
 )
-from django.conf import settings
-from django.conf.urls.static import static
-
 
 router = DefaultRouter()
 router.register(r'register', RegisterViewset, basename='register')
@@ -39,5 +36,3 @@ urlpatterns = router.urls + [
     path('actividad_reciente/', actividad_reciente, name='actividad-reciente'),
     path('upload/', FileUploadView.as_view(), name='file-upload'),]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

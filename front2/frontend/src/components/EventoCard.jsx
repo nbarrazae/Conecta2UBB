@@ -103,8 +103,7 @@ const EventoCard = ({
     (author_profile_picture?.trim() &&
       (author_profile_picture.startsWith("http")
         ? author_profile_picture
-        : `http://localhost:8000${author_profile_picture}`)) ||
-    defaultAvatar;
+        : defaultAvatar)) ;
 
   const nombreCategoria = category_name || category;
   const estaLleno = listaParticipantes.length >= max_participants;

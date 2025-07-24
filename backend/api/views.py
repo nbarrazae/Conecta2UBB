@@ -524,7 +524,7 @@ class EventoViewSet(viewsets.ModelViewSet):
                 "full_name": usuario.full_name,
                 "username": usuario.username,
                 "email": usuario.email,
-                "profile_picture": request.build_absolute_uri(usuario.profile_picture.url)
+                "profile_picture": request.build_absolute_uri(usuario.profile_picture)
                 if usuario.profile_picture else None
             }
             for usuario in inscritos

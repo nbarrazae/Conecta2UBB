@@ -248,8 +248,8 @@ class CommentSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if obj.author.profile_picture:
             if request:
-                return request.build_absolute_uri(obj.author.profile_picture.url)
-            return obj.author.profile_picture.url
+                return request.build_absolute_uri(obj.author.profile_picture)
+            return obj.author.profile_picture
         return None
 
     def create(self, validated_data):
@@ -273,8 +273,8 @@ class NotificationSerializer(serializers.ModelSerializer):
         if obj.emisor and obj.emisor.profile_picture:
             request = self.context.get("request")
             if request:
-                return request.build_absolute_uri(obj.emisor.profile_picture.url)
-            return obj.emisor.profile_picture.url
+                return request.build_absolute_uri(obj.emisor.profile_picture)
+            return obj.emisor.profile_picture
         return None
 
     def get_emisor_username(self, obj):
