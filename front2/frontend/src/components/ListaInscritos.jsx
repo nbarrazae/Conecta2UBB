@@ -14,9 +14,9 @@ const ListaInscritos = ({ inscritos }) => {
         {inscritos.length === 0 && <li>No hay participantes aún.</li>}
 
         {inscritos.map((user) => {
-          const foto = user.profile_picture?.startsWith("http")
+          const foto = user.profile_picture 
             ? user.profile_picture
-            : `http://localhost:8000${user.profile_picture || ""}`;
+            : defaultAvatar;
 
           return (
             <li key={user.id} className="participante-item">

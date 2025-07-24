@@ -84,10 +84,8 @@ const BarraBusqueda = () => {
           nombre: u.full_name || u.username,
           username: u.username,
           foto: u.profile_picture
-            ? u.profile_picture.startsWith("http")
-              ? u.profile_picture
-              : `http://localhost:8000${u.profile_picture}`
-            : defaultAvatar,
+            ? u.profile_picture
+            : defaultAvatar 
         }));
 
       setEventos(eventosFiltrados);
