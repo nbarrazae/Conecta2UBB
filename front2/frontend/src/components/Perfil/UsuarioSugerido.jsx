@@ -6,9 +6,7 @@ import { Link } from "react-router-dom";
 
 const UsuarioSugerido = ({ user, onSeguir }) => {
   const imagenPerfil = user.profile_picture
-    ? user.profile_picture.startsWith("http")
-      ? user.profile_picture
-      : `http://localhost:8000${user.profile_picture}`
+    ? user.profile_picture 
     : defaultAvatar;
 
   return (

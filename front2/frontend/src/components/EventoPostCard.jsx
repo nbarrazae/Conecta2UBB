@@ -120,7 +120,7 @@ const EventoPostCard = ({ event, mostrarSnackbar }) => {
 
       <div className="evento-post-separador" />
 
-      <div className="evento-post-body">
+      {/* <div className="evento-post-body">
         {description && <p className="evento-descripcion">{description}</p>}
         {image && (
           <img
@@ -131,7 +131,7 @@ const EventoPostCard = ({ event, mostrarSnackbar }) => {
             className="evento-imagen"
           />
         )}
-      </div>
+      </div> */}
 
       <div className="evento-post-footer">
         <div className="evento-comentarios-header">
@@ -148,7 +148,7 @@ const EventoPostCard = ({ event, mostrarSnackbar }) => {
           <img
             src={
               usuarioLogeado?.profile_picture
-                ? `http://localhost:8000${usuarioLogeado.profile_picture}`
+                ? usuarioLogeado.profile_picture
                 : defaultAvatar
             }
             alt="Usuario"

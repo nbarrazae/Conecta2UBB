@@ -37,6 +37,7 @@ import { isSameDay } from "date-fns";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 
 import SidebarUI from "./SidebarUI";
+import defaultAvatar from "../assets/default-avatar.jpg";
 
 const drawerWidth = 260;
 const widgetWidth = 400;
@@ -128,8 +129,8 @@ export default function Navbar({ content }) {
         const res = await AxiosInstance.get("/users/ver_perfil/");
         setProfilePicture(
           res.data.profile_picture
-            ? `http://localhost:8000${res.data.profile_picture}`
-            : null
+            ? res.data.profile_picture
+            : defaultAvatar
         );
         setUserData(res.data);
       } catch (error) {
