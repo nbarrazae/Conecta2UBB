@@ -91,10 +91,8 @@ const EditarEventoDialog = ({
                     },
                 });
         
-        -       setOpenEditDialog(false);
-        +       onClose();  // ✅ Solución: cerrar modal correctamente
+               onClose();  // ✅ Solución: cerrar modal correctamente
         
-                await fetchEvento();
             } catch (err) {
                 console.error(err);
                 setError('Error al guardar los cambios. Revisa los campos.');

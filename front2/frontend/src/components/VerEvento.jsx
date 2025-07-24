@@ -149,12 +149,22 @@ const VerEvento = () => {
     }
   };
 
+  const handleCloseEditDialog = async () => {
+    setOpenEditDialog(false);
+    setImagenesNuevas([]);  // ✅ limpiar imágenes nuevas tras cerrar modal
+    await fetchEvento();     // recarga imágenes y datos actualizados
+};
+
   const fetchEvento = async () => {
     try {
       const response = await AxiosInstance.get(`eventos/${id}/`);
       setEvento(response.data);
       setImagenes(response.data.imagenes || []);
       console.log("Evento fetched:", response.data);
+
+
+    
+
     } catch (error) {
       console.error("Error fetching event:", error);
     }
@@ -212,6 +222,8 @@ const VerEvento = () => {
     } catch (error) {
       console.error(error);
     }
+
+    
   };
 
   const handleReply = async (parentId, content) => {
@@ -913,7 +925,7 @@ const VerEvento = () => {
 
       <EditarEventoDialog
         open={openEditDialog}
-        onClose={() => setOpenEditDialog(false)}
+        onClose={handleCloseEditDialog}        
         editData={editData}
         onChange={handleEditChange}
         onSubmit={handleEditSubmit}
@@ -934,8 +946,5 @@ const VerEvento = () => {
   );
 };
 
-const styles = {
-  // Ya no necesitamos estos estilos, todo se maneja con CSS
-};
 
 export default VerEvento;
