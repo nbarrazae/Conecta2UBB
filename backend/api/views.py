@@ -269,12 +269,10 @@ class EventoViewSet(viewsets.ModelViewSet):
 
 
     def get_serializer_class(self):
-        print("hola1")
-        print(f"Serializer utilizado para acción: {self.action}")
-        #raise Exception("SE ESTÁ EJECUTANDO ESTE get_queryset")
-        if self.action == 'retrieve':
-            return EventoSerializer
-        return EventoSimpleSerializer
+        if self.action in ['list']:
+            return EventoSimpleSerializer
+        return EventoSerializer
+
  
     def get_queryset(self):
         print("🔥 get_queryset ejecutándose")
@@ -296,7 +294,7 @@ class EventoViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Tu usuario está suspendido y no puede crear eventos.")
 
         evento = serializer.save(author=self.request.user)
-
+        print(serializer.validated_data)
         imagenes = self.request.FILES.getlist('imagenes')
         print(f"Se recibieron {len(imagenes)} imágenes")
 

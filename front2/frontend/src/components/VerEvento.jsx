@@ -42,6 +42,9 @@ import "./VerEvento.css";
 const VerEvento = () => {
   const [evento, setEvento] = useState(null);
   const [imagenes, setImagenes] = useState([]);
+  const [imagenesExistentes, setImagenesExistentes] = useState([]);
+  const [imagenesNuevas, setImagenesNuevas] = useState([]);
+
   const [categoriasDisponibles, setCategoriasDisponibles] = useState([]);
   const [myData, setMyData] = useState(null);
   const navigate = useNavigate();
@@ -149,7 +152,7 @@ const VerEvento = () => {
       const response = await AxiosInstance.get(`eventos/${id}/`);
       setEvento(response.data);
       setImagenes(response.data.imagenes || []);
-      console.log("Evento fetched:", response.data.imagenes);
+      console.log("Evento fetched:", response.data);
     } catch (error) {
       console.error("Error fetching event:", error);
     }
@@ -486,7 +489,7 @@ const VerEvento = () => {
             <p className="descripcion-evento">{evento.description}</p>
           </div>
 
-          {/* Sección de imágenes - Preparada para MinIO */}
+          {/* Sección de imágenes */}
           <div className="seccion-evento">
             <h3 className="titulo-seccion">
               🖼️ Imágenes del Evento
@@ -914,6 +917,11 @@ const VerEvento = () => {
         loading={editLoading}
         error={editError}
         categorias={categoriasDisponibles}
+        imagenesExistentes={imagenes}             // <--- asegurar que esté inicializado como []
+        setImagenesExistentes={setImagenes}
+        imagenesNuevas={imagenesNuevas}                     // <--- asegurar que esté inicializado como []
+        setImagenesNuevas={setImagenesNuevas}
+        
       />
     </div>
   );

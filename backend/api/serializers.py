@@ -175,14 +175,14 @@ class EventoImagenSerializer(serializers.ModelSerializer):
 
 class EventoSerializer(serializers.ModelSerializer):
     imagenes = EventoImagenSerializer(many=True, read_only=True)
-
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     class Meta:
         model = Evento
         fields = [
             'id', 'title', 'description', 'createdAt', 'event_date', 'location',
             'state', 'author', 'author_username', 'author_profile_picture',
             'category', 'category_name', 'participants', 'max_participants',
-            'comment_count', 'imagenes'  # 👈 está incluido correctamente
+            'comment_count', 'imagenes'
         ]
 
 
@@ -200,6 +200,8 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'title',
+            'description',
+            'createdAt',
             'category',               # 👈 campo tipo string (fallback)
             'category_name',          # 👈 campo que usas para mostrar chip
             'event_date',
