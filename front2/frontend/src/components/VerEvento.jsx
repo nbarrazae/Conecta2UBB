@@ -71,6 +71,8 @@ const VerEvento = () => {
   const [anchorElEvent, setAnchorElEvent] = useState(null);
   const openEventMenu = Boolean(anchorElEvent);
 
+  
+
   const handleEventMenuClick = (event) => {
     setAnchorElEvent(event.currentTarget);
   };
@@ -306,6 +308,7 @@ const VerEvento = () => {
   // cuando se abre el diálogo, llena los datos actuales
   const handleOpenEditDialog = () => {
     setEditData({
+      id: evento.id || "",  // <--- agrega esta línea
       title: evento.title || "",
       description: evento.description || "",
       event_date: evento.event_date ? evento.event_date.slice(0, 16) : "", // formato YYYY-MM-DDTHH:mm
@@ -921,6 +924,10 @@ const VerEvento = () => {
         setImagenesExistentes={setImagenes}
         imagenesNuevas={imagenesNuevas}                     // <--- asegurar que esté inicializado como []
         setImagenesNuevas={setImagenesNuevas}
+       
+        setLoading={setEditLoading}
+        setError={setEditError}
+
         
       />
     </div>

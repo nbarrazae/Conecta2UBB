@@ -35,6 +35,17 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from django.db import IntegrityError
 
+from datetime import timedelta
+from .models import EventoImagen, Notification, Actividad
+
+import uuid
+from datetime import timedelta
+from django.conf import settings
+from minio import Minio
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from io import BytesIO
 
 User = get_user_model()
 
@@ -222,14 +233,7 @@ def esta_siguiendo(request, user_id):
     return Response({'esta_siguiendo': is_following})
 
 # ---------------------------------------------------------------------------------
-import uuid
-from datetime import timedelta
-from django.conf import settings
-from minio import Minio
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from io import BytesIO
+
 
 # Inicializar cliente MinIO
 minio_client = Minio(
@@ -336,21 +340,16 @@ class EventoViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        # Obtener el objeto antes de las modificaciones
+
+
         original_instance = self.get_object()
-        
-        # Campos importantes que justifican una notificación
         important_fields = ['title', 'description', 'event_date', 'location', 'max_participants', 'category']
-        
-        # Verificar si hubo cambios en campos importantes
         has_important_changes = False
+
         for field in important_fields:
             old_value = getattr(original_instance, field, None)
             new_value = serializer.validated_data.get(field, old_value)
-            
-            # Comparar valores (considerando diferentes tipos de datos)
             if field == 'category' and old_value and new_value:
-                # Para campos relacionados, comparar IDs
                 if hasattr(old_value, 'id') and hasattr(new_value, 'id'):
                     if old_value.id != new_value.id:
                         has_important_changes = True
@@ -361,11 +360,69 @@ class EventoViewSet(viewsets.ModelViewSet):
             elif old_value != new_value:
                 has_important_changes = True
                 break
-        
-        # Guardar los cambios
+
         instance = serializer.save()
-        
-        # Solo notificar si hubo cambios importantes
+
+        # -------------------------------
+        # Procesar imágenes
+        # -------------------------------
+        orden_data = self.request.data.get('imagenes_orden')
+        imagenes_nuevas = self.request.FILES.getlist('imagenes')
+
+        if orden_data:
+            import json
+            orden = json.loads(orden_data)
+
+            # Eliminar imágenes anteriores en PostgreSQL
+            EventoImagen.objects.filter(evento=instance).delete()
+
+            nuevas_subidas = {}  # key: "nuevo-0", value: (url, file)
+
+            for idx, file in enumerate(imagenes_nuevas):
+                try:
+                    file_extension = file.name.split('.')[-1]
+                    file_name = f"{uuid.uuid4()}.{file_extension}"
+
+                    minio_client.put_object(
+                        settings.MINIO_BUCKET_NAME,
+                        file_name,
+                        file,
+                        length=file.size,
+                        content_type=file.content_type,
+                    )
+
+                    url = minio_client.presigned_get_object(
+                        settings.MINIO_BUCKET_NAME,
+                        file_name,
+                        expires=timedelta(days=7)
+                    )
+
+                    nuevas_subidas[f"nuevo-{idx}"] = url
+
+                except Exception as e:
+                    print(f"Error subiendo {file.name}: {e}")
+
+            # Registrar en la BD con orden
+            for idx, item in enumerate(orden):
+                if isinstance(item, dict) and "id" in item:
+                    # Imagen existente, usar el mismo URL
+                    EventoImagen.objects.create(
+                        evento=instance,
+                        url=item["url"],
+                        orden=idx
+                    )
+                elif isinstance(item, str) and item.startswith("nuevo-"):
+                    url = nuevas_subidas.get(item)
+                    if url:
+                        EventoImagen.objects.create(
+                            evento=instance,
+                            url=url,
+                            orden=idx
+                        )
+
+        # -------------------------------
+        # Notificar participantes
+        # -------------------------------
         if has_important_changes:
             participantes = instance.participants.exclude(id=self.request.user.id)
             for user in participantes:
@@ -373,8 +430,18 @@ class EventoViewSet(viewsets.ModelViewSet):
                     user=user,
                     notification_type='evento',
                     message=f'El evento "{instance.title}" ha sido modificado.',
-                    url=f'http://localhost:5173/ver-evento/{instance.id}' 
+                    url=f'{settings.FRONTEND_URL}/ver-evento/{instance.id}'
                 )
+
+        # -------------------------------
+        # Registrar actividad
+        # -------------------------------
+        Actividad.objects.create(
+            usuario=self.request.user,
+            tipo="actualizacion",
+            evento=instance
+        )
+
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def inscribirse(self, request, pk=None):

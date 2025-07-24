@@ -5,18 +5,20 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Save as SaveIcon } from '@mui/icons-material';
 import "./VerEvento.css";
-
-
-
-
+import AxiosInstance from "./axiosInstance";
 
 
 const EditarEventoDialog = ({
     open, onClose, editData, onChange, onSubmit, loading, error, categorias,
     imagenesExistentes = [], setImagenesExistentes = () => {},
     imagenesNuevas = [], setImagenesNuevas = () => {},
+    setLoading = () => {},
+    setError = () => {},
+    
 
     }) => {
+
+        
 
 
             // Agregar nuevas imágenes
@@ -51,6 +53,60 @@ const EditarEventoDialog = ({
             setImagenesNuevas(updated);
         };
 
+
+        const handleEditSubmit = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const formData = new FormData();
+        
+                // Campos de texto
+                formData.append('title', editData.title);
+                formData.append('description', editData.description);
+                formData.append('event_date', editData.event_date);
+                formData.append('location', editData.location);
+                formData.append('max_participants', editData.max_participants);
+                formData.append('category', editData.category);
+        
+                // Construir el orden de imágenes
+                const orden = [];
+        
+                imagenesExistentes.forEach(img => {
+                    orden.push({
+                        id: img.id,
+                        url: img.url,
+                    });
+                });
+        
+                imagenesNuevas.forEach((file, idx) => {
+                    orden.push(`nuevo-${idx}`);
+                    formData.append('imagenes', file);
+                });
+        
+                formData.append('imagenes_orden', JSON.stringify(orden));
+        
+                await AxiosInstance.patch(`/eventos/${editData.id}/`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+        
+        -       setOpenEditDialog(false);
+        +       onClose();  // ✅ Solución: cerrar modal correctamente
+        
+                await fetchEvento();
+            } catch (err) {
+                console.error(err);
+                setError('Error al guardar los cambios. Revisa los campos.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        
+
+
+        
 
 
 
@@ -303,58 +359,73 @@ const EditarEventoDialog = ({
      
            
         
-    <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle2" sx={{
-            mb: 1,
-            color: '#1976d2',
-            fontWeight: 600,
-            fontSize: '0.9rem'
+        <Box sx={{ mt: 2 }}>
+    <Typography variant="subtitle2" sx={{
+        mb: 1,
+        color: '#1976d2',
+        fontWeight: 600,
+        fontSize: '0.9rem'
+    }}>
+        🖼️ Imágenes del Evento (haz clic sobre una imagen para eliminarla)
+    </Typography>
+
+    <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleImagenes}
+    />
+
+    <Box sx={{
+            mt: 2,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 2,
+            justifyContent: 'center'
         }}>
-            🖼️ Imágenes del Evento
-        </Typography>
-
-        <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImagenes}
-        />
-
-            <Box sx={{
-                mt: 2,
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 2,
-                justifyContent: 'center'
-            }}>
             {[...imagenesExistentes, ...imagenesNuevas.map((file, idx) => ({
-                id: `new-${idx}`,
-                url: URL.createObjectURL(file),
-                isNew: true,
-                idx
-            }))].map((img, idx) => (
+            id: `new-${idx}`,
+            url: URL.createObjectURL(file),
+            isNew: true,
+            idx
+        }))].map((img, idx) => (
             <Box key={img.id} sx={{
                 width: '120px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 0.5,
+                cursor: 'pointer', // Indica que es clickable
                 position: 'relative'
             }}>
-                <img
+               <img
                     src={img.url}
                     alt={`img-${idx}`}
+                    onClick={() => img.isNew
+                        ? handleEliminarNueva(img.idx)
+                        : handleEliminarExistente(img.id)
+                    }
                     style={{
                         width: '100%',
                         height: '120px',
                         objectFit: 'cover',
                         borderRadius: '8px',
-                        border: '2px solid #eee'
+                        border: '2px solid #eee',
+                        transition: 'transform 0.2s, opacity 0.2s',
                     }}
+                    onMouseOver={e => {
+                        e.currentTarget.style.opacity = '0.8';
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseOut={e => {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                    title="Haz clic para eliminar esta imagen"
                 />
 
-                {/* Controles de orden abajo */}
-                <Box sx={{
+                   {/* Controles de orden abajo */}
+                   <Box sx={{
                     display: 'flex',
                     gap: 0.5,
                     justifyContent: 'center'
@@ -381,35 +452,11 @@ const EditarEventoDialog = ({
                             sx={{ minWidth: '30px', p: 0 }}
                         >→</Button>
                     )}
-                </Box>
-
-                {/* Botón eliminar si quieres mantenerlo visible */}
-                {true && (
-                    <Button
-                        onClick={() => img.isNew
-                            ? handleEliminarNueva(img.idx)
-                            : handleEliminarExistente(img.id)
-                        }
-                        size="small"
-                        sx={{
-                            position: 'absolute',
-                            top: 4, right: 4,
-                            minWidth: '24px',
-                            height: '24px',
-                            fontSize: '0.7rem',
-                            bgcolor: '#fff',
-                            backgroundColor: '#f8f9fa',
-                            color: '#f00',
-                            '&:hover': { bgcolor: '#fee' }
-                        }}
-                    >X</Button>
-                )}
+                         </Box>
             </Box>
         ))}
     </Box>
 </Box>
-
-
 
 
         </Box>
@@ -445,7 +492,7 @@ const EditarEventoDialog = ({
                         Cancelar
                     </Button>
                     <Button
-                        onClick={onSubmit}
+                        onClick={handleEditSubmit}
                         variant="contained"
                         disabled={loading}
                         sx={{
@@ -475,15 +522,8 @@ const EditarEventoDialog = ({
             </>
         );
 
-
-
-
-
-
     }
 
-
-    
     
 
 export default EditarEventoDialog;
