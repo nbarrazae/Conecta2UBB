@@ -168,6 +168,22 @@ class ProfileSerializer(serializers.ModelSerializer):
         return user
 
 
+class EventoImagenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventoImagen
+        fields = ['id', 'url', 'orden']
+
+class EventoSerializer(serializers.ModelSerializer):
+    imagenes = EventoImagenSerializer(many=True, read_only=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    class Meta:
+        model = Evento
+        fields = [
+            'id', 'title', 'description', 'createdAt', 'event_date', 'location',
+            'state', 'author', 'author_username', 'author_profile_picture',
+            'category', 'category_name', 'participants', 'max_participants',
+            'comment_count', 'imagenes'
+        ]
 
 
 class EventoSimpleSerializer(serializers.ModelSerializer):
@@ -177,12 +193,15 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source="author.username", read_only=True)
     author_profile_picture = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()  # ✅ Nuevo campo
+    imagenes = EventoImagenSerializer(many=True, read_only=True)  # 👈 AÑADE ESTO
 
     class Meta:
         model = Evento
         fields = [
             'id',
             'title',
+            'description',
+            'createdAt',
             'category',               # 👈 campo tipo string (fallback)
             'category_name',          # 👈 campo que usas para mostrar chip
             'event_date',
@@ -193,6 +212,7 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
             'author_username',
             'author_profile_picture',
             'comment_count',  # ✅ Nuevo campo
+            'imagenes',   # 👈 AÑADE ESTO
         ]
 
 

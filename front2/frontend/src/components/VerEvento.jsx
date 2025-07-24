@@ -42,6 +42,9 @@ import "./VerEvento.css";
 const VerEvento = () => {
   const [evento, setEvento] = useState(null);
   const [imagenes, setImagenes] = useState([]);
+  const [imagenesExistentes, setImagenesExistentes] = useState([]);
+  const [imagenesNuevas, setImagenesNuevas] = useState([]);
+
   const [categoriasDisponibles, setCategoriasDisponibles] = useState([]);
   const [myData, setMyData] = useState(null);
   const navigate = useNavigate();
@@ -67,6 +70,8 @@ const VerEvento = () => {
   // Estados para el menú de tres puntos del evento
   const [anchorElEvent, setAnchorElEvent] = useState(null);
   const openEventMenu = Boolean(anchorElEvent);
+
+  
 
   const handleEventMenuClick = (event) => {
     setAnchorElEvent(event.currentTarget);
@@ -144,11 +149,22 @@ const VerEvento = () => {
     }
   };
 
+  const handleCloseEditDialog = async () => {
+    setOpenEditDialog(false);
+    setImagenesNuevas([]);  // ✅ limpiar imágenes nuevas tras cerrar modal
+    await fetchEvento();     // recarga imágenes y datos actualizados
+};
+
   const fetchEvento = async () => {
     try {
       const response = await AxiosInstance.get(`eventos/${id}/`);
       setEvento(response.data);
       setImagenes(response.data.imagenes || []);
+      console.log("Evento fetched:", response.data);
+
+
+    
+
     } catch (error) {
       console.error("Error fetching event:", error);
     }
@@ -206,6 +222,8 @@ const VerEvento = () => {
     } catch (error) {
       console.error(error);
     }
+
+    
   };
 
   const handleReply = async (parentId, content) => {
@@ -302,6 +320,7 @@ const VerEvento = () => {
   // cuando se abre el diálogo, llena los datos actuales
   const handleOpenEditDialog = () => {
     setEditData({
+      id: evento.id || "",  // <--- agrega esta línea
       title: evento.title || "",
       description: evento.description || "",
       event_date: evento.event_date ? evento.event_date.slice(0, 16) : "", // formato YYYY-MM-DDTHH:mm
@@ -485,7 +504,7 @@ const VerEvento = () => {
             <p className="descripcion-evento">{evento.description}</p>
           </div>
 
-          {/* Sección de imágenes - Preparada para MinIO */}
+          {/* Sección de imágenes */}
           <div className="seccion-evento">
             <h3 className="titulo-seccion">
               🖼️ Imágenes del Evento
@@ -906,20 +925,26 @@ const VerEvento = () => {
 
       <EditarEventoDialog
         open={openEditDialog}
-        onClose={() => setOpenEditDialog(false)}
+        onClose={handleCloseEditDialog}        
         editData={editData}
         onChange={handleEditChange}
         onSubmit={handleEditSubmit}
         loading={editLoading}
         error={editError}
         categorias={categoriasDisponibles}
+        imagenesExistentes={imagenes}             // <--- asegurar que esté inicializado como []
+        setImagenesExistentes={setImagenes}
+        imagenesNuevas={imagenesNuevas}                     // <--- asegurar que esté inicializado como []
+        setImagenesNuevas={setImagenesNuevas}
+       
+        setLoading={setEditLoading}
+        setError={setEditError}
+
+        
       />
     </div>
   );
 };
 
-const styles = {
-  // Ya no necesitamos estos estilos, todo se maneja con CSS
-};
 
 export default VerEvento;

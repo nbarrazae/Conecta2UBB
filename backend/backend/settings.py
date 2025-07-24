@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'knox',
     'django_rest_passwordreset',
     'django_filters',
+    'storages',  # Para el almacenamiento en S3
 ]
 
 MIDDLEWARE = [
@@ -162,16 +163,14 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-""" 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
-AWS_ACCESS_KEY_ID = env('MINIO_ACCESS_KEY')
-AWS_SECRET_ACCESS_KEY = env('MINIO_SECRET_KEY')
-AWS_STORAGE_BUCKET_NAME = env('MINIO_BUCKET_NAME')
-AWS_S3_ENDPOINT_URL = env('MINIO_ENDPOINT')
-AWS_S3_REGION_NAME = 'us-east-1'  # o la región que uses
-AWS_S3_USE_SSL = False  # o True, según tu configuración
-AWS_S3_VERIFY = False """
+MINIO_ENDPOINT = "146.83.198.35:1265"
+MINIO_ACCESS_KEY = "nbarraza"
+MINIO_SECRET_KEY = "nicolas2025"
+MINIO_BUCKET_NAME = "test"
+MINIO_USE_SSL = False
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

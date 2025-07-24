@@ -65,8 +65,7 @@ const CrearEvento = () => {
         formData.append("description", descripcion);
         formData.append("max_participants", max_participants); // si el backend lo espera así
 
-        formData.append("descripcion", descripcion);
-
+        console.log("formData:", formData);
         imagenes.forEach((img, index) => {
             formData.append("imagenes", img);
             formData.append(`orden_${index}`, index); // importante para el backend
