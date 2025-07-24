@@ -20,7 +20,7 @@ const ListaUsuarios = ({ usuarios }) => {
             <img
               src={
                 u.profile_picture
-                  ? `http://localhost:8000${u.profile_picture}`
+                  ? u.profile_picture // ✅ ya es URL completa
                   : defaultAvatar
               }
               alt="Foto de perfil"

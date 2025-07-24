@@ -99,14 +99,15 @@ const UserProfile = () => {
 
           <div className="perfil-card">
             <div className="perfil-header">
-              <img
-                src={
-                  perfil.profile_picture
-                    ? `http://localhost:8000${perfil.profile_picture}`
-                    : defaultAvatar
-                }
-                alt="Foto de perfil"
-              />
+            <img
+  src={
+    perfil.profile_picture
+      ? perfil.profile_picture // ✅ ya es URL completa
+      : defaultAvatar
+  }
+  alt="Foto de perfil"
+/>
+
               <div className="perfil-header-info">
                 <div className="perfil-nombre-wrapper">
                   <div className="perfil-nombre-seguir-row">

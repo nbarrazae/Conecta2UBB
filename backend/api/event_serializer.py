@@ -46,8 +46,8 @@ class EventoSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if obj.author.profile_picture:
             if request:
-                return request.build_absolute_uri(obj.author.profile_picture.url)
-            return obj.author.profile_picture.url
+                return request.build_absolute_uri(obj.author.profile_picture)
+            return obj.author.profile_picture
         return None
     
     def get_comment_count(self, obj):

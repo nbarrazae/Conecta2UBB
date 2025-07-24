@@ -49,6 +49,20 @@ from io import BytesIO
 
 User = get_user_model()
 
+# Inicializar cliente MinIO
+minio_client = Minio(
+    settings.MINIO_ENDPOINT,
+    access_key=settings.MINIO_ACCESS_KEY,
+    secret_key=settings.MINIO_SECRET_KEY,
+    secure=settings.MINIO_USE_SSL,
+)
+
+# Verificar que el bucket existe (lo crea si no existe)
+found = minio_client.bucket_exists(settings.MINIO_BUCKET_NAME)
+if not found:
+    minio_client.make_bucket(settings.MINIO_BUCKET_NAME)
+
+
 # Create your views here.
 
 class LoginViewset(viewsets.ViewSet):
@@ -136,22 +150,63 @@ class UserViewset(viewsets.ViewSet):
         serializer = ProfileSerializer(user)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['put'], parser_classes=[MultiPartParser, FormParser, JSONParser])
+    @action(
+    detail=False,
+    methods=['put'],
+    parser_classes=[MultiPartParser, FormParser, JSONParser]
+)
+    @action(detail=False, methods=['put'], parser_classes=[MultiPartParser, FormParser])
     def editar_perfil(self, request):
         user = request.user
-
         data = request.data.copy()
-        ids = data.getlist('interest_ids') if hasattr(data, 'getlist') else data.get('interest_ids')
 
+        ids = data.getlist('interest_ids') if hasattr(data, 'getlist') else data.get('interest_ids')
         if ids == ["0"] or ids == []:
             user.interests.clear()
             data.pop("interest_ids", None)
 
+        profile_picture = request.FILES.get('profile_picture')
+
+        if profile_picture:
+            try:
+                file_extension = profile_picture.name.split('.')[-1]
+                file_name = f"{uuid.uuid4()}.{file_extension}"
+
+                minio_client.put_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    profile_picture,
+                    length=profile_picture.size,
+                    content_type=profile_picture.content_type,
+                )
+
+                url = minio_client.presigned_get_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    expires=timedelta(days=7)
+                )
+
+                data['profile_picture'] = url  # ✅ lo guardamos como URL en el usuario
+
+                print(f"✅ Imagen subida correctamente: {url}")
+
+            except Exception as e:
+                print(f"❌ Error subiendo imagen: {e}")
+                return Response({"error": "Error subiendo imagen a MinIO."}, status=500)
+
         serializer = ProfileSerializer(user, data=data, partial=True)
+
         if serializer.is_valid():
+            print("DEBUG validated_data:", serializer.validated_data)
             serializer.save()
             return Response({"message": "Perfil actualizado correctamente"})
-        return Response(serializer.errors, status=400)
+        else:
+            print(serializer.errors)
+            return Response(serializer.errors, status=400)
+
+
+
+
     
     @action(detail=False, methods=['get'], url_path='username/(?P<username>[^/.]+)')
     def perfil_por_username(self, request, username=None):
@@ -235,18 +290,7 @@ def esta_siguiendo(request, user_id):
 # ---------------------------------------------------------------------------------
 
 
-# Inicializar cliente MinIO
-minio_client = Minio(
-    settings.MINIO_ENDPOINT,
-    access_key=settings.MINIO_ACCESS_KEY,
-    secret_key=settings.MINIO_SECRET_KEY,
-    secure=settings.MINIO_USE_SSL,
-)
 
-# Verificar que el bucket existe (lo crea si no existe)
-found = minio_client.bucket_exists(settings.MINIO_BUCKET_NAME)
-if not found:
-    minio_client.make_bucket(settings.MINIO_BUCKET_NAME)
     
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
@@ -480,7 +524,7 @@ class EventoViewSet(viewsets.ModelViewSet):
                 "full_name": usuario.full_name,
                 "username": usuario.username,
                 "email": usuario.email,
-                "profile_picture": request.build_absolute_uri(usuario.profile_picture.url)
+                "profile_picture": request.build_absolute_uri(usuario.profile_picture)
                 if usuario.profile_picture else None
             }
             for usuario in inscritos

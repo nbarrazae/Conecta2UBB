@@ -35,3 +35,4 @@ urlpatterns = router.urls + [
     path('esta_siguiendo/<int:user_id>/', esta_siguiendo, name='esta-siguiendo'),
     path('actividad_reciente/', actividad_reciente, name='actividad-reciente'),
     path('upload/', FileUploadView.as_view(), name='file-upload'),]
+
