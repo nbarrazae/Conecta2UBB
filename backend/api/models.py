@@ -35,8 +35,7 @@ class CustomUser(AbstractUser):
     # Nuevos campos para el perfil (no obligatorios)
     full_name = models.CharField(max_length=100, blank=True)
     bio = models.TextField(blank=True)
-    profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
-    
+    profile_picture = models.URLField(max_length=1000, null=True, blank=True)    
     interests = models.ManyToManyField('Category', blank=True, related_name='interested_users')
 
      # 👇 Seguidores / seguidos

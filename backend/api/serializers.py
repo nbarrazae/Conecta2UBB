@@ -221,7 +221,7 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
 
     def get_author_profile_picture(self, obj):
         if obj.author.profile_picture:
-            return obj.author.profile_picture.url
+            return obj.author.profile_picture
         return None
     
     def get_comment_count(self, obj):  # ✅ Nuevo método
