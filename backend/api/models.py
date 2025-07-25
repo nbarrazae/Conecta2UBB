@@ -54,7 +54,7 @@ class CustomUser(AbstractUser):
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(reset_password_token, *args, **kwargs):
-    sitelink = "http://localhost:5173/"
+    sitelink = "http://146.83.198.35:1242/"
     token = "{}".format(reset_password_token.key)
     full_link = str(sitelink)+str("password-reset/")+str(token)
 
