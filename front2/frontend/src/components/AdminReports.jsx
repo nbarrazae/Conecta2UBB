@@ -14,14 +14,42 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import Tooltip from '@mui/material/Tooltip';
+import { 
+  Box, 
+  Typography,
+  IconButton
+} from "@mui/material";
+import {
+  Person,
+  CalendarToday,
+  LocationOn,
+  Group
+} from "@mui/icons-material";
+
+// componente reutilizable para el icono de estado
+const StatusIcon = ({ status, fontSize = "small" }) => {
+  const iconProps = { fontSize, sx: { verticalAlign: 'middle' } };
+  
+  switch(status) {
+    case "pending":
+      return <HourglassEmptyIcon {...iconProps} color="warning" />;
+    case "accepted":
+      return <CheckCircleIcon {...iconProps} color="success" />;
+    case "rejected":
+      return <CancelIcon {...iconProps} color="error" />;
+    default:
+      return <HelpOutlineIcon {...iconProps} color="disabled" />;
+  }
+};
 
 const AdminReports = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [evento, setEvento] = useState(null);
-
+  const [reportData, setReportData] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingActionId, setPendingActionId] = useState(null);
   const navigate = useNavigate();
@@ -37,20 +65,33 @@ const AdminReports = () => {
     AxiosInstance.post(`event-reports/${id}/${action}/`).then(() => fetchReports());
   };
 
-  const handleOpenEvento = (eventId) => {
+  const handleOpenEvento = (eventId, reportId) => {
     if (eventId && eventId !== "Evento eliminado") {
       AxiosInstance.get(`eventos/${eventId}/`).then((res) => {
         setEvento(res.data);
+        
+        if (reportId) {
+          const report = reports.find(r => r.id === reportId);
+          setReportData(report);
+        }
+        
         setOpen(true);
       });
     } else {
       setEvento(null);
+      
+      if (reportId) {
+        const report = reports.find(r => r.id === reportId);
+        setReportData(report);
+      }
+      
       setOpen(true);
     }
   };
 
   const handleClose = () => {
     setOpen(false);
+    setReportData(null);
   };
 
   useEffect(() => {
@@ -75,7 +116,6 @@ const AdminReports = () => {
       width: 170,
       headerClassName: "header-bold",
       renderCell: (params) => {
-        // Si el valor es un email, toma solo la parte antes del @
         const username = params.value.includes('@')
           ? params.value.split('@')[0]
           : params.value;
@@ -95,28 +135,12 @@ const AdminReports = () => {
       headerName: "Estado",
       width: 140,
       headerClassName: "header-bold",
-      renderCell: (params) => {
-        let className = "";
-        let icon = null;
-        if (params.row.status === "pending") {
-          className = "status-pending";
-          icon = <HourglassEmptyIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />;
-        }
-        if (params.row.status === "accepted") {
-          className = "status-accepted";
-          icon = <CheckCircleIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />;
-        }
-        if (params.row.status === "rejected") {
-          className = "status-rejected";
-          icon = <CancelIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />;
-        }
-        return (
-          <span className={className} style={{ display: 'flex', alignItems: 'center' }}>
-            {icon}
-            <span>{params.value}</span>
-          </span>
-        );
-      }
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <StatusIcon status={params.row.status} />
+          <span>{params.value}</span>
+        </Box>
+      )
     },
     {
       field: "ver",
@@ -127,7 +151,7 @@ const AdminReports = () => {
         <Button
           variant="outlined"
           size="small"
-          onClick={() => handleOpenEvento(params.row.event)}
+          onClick={() => handleOpenEvento(params.row.event, params.row.id)}
           disabled={!params.row.event}
         >
           Ver Detalle
@@ -143,27 +167,25 @@ const AdminReports = () => {
         params.row.status === "pending" && (params.row.comment || params.row.event) ? (
           <>
             <Tooltip title="Aceptar">
-              <Button
+              <IconButton
                 size="small"
                 color="success"
                 onClick={() => {
                   setPendingActionId(params.row.id);
                   setConfirmOpen(true);
                 }}
-                sx={{ minWidth: 0, padding: 0.5 }}
               >
-                <CheckCircleIcon />
-              </Button>
+                <CheckCircleIcon fontSize="small" />
+              </IconButton>
             </Tooltip>
             <Tooltip title="Rechazar">
-              <Button
+              <IconButton
                 size="small"
                 color="error"
                 onClick={() => handleAction(params.row.id, "reject")}
-                sx={{ minWidth: 0, padding: 0.5, marginLeft: 1 }}
               >
-                <CancelIcon />
-              </Button>
+                <CancelIcon fontSize="small" />
+              </IconButton>
             </Tooltip>
           </>
         ) : null,
@@ -208,7 +230,6 @@ const AdminReports = () => {
           mt: 2,
         }}
       >
-        {/* <h2>Gestión de Reportes de Eventos</h2> */}
         <DataGrid
           rows={sortedReports}
           columns={columns}
@@ -226,51 +247,333 @@ const AdminReports = () => {
           }}
         />
 
+        {/* Diálogo de detalles del reporte */}
         <Dialog
           open={open}
           onClose={handleClose}
-          onExited={() => setEvento(null)}
-          maxWidth="sm"
+          maxWidth="md"
           fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '12px',
+              overflow: 'hidden',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+            }
+          }}
         >
-          <DialogTitle>Publicación Reportada</DialogTitle>
-          <DialogContent>
+          <DialogTitle
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              fontWeight: 600,
+              fontSize: '1.3rem',
+              py: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            <ReportProblemIcon fontSize="large" />
+            <span>Detalles del Reporte</span>
+          </DialogTitle>
+          
+          <DialogContent sx={{ py: 3 }}>
+            {/* Sección de información del reporte */}
+            {reportData && (
+              <Box sx={{
+                border: '1px solid #ffebee',
+                borderRadius: '8px',
+                p: 2,
+                background: '#fff5f5',
+                mb: 3
+              }}>
+                <Typography variant="h5" sx={{ 
+                  fontWeight: 600, 
+                  mb: 1,
+                  color: '#d32f2f',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  ⚠️ Información del Reporte
+                </Typography>
+                
+                <Box sx={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: 2,
+                  mb: 1
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Person fontSize="small" color="error" />
+                    <Typography variant="body1">
+                      <strong>Reportado por:</strong>{' '}
+                      {reportData.reporter ? (
+                        <Link
+                          to={`/perfil-publico/${encodeURIComponent(
+                            reportData.reporter.includes('@') 
+                              ? reportData.reporter.split('@')[0] 
+                              : reportData.reporter
+                          )}`}
+                          style={{
+                            color: '#1976d2',
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              textDecoration: 'underline'
+                            }
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleClose();
+                          }}
+                        >
+                          {reportData.reporter.includes('@') 
+                            ? reportData.reporter.split('@')[0] 
+                            : reportData.reporter}
+                        </Link>
+                      ) : 'Desconocido'}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ReportProblemIcon fontSize="small" color="error" />
+                    <Typography variant="body1">
+                      <strong>Motivo:</strong> {reportData.reason_display || 'No especificado'}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <StatusIcon status={reportData.status} />
+                    <Typography variant="body1">
+                      <strong>Estado:</strong> {reportData.status_display || 'Pendiente'}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CalendarToday fontSize="small" color="error" />
+                    <Typography variant="body1">
+                      <strong>Fecha reporte:</strong> {reportData.created_at ? new Date(reportData.created_at).toLocaleString('es-ES') : 'Desconocida'}
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                {reportData.additional_notes && (
+                  <Box sx={{ mt: 1, p: 1, background: '#ffebee', borderRadius: '4px' }}>
+                    <Typography variant="body2">
+                      <strong>Notas adicionales:</strong> {reportData.additional_notes}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            )}
+
             {evento ? (
-              <div>
-                <h3>{evento.title}</h3>
-                <p>
-                  <strong>Descripción:</strong> {evento.description}
-                </p>
-                <p>
-                  <strong>Fecha:</strong>{" "}
-                  {new Date(evento.event_date).toLocaleString()}
-                </p>
-                <p>
-                  <strong>Ubicación:</strong> {evento.location}
-                </p>
-                <p>
-                  <strong>Categoría:</strong> {evento.category_name}
-                </p>
-                <p>
-                  <strong>Estado:</strong> {evento.state}
-                </p>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  sx={{ mt: 2 }}
-                  onClick={() => navigate(`/ver-evento/${evento.id}`)}
-                >
-                  Ir a publicación
-                </Button>
-              </div>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: 3 
+              }}>
+                {/* Sección de información básica del evento */}
+                <Box sx={{
+                  border: '1px solid #eee',
+                  borderRadius: '8px',
+                  p: 2,
+                  background: '#f9f9f9'
+                }}>
+                  <Typography variant="h4" sx={{ 
+                    fontWeight: 600, 
+                    mb: 2,
+                    color: '#333'
+                  }}>
+                    {evento.title}
+                  </Typography>
+                  
+                  <Box sx={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                    gap: 2,
+                    mb: 2
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Person fontSize="small" color="primary" />
+                      <Typography variant="body1">
+                        <strong>Organizador:</strong>{' '}
+                        <Link
+                          to={`/perfil-publico/${encodeURIComponent(evento.author_username || evento.author)}`}
+                          style={{
+                            color: '#1976d2',
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              textDecoration: 'underline'
+                            }
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleClose();
+                          }}
+                        >
+                          {evento.author_username || evento.author}
+                        </Link>
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CalendarToday fontSize="small" color="primary" />
+                      <Typography variant="body1">
+                        <strong>Fecha:</strong> {new Date(evento.event_date).toLocaleString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <LocationOn fontSize="small" color="primary" />
+                      <Typography variant="body1">
+                        <strong>Ubicación:</strong> {evento.location}
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Group fontSize="small" color="primary" />
+                      <Typography variant="body1">
+                        <strong>Participantes:</strong> {evento.participants?.length || 0}/{evento.max_participants}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                
+                {/* Sección de descripción del evento */}
+                <Box sx={{
+                  border: '1px solid #eee',
+                  borderRadius: '8px',
+                  p: 2,
+                  background: '#f9f9f9'
+                }}>
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 600, 
+                    mb: 1,
+                    color: '#333',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}>
+                    📝 Descripción del Evento
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    whiteSpace: 'pre-line',
+                    lineHeight: 1.6
+                  }}>
+                    {evento.description || "Sin descripción proporcionada."}
+                  </Typography>
+                </Box>
+                
+                {/* Sección de imágenes del evento (si existen) */}
+                {evento.imagenes?.length > 0 && (
+                  <Box sx={{
+                    border: '1px solid #eee',
+                    borderRadius: '8px',
+                    p: 2,
+                    background: '#f9f9f9'
+                  }}>
+                    <Typography variant="h6" sx={{ 
+                      fontWeight: 600, 
+                      mb: 2,
+                      color: '#333',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}>
+                      🖼️ Imágenes del Evento
+                    </Typography>
+                    <Box sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                      gap: 2
+                    }}>
+                      {evento.imagenes.map((img, idx) => (
+                        <Box 
+                          key={idx}
+                          sx={{
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            border: '1px solid #ddd',
+                            height: '200px',
+                            backgroundImage: `url(${img.url})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </Box>
             ) : (
-              <div>
-                <p>El evento ha sido eliminado o no está disponible.</p>
-              </div>
+              <Box sx={{ 
+                textAlign: 'center', 
+                py: 4,
+                background: '#fff8e1',
+                borderRadius: '8px',
+                border: '1px solid #ffe0b2'
+              }}>
+                <ReportProblemIcon color="warning" sx={{ fontSize: '3rem', mb: 2 }} />
+                <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
+                  Evento no disponible
+                </Typography>
+                <Typography variant="body1">
+                  El evento ha sido eliminado o no está accesible.
+                </Typography>
+              </Box>
             )}
           </DialogContent>
+          
+          <DialogActions sx={{ 
+            px: 3, 
+            pb: 3,
+            display: 'flex',
+            justifyContent: 'space-between'
+          }}>
+            <Button 
+              onClick={handleClose}
+              variant="outlined"
+              sx={{
+                borderRadius: '20px',
+                px: 3,
+                textTransform: 'none',
+                fontWeight: 500
+              }}
+            >
+              Cerrar
+            </Button>
+            
+            {evento && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  handleClose();
+                  navigate(`/ver-evento/${evento.id}`);
+                }}
+                sx={{
+                  borderRadius: '20px',
+                  px: 3,
+                  textTransform: 'none',
+                  fontWeight: 600
+                }}
+              >
+                Ver evento completo
+              </Button>
+            )}
+          </DialogActions>
         </Dialog>
 
+        {/* Diálogo de confirmación para aceptar reporte */}
         <Dialog
           open={confirmOpen}
           onClose={() => setConfirmOpen(false)}
