@@ -4,7 +4,8 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 def send_welcome_email(user, token):
-    full_link = f"http://localhost:5173/password-reset/{token.key}"
+    #full_link = f"http://localhost:5173/password-reset/{token.key}"
+    full_link = f"http://146.83.198.35:1242/password-reset/{token.key}"
     context = {
         'full_link': full_link,
         'email_address': user.email
