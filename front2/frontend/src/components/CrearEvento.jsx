@@ -70,6 +70,7 @@ const CrearEvento = () => {
             formData.append("description", descripcion);
             formData.append("max_participants", max_participants);
 
+            console.log("formData:", formData);
             imagenes.forEach((img, index) => {
                 formData.append("imagenes", img);
                 formData.append(`orden_${index}`, index);

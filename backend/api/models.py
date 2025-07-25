@@ -35,8 +35,7 @@ class CustomUser(AbstractUser):
     # Nuevos campos para el perfil (no obligatorios)
     full_name = models.CharField(max_length=100, blank=True)
     bio = models.TextField(blank=True)
-    profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
-    
+    profile_picture = models.URLField(max_length=1000, null=True, blank=True)    
     interests = models.ManyToManyField('Category', blank=True, related_name='interested_users')
 
      # 👇 Seguidores / seguidos
@@ -124,6 +123,13 @@ class Evento(models.Model):
 
     def __str__(self):
         return self.title
+
+class EventoImagen(models.Model):
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="imagenes")
+    url = models.URLField(max_length=1000)
+    orden = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
 class EventReport(models.Model):
     REASON_CHOICES = [

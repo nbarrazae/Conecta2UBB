@@ -168,6 +168,22 @@ class ProfileSerializer(serializers.ModelSerializer):
         return user
 
 
+class EventoImagenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventoImagen
+        fields = ['id', 'url', 'orden']
+
+class EventoSerializer(serializers.ModelSerializer):
+    imagenes = EventoImagenSerializer(many=True, read_only=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    class Meta:
+        model = Evento
+        fields = [
+            'id', 'title', 'description', 'createdAt', 'event_date', 'location',
+            'state', 'author', 'author_username', 'author_profile_picture',
+            'category', 'category_name', 'participants', 'max_participants',
+            'comment_count', 'imagenes'
+        ]
 
 
 class EventoSimpleSerializer(serializers.ModelSerializer):
@@ -177,12 +193,15 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source="author.username", read_only=True)
     author_profile_picture = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()  # ✅ Nuevo campo
+    imagenes = EventoImagenSerializer(many=True, read_only=True)  # 👈 AÑADE ESTO
 
     class Meta:
         model = Evento
         fields = [
             'id',
             'title',
+            'description',
+            'createdAt',
             'category',               # 👈 campo tipo string (fallback)
             'category_name',          # 👈 campo que usas para mostrar chip
             'event_date',
@@ -193,6 +212,7 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
             'author_username',
             'author_profile_picture',
             'comment_count',  # ✅ Nuevo campo
+            'imagenes',   # 👈 AÑADE ESTO
         ]
 
 
@@ -201,7 +221,7 @@ class EventoSimpleSerializer(serializers.ModelSerializer):
 
     def get_author_profile_picture(self, obj):
         if obj.author.profile_picture:
-            return obj.author.profile_picture.url
+            return obj.author.profile_picture
         return None
     
     def get_comment_count(self, obj):  # ✅ Nuevo método
@@ -228,8 +248,8 @@ class CommentSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if obj.author.profile_picture:
             if request:
-                return request.build_absolute_uri(obj.author.profile_picture.url)
-            return obj.author.profile_picture.url
+                return request.build_absolute_uri(obj.author.profile_picture)
+            return obj.author.profile_picture
         return None
 
     def create(self, validated_data):
@@ -253,8 +273,8 @@ class NotificationSerializer(serializers.ModelSerializer):
         if obj.emisor and obj.emisor.profile_picture:
             request = self.context.get("request")
             if request:
-                return request.build_absolute_uri(obj.emisor.profile_picture.url)
-            return obj.emisor.profile_picture.url
+                return request.build_absolute_uri(obj.emisor.profile_picture)
+            return obj.emisor.profile_picture
         return None
 
     def get_emisor_username(self, obj):

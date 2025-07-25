@@ -35,8 +35,33 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from django.db import IntegrityError
 
+from datetime import timedelta
+from .models import EventoImagen, Notification, Actividad
+
+import uuid
+from datetime import timedelta
+from django.conf import settings
+from minio import Minio
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from io import BytesIO
 
 User = get_user_model()
+
+# Inicializar cliente MinIO
+minio_client = Minio(
+    settings.MINIO_ENDPOINT,
+    access_key=settings.MINIO_ACCESS_KEY,
+    secret_key=settings.MINIO_SECRET_KEY,
+    secure=settings.MINIO_USE_SSL,
+)
+
+# Verificar que el bucket existe (lo crea si no existe)
+found = minio_client.bucket_exists(settings.MINIO_BUCKET_NAME)
+if not found:
+    minio_client.make_bucket(settings.MINIO_BUCKET_NAME)
+
 
 # Create your views here.
 
@@ -125,22 +150,63 @@ class UserViewset(viewsets.ViewSet):
         serializer = ProfileSerializer(user)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['put'], parser_classes=[MultiPartParser, FormParser, JSONParser])
+    @action(
+    detail=False,
+    methods=['put'],
+    parser_classes=[MultiPartParser, FormParser, JSONParser]
+)
+    @action(detail=False, methods=['put'], parser_classes=[MultiPartParser, FormParser])
     def editar_perfil(self, request):
         user = request.user
-
         data = request.data.copy()
-        ids = data.getlist('interest_ids') if hasattr(data, 'getlist') else data.get('interest_ids')
 
+        ids = data.getlist('interest_ids') if hasattr(data, 'getlist') else data.get('interest_ids')
         if ids == ["0"] or ids == []:
             user.interests.clear()
             data.pop("interest_ids", None)
 
+        profile_picture = request.FILES.get('profile_picture')
+
+        if profile_picture:
+            try:
+                file_extension = profile_picture.name.split('.')[-1]
+                file_name = f"{uuid.uuid4()}.{file_extension}"
+
+                minio_client.put_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    profile_picture,
+                    length=profile_picture.size,
+                    content_type=profile_picture.content_type,
+                )
+
+                url = minio_client.presigned_get_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    expires=timedelta(days=7)
+                )
+
+                data['profile_picture'] = url  # ✅ lo guardamos como URL en el usuario
+
+                print(f"✅ Imagen subida correctamente: {url}")
+
+            except Exception as e:
+                print(f"❌ Error subiendo imagen: {e}")
+                return Response({"error": "Error subiendo imagen a MinIO."}, status=500)
+
         serializer = ProfileSerializer(user, data=data, partial=True)
+
         if serializer.is_valid():
+            print("DEBUG validated_data:", serializer.validated_data)
             serializer.save()
             return Response({"message": "Perfil actualizado correctamente"})
-        return Response(serializer.errors, status=400)
+        else:
+            print(serializer.errors)
+            return Response(serializer.errors, status=400)
+
+
+
+
     
     @action(detail=False, methods=['get'], url_path='username/(?P<username>[^/.]+)')
     def perfil_por_username(self, request, username=None):
@@ -223,6 +289,9 @@ def esta_siguiendo(request, user_id):
 
 # ---------------------------------------------------------------------------------
 
+
+
+    
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
@@ -232,27 +301,99 @@ class EventoViewSet(viewsets.ModelViewSet):
     ordering_fields = ['event_date']  # 👈 Campos que puedes ordenar (puedes agregar más si quieres)
     ordering = ['-event_date']  # 👈 Orden por defecto: eventos más recientes primero
 
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+
+        print(data)
+
+        if 'imagenes' not in data:
+            data['imagenes'] = EventoImagenSerializer(instance.imagenes.all(), many=True).data
+
+        return Response(data)
+
+
+
+    def get_serializer_class(self):
+        if self.action in ['list']:
+            return EventoSimpleSerializer
+        return EventoSerializer
+
+ 
+    def get_queryset(self):
+        print("🔥 get_queryset ejecutándose")
+        queryset = Evento.objects.all().prefetch_related('imagenes')
+        user = self.request.user
+
+        siguiendo = self.request.query_params.get("siguiendo")
+
+        if siguiendo and siguiendo.lower() == "true" and user.is_authenticated:
+            seguidos = user.following.all()
+            queryset = queryset.filter(author__in=seguidos)
+
+        return queryset
+
+
     def perform_create(self, serializer):
         if not self.request.user.is_active:
-            return Response({"error": "Tu usuario está suspendido y no puede crear eventos."}, status=status.HTTP_403_FORBIDDEN)
-        serializer.save(author=self.request.user)
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Tu usuario está suspendido y no puede crear eventos.")
+
+        evento = serializer.save(author=self.request.user)
+        print(serializer.validated_data)
+        imagenes = self.request.FILES.getlist('imagenes')
+        print(f"Se recibieron {len(imagenes)} imágenes")
+
+        for idx, img in enumerate(imagenes):
+            print(f"Subiendo {img.name}...")
+            try:
+                file_extension = img.name.split('.')[-1]
+                file_name = f"{uuid.uuid4()}.{file_extension}"
+
+                minio_client.put_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    img,
+                    length=img.size,
+                    content_type=img.content_type,
+                )
+                url = minio_client.presigned_get_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    expires=timedelta(days=7)
+                )
+
+                # Crear registro asociado al evento con orden
+                EventoImagen.objects.create(
+                    evento=evento,
+                    url=url,
+                    orden=idx
+                )
+                print(f"Subida correcta: {url}")
+
+            except Exception as e:
+                print(f"Error subiendo imagen {img.name}: {e}")
+
+        # Registrar actividad
+        Actividad.objects.create(
+            usuario=self.request.user,
+            tipo="creacion",
+            evento=evento
+        )
 
     def perform_update(self, serializer):
-        # Obtener el objeto antes de las modificaciones
+
+
         original_instance = self.get_object()
-        
-        # Campos importantes que justifican una notificación
         important_fields = ['title', 'description', 'event_date', 'location', 'max_participants', 'category']
-        
-        # Verificar si hubo cambios en campos importantes
         has_important_changes = False
+
         for field in important_fields:
             old_value = getattr(original_instance, field, None)
             new_value = serializer.validated_data.get(field, old_value)
-            
-            # Comparar valores (considerando diferentes tipos de datos)
             if field == 'category' and old_value and new_value:
-                # Para campos relacionados, comparar IDs
                 if hasattr(old_value, 'id') and hasattr(new_value, 'id'):
                     if old_value.id != new_value.id:
                         has_important_changes = True
@@ -263,11 +404,69 @@ class EventoViewSet(viewsets.ModelViewSet):
             elif old_value != new_value:
                 has_important_changes = True
                 break
-        
-        # Guardar los cambios
+
         instance = serializer.save()
-        
-        # Solo notificar si hubo cambios importantes
+
+        # -------------------------------
+        # Procesar imágenes
+        # -------------------------------
+        orden_data = self.request.data.get('imagenes_orden')
+        imagenes_nuevas = self.request.FILES.getlist('imagenes')
+
+        if orden_data:
+            import json
+            orden = json.loads(orden_data)
+
+            # Eliminar imágenes anteriores en PostgreSQL
+            EventoImagen.objects.filter(evento=instance).delete()
+
+            nuevas_subidas = {}  # key: "nuevo-0", value: (url, file)
+
+            for idx, file in enumerate(imagenes_nuevas):
+                try:
+                    file_extension = file.name.split('.')[-1]
+                    file_name = f"{uuid.uuid4()}.{file_extension}"
+
+                    minio_client.put_object(
+                        settings.MINIO_BUCKET_NAME,
+                        file_name,
+                        file,
+                        length=file.size,
+                        content_type=file.content_type,
+                    )
+
+                    url = minio_client.presigned_get_object(
+                        settings.MINIO_BUCKET_NAME,
+                        file_name,
+                        expires=timedelta(days=7)
+                    )
+
+                    nuevas_subidas[f"nuevo-{idx}"] = url
+
+                except Exception as e:
+                    print(f"Error subiendo {file.name}: {e}")
+
+            # Registrar en la BD con orden
+            for idx, item in enumerate(orden):
+                if isinstance(item, dict) and "id" in item:
+                    # Imagen existente, usar el mismo URL
+                    EventoImagen.objects.create(
+                        evento=instance,
+                        url=item["url"],
+                        orden=idx
+                    )
+                elif isinstance(item, str) and item.startswith("nuevo-"):
+                    url = nuevas_subidas.get(item)
+                    if url:
+                        EventoImagen.objects.create(
+                            evento=instance,
+                            url=url,
+                            orden=idx
+                        )
+
+        # -------------------------------
+        # Notificar participantes
+        # -------------------------------
         if has_important_changes:
             participantes = instance.participants.exclude(id=self.request.user.id)
             for user in participantes:
@@ -275,8 +474,18 @@ class EventoViewSet(viewsets.ModelViewSet):
                     user=user,
                     notification_type='evento',
                     message=f'El evento "{instance.title}" ha sido modificado.',
-                    url=f'http://localhost:5173/ver-evento/{instance.id}' 
+                    url=f'{settings.FRONTEND_URL}/ver-evento/{instance.id}'
                 )
+
+        # -------------------------------
+        # Registrar actividad
+        # -------------------------------
+        Actividad.objects.create(
+            usuario=self.request.user,
+            tipo="actualizacion",
+            evento=instance
+        )
+
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def inscribirse(self, request, pk=None):
@@ -315,7 +524,7 @@ class EventoViewSet(viewsets.ModelViewSet):
                 "full_name": usuario.full_name,
                 "username": usuario.username,
                 "email": usuario.email,
-                "profile_picture": request.build_absolute_uri(usuario.profile_picture.url)
+                "profile_picture": request.build_absolute_uri(usuario.profile_picture)
                 if usuario.profile_picture else None
             }
             for usuario in inscritos
@@ -341,6 +550,8 @@ class EventoViewSet(viewsets.ModelViewSet):
         return Response({"message": "Te has desinscrito del evento."}, status=status.HTTP_200_OK)
 
     def get_serializer_context(self):
+        print("hola")
+
         context = super().get_serializer_context()
         context.update({"request": self.request})  # 👈 necesario para obtener la URL completa de imagen
         return context
@@ -365,35 +576,10 @@ class EventoViewSet(viewsets.ModelViewSet):
 
         return Response(data)
     
-    def get_queryset(self):
-        queryset = Evento.objects.all()
-        user = self.request.user
 
-        siguiendo = self.request.query_params.get("siguiendo")
 
-        if siguiendo and siguiendo.lower() == "true" and user.is_authenticated:
-            seguidos = user.following.all()
-            queryset = queryset.filter(author__in=seguidos)
 
-        return queryset
 
-    def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-
-    # Después de guardar el evento con éxito, registramos la actividad
-        if response.status_code == 201:
-            evento_id = response.data.get("id")
-            try:
-                evento = Evento.objects.get(id=evento_id)
-                Actividad.objects.create(
-                    usuario=request.user,
-                    tipo="creacion",
-                    evento=evento
-                )
-            except Evento.DoesNotExist:
-                pass  # Silencioso: no rompemos nada si falla
-
-        return response
 
 
 class MisInscripcionesViewSet(viewsets.ViewSet):
@@ -632,3 +818,38 @@ def actividad_reciente(request):
 
 
 
+class FileUploadView(APIView):
+    def post(self, request, *args, **kwargs):
+        files = request.FILES.getlist("files")  # Obtener lista de archivos
+
+        if not files:
+            return Response({"error": "No files uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+
+        uploaded_files = []
+
+        for file_obj in files:
+            try:
+                file_extension = file_obj.name.split('.')[-1]
+                file_name = f"{uuid.uuid4()}.{file_extension}"
+
+                minio_client.put_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    file_obj.file,
+                    length=file_obj.size,
+                    content_type=file_obj.content_type,
+                )
+
+                url = minio_client.presigned_get_object(
+                    settings.MINIO_BUCKET_NAME,
+                    file_name,
+                    expires=timedelta(days=7)
+                )
+
+                uploaded_files.append({"file_name": file_name, "url": url})
+
+            except Exception as e:
+                # Puedes decidir si abortar todo o solo reportar error en ese archivo
+                return Response({"error": f"Error uploading {file_obj.name}: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"uploaded_files": uploaded_files}, status=status.HTTP_201_CREATED)

@@ -1,7 +1,7 @@
 from django.urls import path, re_path
 from .views import RegisterViewset, LoginViewset, UserViewset, UserDataViewset, MisInscripcionesViewSet
 from rest_framework.routers import DefaultRouter
-from .views import EventoViewSet, CategoryViewSet, EventReportViewSet, NotificationViewSet,CommentViewSet, CommentReportViewSet, UsuarioPorUsernameView, UserAdminViewSet
+from .views import EventoViewSet, CategoryViewSet, EventReportViewSet, NotificationViewSet,CommentViewSet, CommentReportViewSet, UsuarioPorUsernameView, UserAdminViewSet, FileUploadView
 from .views import (
     seguir_usuario,
     dejar_de_seguir_usuario,
@@ -34,4 +34,5 @@ urlpatterns = router.urls + [
     path('seguidos/<int:user_id>/', ver_seguidos, name='ver-seguidos'),
     path('esta_siguiendo/<int:user_id>/', esta_siguiendo, name='esta-siguiendo'),
     path('actividad_reciente/', actividad_reciente, name='actividad-reciente'),
-]
+    path('upload/', FileUploadView.as_view(), name='file-upload'),]
+
