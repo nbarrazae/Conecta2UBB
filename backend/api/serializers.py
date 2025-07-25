@@ -3,7 +3,7 @@ from .models import *
 from django.contrib.auth import get_user_model
 from django.utils.crypto import get_random_string
 from django.utils import timezone
-
+from django.conf import settings
 User = get_user_model()
 
 
@@ -41,9 +41,21 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         email = validated_data.get("email")
         validated_data["username"] = email.split("@")[0]  # genera el username automáticamente
-        # pasword random
+
+        ###########################################
+        # Comentado durante pruebas, quitar antes de la entrega final
+        ###########################################
+        if not email.endswith('@alumnos.ubiobio.cl') or not email.endswith('.ubiobio.cl'):
+            raise serializers.ValidationError("El email debe ser de la forma @alumnos.ubiobio.cl")
         validated_data["password"] = get_random_string(length=10)
         print(validated_data["password"])
+
+        # Verificar si el correo está en la lista de administradores
+        admin_emails = getattr(settings, "ADMIN_EMAILS", [])
+        if email in admin_emails:
+            validated_data["is_staff"] = True
+            validated_data["is_superuser"] = True
+
         user = User.objects.create_user(**validated_data)
         return user 
     

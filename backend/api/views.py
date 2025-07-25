@@ -254,7 +254,7 @@ def seguir_usuario(request, user_id):
         emisor=request.user,
         notification_type='seguimiento',
         message=f'{request.user.username} comenzó a seguirte',
-        url=f'http://localhost:5173/perfil-publico/{request.user.username}/'
+        url=f'http://146.83.198.35:1242/perfil-publico/{request.user.username}/'
     )
     return Response({'status': f'Siguiendo a {target_user.username}.'}, status=200)
 
@@ -630,7 +630,7 @@ class EventReportViewSet(viewsets.ModelViewSet):
                 user=autor,
                 notification_type='evento',
                 message=f'Tu evento "{report.event.title}" fue eliminado por moderación. Motivo: {motivo}',
-                url=f'http://localhost:5173/home'
+                url=f'http://146.83.198.35:1242/home'
             )
         if report.event:
             report.event.delete()
@@ -689,7 +689,8 @@ class CommentViewSet(viewsets.ModelViewSet):
                     user=parent_user,
                     notification_type='comentario',
                     message=f'{self.request.user.username} te respondió: "{reply_preview}"',
-                    url=f'http://localhost:5173/ver-evento/{instance.evento.id}'
+                    url=f'http://146.83.198.35:1242/ver-evento/{instance.evento.id}'
+                    
                 )
         
         # Notificar al creador del evento cuando alguien comenta (solo si es comentario raíz)
@@ -702,7 +703,7 @@ class CommentViewSet(viewsets.ModelViewSet):
                     user=event_author,
                     notification_type='comentario',
                     message=f'{self.request.user.username} comentó en tu evento "{instance.evento.title}": "{comment_preview}"',
-                    url=f'http://localhost:5173/ver-evento/{instance.evento.id}'
+                    url=f'http://146.83.198.35:1242/ver-evento/{instance.evento.id}'
                 )
 
 
@@ -765,7 +766,7 @@ class CommentReportViewSet(viewsets.ModelViewSet):
                     f'Tu comentario "{report.comment.content}" fue eliminado por moderación. '
                     f'Motivo: {motivo}'
                 ),
-                url=f'http://localhost:5173/ver-evento/{report.comment.evento.id}' if report.comment.evento else ''
+                url=f'http://146.83.198.35:1242/ver-evento/{report.comment.evento.id}' if report.comment.evento else ''
             )
         if report.comment:
             report.comment.delete()

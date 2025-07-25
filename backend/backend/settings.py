@@ -180,3 +180,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# settings.py
+
+ADMIN_EMAILS = [
+    "gabriel.lagos@ubiobio.cl",
+    "otro.admin@ubiobio.cl",
+    "xnibex@gmail.com",
+]
