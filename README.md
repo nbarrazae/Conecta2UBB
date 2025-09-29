@@ -34,7 +34,7 @@ Python >= 3.10
 
 Node.js y npm 
 
-## Installation
+## Instalación
 
 ```bash
 git clone https://github.com/nbarrazae/Conecta2UBB.git
